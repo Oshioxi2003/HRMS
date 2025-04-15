@@ -1,0 +1,67 @@
+{% extends "messaging/base_messaging.html" %}
+
+{% block messaging_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Preview: {{ template.name }}</h5>
+        <div class="btn-group">
+            <a href="{% url 'email_template_detail' template_id=template.template_id %}" class="btn btn-secondary btn-sm">
+                Back to Template
+            </a>
+            <a href="{% url 'email_template_test' template_id=template.template_id %}" class="btn btn-success btn-sm">
+                <i class="fas fa-paper-plane"></i> Test Send
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if sample_context %}
+        <div class="mb-4">
+            <h6>Sample Context Data</h6>
+            <div class="bg-light p-3 rounded">
+                <pre>{{ sample_context|pprint }}</pre>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="mb-4">
+            <h6>Rendered Subject</h6>
+            <div class="bg-light p-3 rounded">
+                {{ rendered_subject }}
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6>HTML Preview</h6>
+            <div class="border rounded p-0">
+                <ul class="nav nav-tabs" id="emailTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab" aria-controls="preview" aria-selected="true">
+                            Preview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="code-tab" data-bs-toggle="tab" data-bs-target="#code" type="button" role="tab" aria-controls="code" aria-selected="false">
+                            HTML Code
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="emailTabContent">
+                    <div class="tab-pane fade show active p-3" id="preview" role="tabpanel" aria-labelledby="preview-tab">
+                        <iframe id="htmlPreview" style="width: 100%; height: 500px; border: none;" srcdoc="{{ rendered_html|escapejs }}"></iframe>
+                    </div>
+                    <div class="tab-pane fade p-3 bg-light" id="code" role="tabpanel" aria-labelledby="code-tab">
+                        <pre style="max-height: 500px; overflow: auto;"><code>{{ rendered_html }}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6>Plain Text Preview</h6>
+            <div class="bg-light p-3 rounded" style="max-height: 300px; overflow: auto;">
+                <pre>{{ rendered_text }}</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

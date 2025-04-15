@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chuyên Cần Của Tôi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Tham dự</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Action Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="card-title">Chuyên Cần Hôm Nay</h5>
+                            <p class="card-text">
+                                <strong>Ngày:</strong> {{ today|date:"l, F j, Y" }}
+                                {% if today_attendance %}
+                                <br>
+                                <strong>Trạng thái:</strong> {{ today_attendance.status }}
+                                <br>
+                                {% if today_attendance.time_in %}
+                                <strong>Giờ vào:</strong> {{ today_attendance.time_in|time:"H:i" }}
+                                {% endif %}
+                                {% if today_attendance.time_out %}
+                                <br>
+                                <strong>Giờ ra:</strong> {{ today_attendance.time_out|time:"H:i" }}
+                                <br>
+                                <strong>Số giờ làm việc:</strong> {{ today_attendance.actual_work_hours|default:"--" }}
+                                {% endif %}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            {% if can_check_in %}
+                            <a href="{% url 'attendance_check_in' %}" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-1"></i> Đăng Ký Vào
+                            </a>
+                            {% endif %}
+                            
+                            {% if can_check_out %}
+                            <a href="{% url 'attendance_check_out' %}" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt me-1"></i> Đăng Ký Ra
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'attendance_calendar' %}" class="btn btn-info">
+                                <i class="fas fa-calendar-alt me-1"></i> Xem Lịch
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-title">Ngày Có Mặt</div>
+                <div class="stat-number text-success">{{ summary.present_days }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-title">Ngày Vắng Mặt</div>
+                <div class="stat-number text-danger">{{ summary.absent_days }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-title">Ngày Nghỉ Phép</div>
+                <div class="stat-number text-warning">{{ summary.leave_days }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-title">Tổng Số Giờ</div>
+                <div class="stat-number text-primary">{{ summary.total_work_hours|floatformat:2 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Filter -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="{% url 'my_attendance' %}" class="row g-3 align-items-center">
+                        <div class="col-md-4">
+                            <label for="monthFilter" class="form-label">Chọn Tháng</label>
+                            <select name="month" id="monthFilter" class="form-select" onchange="this.form.submit()">
+                                {% for m in month_choices %}
+                                <option value="{{ m.month }}" data-year="{{ m.year }}" {% if month == m.month and year == m.year %}selected{% endif %}>
+                                    {{ m.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input type="hidden" name="year" id="yearInput" value="{{ year }}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Lịch Sử Chuyên Cần: {{ month_name }} {{ year }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Thứ</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Giờ Vào</th>
+                                    <th>Giờ Ra</th>
+                                    <th>Số Giờ</th>
+                                    <th>Làm Thêm</th>
+                                    <th>Ca Làm Việc</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.work_date|date:"Y-m-d" }}</td>
+                                    <td>{{ record.work_date|date:"l" }}</td>
+                                    <td>
+                                        {% if record.status == 'Present' %}
+                                        <span class="badge bg-success">Có Mặt</span>
+                                        {% elif record.status == 'Absent' %}
+                                        <span class="badge bg-danger">Vắng Mặt</span>
+                                        {% elif record.status == 'On Leave' %}
+                                        <span class="badge bg-warning">Nghỉ Phép</span>
+                                        {% elif record.status == 'Holiday' %}
+                                        <span class="badge bg-info">Ngày Lễ</span>
+                                        {% elif record.status == 'Business Trip' %}
+                                        <span class="badge bg-primary">Công Tác</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.time_in|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.time_out|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.actual_work_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.overtime_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.shift.shift_name|default:"--" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">Không tìm thấy dữ liệu chuyên cần trong tháng này.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update year hidden input when month changes
+        const monthSelect = document.getElementById('monthFilter');
+        const yearInput = document.getElementById('yearInput');
+        
+        monthSelect.addEventListener('change', function() {
+            const selectedOption = monthSelect.options[monthSelect.selectedIndex];
+            const year = selectedOption.getAttribute('data-year');
+            yearInput.value = year;
+        });
+    });
+</script>
+{% endblock %}

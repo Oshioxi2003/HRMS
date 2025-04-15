@@ -1,0 +1,52 @@
+{% extends "notifications/base_notification.html" %}
+{% load static %}
+
+{% block notification_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Notification Details</h5>
+        <a href="{% url 'notification_list' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+    
+    <div class="card-body">
+        <div class="notification-detail">
+            <div class="notification-icon-large {{ notification.notification_type|lower }}">
+                <i class="fas {{ notification.notification_type|notification_icon }}"></i>
+            </div>
+            
+            <h4 class="notification-title">{{ notification.title }}</h4>
+            
+            <div class="notification-meta">
+                <span class="badge bg-secondary">{{ notification.get_notification_type_display }}</span>
+                <span class="notification-date">{{ notification.created_date|date:"F j, Y, g:i a" }}</span>
+                <span class="badge {% if notification.is_read %}bg-success{% else %}bg-warning{% endif %}">
+                    {% if notification.is_read %}Read{% else %}Unread{% endif %}
+                </span>
+            </div>
+            
+            <div class="notification-message mt-4">
+                {{ notification.message|linebreaks }}
+            </div>
+            
+            <div class="notification-actions mt-4">
+                {% if notification.link %}
+                    <a href="{{ notification.link }}" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> View Related Content
+                    </a>
+                {% endif %}
+                
+                {% if not notification.is_read %}
+                    <form method="post" action="{% url 'mark_notification_read' notification.notification_id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-success">
+                            <i class="fas fa-check"></i> Mark as Read
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}Số Ngày Phép Còn Lại{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/leave.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container leave-container">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-8">
+            <h1 class="h3 mb-0">Số Ngày Phép Còn Lại</h1>
+            <p class="text-muted">Năm hiện tại: {{ current_year }}</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{% url 'my_leave_requests' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i> Quay Lại Yêu Cầu Nghỉ Phép
+            </a>
+        </div>
+    </div>
+    
+    <!-- Thẻ Hiển Thị Số Dư Nghỉ Phép -->
+    <div class="row">
+        {% if balances %}
+        {% for balance in balances %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ balance.leave_type }}</h5>
+                    <div class="balance-value">
+                        <span class="remaining">{{ balance.remaining_days }}</span>
+                        <span class="divider">/</span>
+                        <span class="total">{{ balance.total_days }}</span>
+                        <span class="unit">ngày</span>
+                    </div>
+                    
+                    <div class="progress mb-2 mt-3">
+                        <div class="progress-bar bg-primary" role="progressbar" 
+                            style="width: {{ balance.percentage }}%" 
+                            aria-valuenow="{{ balance.used_days }}" 
+                            aria-valuemin="0" 
+                            aria-valuemax="{{ balance.total_days }}">
+                        </div>
+                    </div>
+                    
+                    <div class="balance-details d-flex justify-content-between text-muted small">
+                        <span>Đã sử dụng: {{ balance.used_days }} ngày</span>
+                        {% if balance.carry_over > 0 %}
+                        <span>Tồn từ năm trước: {{ balance.carry_over }} ngày</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card leave-card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-calculator fa-3x text-muted mb-3"></i>
+                    <h5>Không Có Thông Tin Số Dư Nghỉ Phép</h5>
+                    <p class="text-muted">Thông tin số dư ngày phép của bạn chưa được thiết lập.</p>
+                    <p class="text-muted">Vui lòng liên hệ phòng Nhân sự để biết thêm chi tiết.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Phần Lịch Sử Nghỉ Phép -->
+    <div class="card leave-card mt-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-history me-2"></i>Lịch Sử Nghỉ Phép ({{ current_year }})</h5>
+        </div>
+        <div class="card-body">
+            {% if leave_history %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Loại Nghỉ Phép</th>
+                            <th>Từ Ngày</th>
+                            <th>Đến Ngày</th>
+                            <th>Số Ngày</th>
+                            <th>Trạng Thái</th>
+                            <th>Người Phê Duyệt</th>
+                            <th>Ngày Phê Duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in leave_history %}
+                        <tr>
+                            <td>
+                                <span class="leave-type-badge leave-type-{{ leave.leave_type|lower|cut:' ' }}">
+                                    {% if leave.leave_type == 'Annual' %}Phép Năm
+                                    {% elif leave.leave_type == 'Sick' %}Nghỉ Ốm
+                                    {% elif leave.leave_type == 'Unpaid' %}Không Lương
+                                    {% else %}{{ leave.leave_type }}{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ leave.start_date|date:"d/m/Y" }}</td>
+                            <td>{{ leave.end_date|date:"d/m/Y" }}</td>
+                            <td><span class="leave-days-badge">{{ leave.leave_days }} ngày</span></td>
+                            <td>
+                                <span class="leave-status status-{{ leave.status|lower }}">
+                                    {% if leave.status == 'Pending' %}Đang Chờ
+                                    {% elif leave.status == 'Approved' %}Đã Phê Duyệt
+                                    {% elif leave.status == 'Rejected' %}Đã Từ Chối
+                                    {% elif leave.status == 'Cancelled' %}Đã Hủy
+                                    {% else %}{{ leave.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ leave.approved_by.full_name|default:"--" }}</td>
+                            <td>{{ leave.approval_date|date:"d/m/Y"|default:"--" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Không tìm thấy lịch sử nghỉ phép cho năm nay.</p>
+                <a href="{% url 'leave_request_create' %}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-2"></i> Tạo Yêu Cầu Nghỉ Phép Mới
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Phần Thông Tin Bổ Sung -->
+    <div class="card leave-card mt-4 shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông Tin Chính Sách Nghỉ Phép</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="info-card p-3 border rounded h-100">
+                        <h6 class="fw-bold"><i class="fas fa-calendar-alt me-2 text-primary"></i>Phép Năm</h6>
+                        <p class="small mb-0">Nhân viên được hưởng số ngày phép năm dựa theo thâm niên công tác. Ngày phép năm có thể tích lũy tối đa 5 ngày sang năm tiếp theo.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-card p-3 border rounded h-100">
+                        <h6 class="fw-bold"><i class="fas fa-heartbeat me-2 text-danger"></i>Nghỉ Ốm</h6>
+                        <p class="small mb-0">Nghỉ ốm cần có giấy chứng nhận y tế nếu nghỉ từ 3 ngày trở lên. Mỗi nhân viên được hưởng tối đa 30 ngày nghỉ ốm mỗi năm.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="info-card p-3 border rounded h-100">
+                        <h6 class="fw-bold"><i class="fas fa-money-bill-wave me-2 text-success"></i>Nghỉ Không Lương</h6>
+                        <p class="small mb-0">Nghỉ không lương cần được phê duyệt trước và chỉ được chấp nhận trong những trường hợp đặc biệt. Vui lòng tham khảo chính sách công ty.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="{% static 'js/leave.js' %}"></script>
+<style>
+    /* Custom styles for the leave balance page */
+    .balance-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+        color: #4e73df;
+    }
+    
+    .balance-value .divider {
+        font-size: 1.5rem;
+        color: #858796;
+        margin: 0 5px;
+    }
+    
+    .balance-value .total {
+        color: #858796;
+    }
+    
+    .balance-value .unit {
+        font-size: 1rem;
+        color: #858796;
+        margin-left: 5px;
+    }
+    
+    .balance-details {
+        margin-top: 0.5rem;
+    }
+    
+    .info-card {
+        background-color: #f8f9fc;
+        transition: all 0.2s;
+    }
+    
+    .info-card:hover {
+        background-color: #eaecf4;
+        transform: translateY(-2px);
+    }
+    
+    .leave-type-badge, .leave-status, .leave-days-badge {
+        border-radius: 50rem;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35em 0.75em;
+    }
+    
+    .leave-type-badge {
+        text-transform: uppercase;
+    }
+    
+    .leave-type-phépnăm, .leave-type-annual {
+        background-color: rgba(78, 115, 223, 0.1);
+        color: #4e73df;
+    }
+    
+    .leave-type-nghỉốm, .leave-type-sick {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .leave-type-khônglương, .leave-type-unpaid {
+        background-color: rgba(133, 135, 150, 0.1);
+        color: #858796;
+    }
+    
+    .status-approved, .status-đãphêduyệt {
+        background-color: rgba(28, 200, 138, 0.1);
+        color: #1cc88a;
+    }
+    
+    .status-pending, .status-đangchờ {
+        background-color: rgba(246, 194, 62, 0.1);
+        color: #f6c23e;
+    }
+    
+    .status-rejected, .status-đãtừchối {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .status-cancelled, .status-đãhủy {
+        background-color: rgba(133, 135, 150, 0.1);
+        color: #858796;
+    }
+    
+    .leave-days-badge {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+    }
+    
+    /* Table styles */
+    .table thead th {
+        background-color: #f8f9fc;
+        color: #5a5c69;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}

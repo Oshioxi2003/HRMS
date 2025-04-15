@@ -1,0 +1,88 @@
+<!-- templates/salary/my_salary_advances.html -->
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">My Salary Advances</h4>
+                <a href="{% url 'salary_advance_request' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Request Advance
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Filter by status -->
+                    <div class="mb-3">
+                        <form method="get" class="d-flex justify-content-end">
+                            <select name="status" class="form-select" style="max-width: 200px;" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+                                <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                <option value="Repaid" {% if status_filter == 'Repaid' %}selected{% endif %}>Repaid</option>
+                            </select>
+                        </form>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Request Date</th>
+                                    <th>Amount</th>
+                                    <th>Reason</th>
+                                    <th>Deduction Month/Year</th>
+                                    <th>Status</th>
+                                    <th>Approval Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for advance in advances %}
+                                <tr>
+                                    <td>{{ advance.advance_id }}</td>
+                                    <td>{{ advance.advance_date|date:"Y-m-d" }}</td>
+                                    <td>{{ advance.amount|intcomma }}</td>
+                                    <td>{{ advance.reason|truncatechars:30 }}</td>
+                                    <td>{{ advance.deduction_month }}/{{ advance.deduction_year }}</td>
+                                    <td>
+                                        {% if advance.status == 'Pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif advance.status == 'Approved' %}
+                                        <span class="badge bg-success">Approved</span>
+                                        {% elif advance.status == 'Rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                        {% elif advance.status == 'Repaid' %}
+                                        <span class="badge bg-info">Repaid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ advance.approval_date|date:"Y-m-d"|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">No salary advances found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Note:</strong> Salary advances are deducted from your monthly salary in the specified deduction month. 
+                        Contact HR for any questions regarding your advance requests.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

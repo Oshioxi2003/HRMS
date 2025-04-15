@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Tài Sản Của Tôi" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{% trans "Tài Sản Của Tôi" %}</h4>
+                
+                <div class="page-title-right">
+                    <a href="{% url 'request_asset' %}" class="btn btn-primary">
+                        <i class="fas fa-file-invoice me-1"></i> {% trans "Yêu Cầu Tài Sản" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Summary -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-primary-subtle flex-shrink-0">
+                            <i class="fas fa-laptop fa-2x text-primary p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ active_assignments|length }}</h5>
+                            <p class="text-muted mb-0">{% trans "Tài Sản Hiện Tại" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-success-subtle flex-shrink-0">
+                            <i class="fas fa-history fa-2x text-success p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ past_assignments|length }}</h5>
+                            <p class="text-muted mb-0">{% trans "Tài Sản Cũ" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-warning-subtle flex-shrink-0">
+                            <i class="fas fa-file-alt fa-2x text-warning p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ pending_requests|length }}</h5>
+                            <p class="text-muted mb-0">{% trans "Yêu Cầu Đang Chờ" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Assets -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Tài Sản Đang Được Giao" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if active_assignments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Mã Tài Sản" %}</th>
+                                    <th>{% trans "Tên" %}</th>
+                                    <th>{% trans "Danh Mục" %}</th>
+                                    <th>{% trans "Ngày Giao" %}</th>
+                                    <th>{% trans "Ngày Trả Dự Kiến" %}</th>
+                                    <th>{% trans "Chi Tiết" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in active_assignments %}
+                                <tr>
+                                    <td>{{ assignment.asset.asset_tag }}</td>
+                                    <td>{{ assignment.asset.asset_name }}</td>
+                                    <td>
+                                        {% if assignment.asset.category %}
+                                        <span class="badge bg-info">{{ assignment.asset.category.name }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Chưa Phân Loại" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ assignment.assignment_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if assignment.expected_return_date %}
+                                        {{ assignment.expected_return_date|date:"Y-m-d" }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assetModal{{ assignment.assignment_id }}">
+                                            <i class="fas fa-eye"></i> {% trans "Xem" %}
+                                        </button>
+                                        
+                                        <!-- Asset Details Modal -->
+                                        <div class="modal fade" id="assetModal{{ assignment.assignment_id }}" tabindex="-1" aria-labelledby="assetModalLabel{{ assignment.assignment_id }}" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="assetModalLabel{{ assignment.assignment_id }}">{% trans "Chi Tiết Tài Sản" %}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="text-center mb-4">
+                                                                    <div class="asset-icon bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                                                        {% if assignment.asset.category and assignment.asset.category.name %}
+                                                                            {% if 'laptop' in assignment.asset.category.name|lower %}
+                                                                            <i class="fas fa-laptop fa-2x text-primary"></i>
+                                                                            {% elif 'desktop' in assignment.asset.category.name|lower %}
+                                                                            <i class="fas fa-desktop fa-2x text-primary"></i>
+                                                                            {% elif 'phone' in assignment.asset.category.name|lower %}
+                                                                            <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                                                                            {% elif 'furniture' in assignment.asset.category.name|lower %}
+                                                                            <i class="fas fa-chair fa-2x text-primary"></i>
+                                                                            {% elif 'vehicle' in assignment.asset.category.name|lower %}
+                                                                            <i class="fas fa-car fa-2x text-primary"></i>
+                                                                            {% else %}
+                                                                            <i class="fas fa-box fa-2x text-primary"></i>
+                                                                            {% endif %}
+                                                                        {% else %}
+                                                                        <i class="fas fa-box fa-2x text-primary"></i>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    <h5 class="mt-3">{{ assignment.asset.asset_name }}</h5>
+                                                                    <p class="text-muted mb-0">{{ assignment.asset.asset_tag }}</p>
+                                                                </div>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-bordered">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <th width="40%">{% trans "Danh Mục" %}</th>
+                                                                                <td>{{ assignment.asset.category.name|default:"-" }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Tình Trạng" %}</th>
+                                                                                <td>{{ assignment.asset.condition }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Số Seri" %}</th>
+                                                                                <td>{{ assignment.asset.serial_number|default:"-" }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Mã Model" %}</th>
+                                                                                <td>{{ assignment.asset.model_number|default:"-" }}</td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <h5>{% trans "Chi Tiết Giao Tài Sản" %}</h5>
+                                                                <div class="table-responsive">
+                                                                    <table class="table table-bordered">
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <th width="40%">{% trans "Ngày Giao" %}</th>
+                                                                                <td>{{ assignment.assignment_date|date:"Y-m-d" }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Ngày Trả Dự Kiến" %}</th>
+                                                                                <td>{{ assignment.expected_return_date|date:"Y-m-d"|default:"-" }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Người Giao" %}</th>
+                                                                                <td>{{ assignment.assigned_by.get_full_name }}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <th>{% trans "Trạng Thái" %}</th>
+                                                                                <td><span class="badge bg-warning">{% trans "Đang Giao" %}</span></td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                {% if assignment.assignment_notes %}
+                                                                <div class="mt-3">
+                                                                    <h6>{% trans "Ghi Chú:" %}</h6>
+                                                                    <p>{{ assignment.assignment_notes|linebreaks }}</p>
+                                                                </div>
+                                                                {% endif %}
+                                                                
+                                                                {% if assignment.asset.description %}
+                                                                <div class="mt-3">
+                                                                    <h6>{% trans "Mô Tả Tài Sản:" %}</h6>
+                                                                    <p>{{ assignment.asset.description|linebreaks }}</p>
+                                                                </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Đóng" %}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-laptop fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "Bạn không có tài sản nào được giao." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Asset Requests -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Yêu Cầu Tài Sản Của Tôi" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Ngày Yêu Cầu" %}</th>
+                                    <th>{% trans "Loại Tài Sản" %}</th>
+                                    <th>{% trans "Danh Mục" %}</th>
+                                    <th>{% trans "Cần Từ Ngày" %}</th>
+                                    <th>{% trans "Trạng Thái" %}</th>
+                                    <th>{% trans "Chi Tiết" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in pending_requests %}
+                                <tr>
+                                    <td>{{ request.requested_date|date:"Y-m-d" }}</td>
+                                    <td>{{ request.asset_name }}</td>
+                                    <td>
+                                        {% if request.category %}
+                                        <span class="badge bg-info">{{ request.category.name }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Chưa Phân Loại" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.needed_from|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if request.status == 'Pending' %}
+                                        <span class="badge bg-warning">{% trans "Đang Chờ" %}</span>
+                                        {% elif request.status == 'Approved' %}
+                                        <span class="badge bg-success">{% trans "Đã Duyệt" %}</span>
+                                        {% elif request.status == 'Rejected' %}
+                                        <span class="badge bg-danger">{% trans "Từ Chối" %}</span>
+                                        {% elif request.status == 'Fulfilled' %}
+                                        <span class="badge bg-primary">{% trans "Đã Cấp" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ request.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#requestModal{{ request.request_id }}">
+                                            <i class="fas fa-eye"></i> {% trans "Xem" %}
+                                        </button>
+                                        
+                                        <!-- Request Details Modal -->
+                                        <div class="modal fade" id="requestModal{{ request.request_id }}" tabindex="-1" aria-labelledby="requestModalLabel{{ request.request_id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="requestModalLabel{{ request.request_id }}">{% trans "Chi Tiết Yêu Cầu" %}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <h5>{{ request.asset_name }}</h5>
+                                                        <p class="text-muted">
+                                                            {% if request.category %}
+                                                            <span class="badge bg-info">{{ request.category.name }}</span>
+                                                            {% endif %}
+                                                            <span class="badge bg-{{ request.status|lower }}">{{ request.status }}</span>
+                                                        </p>
+                                                        
+                                                        <div class="mt-3">
+                                                            <p><strong>{% trans "Ngày Yêu Cầu:" %}</strong> {{ request.requested_date|date:"Y-m-d" }}</p>
+                                                            <p><strong>{% trans "Cần Từ Ngày:" %}</strong> {{ request.needed_from|date:"Y-m-d" }}</p>
+                                                            {% if request.needed_until %}
+                                                            <p><strong>{% trans "Cần Đến Ngày:" %}</strong> {{ request.needed_until|date:"Y-m-d" }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                        
+                                                        <div class="mt-3">
+                                                            <h6>{% trans "Mô Tả:" %}</h6>
+                                                            <p>{{ request.description|linebreaks }}</p>
+                                                        </div>
+                                                        
+                                                        <div class="mt-3">
+                                                            <h6>{% trans "Lý Do:" %}</h6>
+                                                            <p>{{ request.reason|linebreaks }}</p>
+                                                        </div>
+                                                        
+                                                        {% if request.status == 'Approved' %}
+                                                        <div class="alert alert-success mt-3">
+                                                            <h6 class="alert-heading">{% trans "Yêu Cầu Đã Được Duyệt" %}</h6>
+                                                            <p class="mb-0">{% trans "Yêu cầu của bạn đã được duyệt. Bạn sẽ được thông báo khi tài sản sẵn sàng để nhận." %}</p>
+                                                        </div>
+                                                        {% endif %}
+                                                        
+                                                        {% if request.status == 'Rejected' %}
+                                                        <div class="alert alert-danger mt-3">
+                                                            <h6 class="alert-heading">{% trans "Yêu Cầu Bị Từ Chối" %}</h6>
+                                                            <p class="mb-0">{% trans "Lý do:" %} {{ request.rejection_reason|default:"Không có lý do được cung cấp." }}</p>
+                                                        </div>
+                                                        {% endif %}
+                                                        
+                                                        {% if request.status == 'Fulfilled' and request.fulfilled_with %}
+                                                        <div class="alert alert-primary mt-3">
+                                                            <h6 class="alert-heading">{% trans "Yêu Cầu Đã Được Cấp" %}</h6>
+                                                            <p>{% trans "Tài sản được giao:" %} {{ request.fulfilled_with.asset_name }} ({{ request.fulfilled_with.asset_tag }})</p>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Đóng" %}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "Bạn không có yêu cầu tài sản nào đang chờ xử lý." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Past Assets -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Tài Sản Cũ" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if past_assignments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Mã Tài Sản" %}</th>
+                                    <th>{% trans "Tên" %}</th>
+                                    <th>{% trans "Danh Mục" %}</th>
+                                    <th>{% trans "Ngày Giao" %}</th>
+                                    <th>{% trans "Ngày Trả" %}</th>
+                                    <th>{% trans "Tình Trạng Khi Trả" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in past_assignments %}
+                                <tr>
+                                    <td>{{ assignment.asset.asset_tag }}</td>
+                                    <td>{{ assignment.asset.asset_name }}</td>
+                                    <td>
+                                        {% if assignment.asset.category %}
+                                        <span class="badge bg-info">{{ assignment.asset.category.name }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Chưa Phân Loại" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ assignment.assignment_date|date:"Y-m-d" }}</td>
+                                    <td>{{ assignment.actual_return_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if assignment.return_condition == 'New' %}
+                                        <span class="badge bg-success">{% trans "Mới" %}</span>
+                                        {% elif assignment.return_condition == 'Good' %}
+                                        <span class="badge bg-info">{% trans "Tốt" %}</span>
+                                        {% elif assignment.return_condition == 'Fair' %}
+                                        <span class="badge bg-warning">{% trans "Trung Bình" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{% trans "Kém" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "Bạn không có tài sản cũ nào." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

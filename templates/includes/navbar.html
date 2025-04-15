@@ -1,0 +1,77 @@
+{% load i18n %}
+<!-- Thanh điều hướng trên cùng -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <i class="fas fa-users-cog"></i> HRMS
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="fas fa-home"></i> Trang chủ
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Thêm biểu mẫu tìm kiếm ở đây -->
+            <form class="d-flex ms-auto me-2" action="{% url 'global_search' %}" method="get">
+                <div class="input-group">
+                    <input class="form-control" type="search" name="q" placeholder="{% trans 'Tìm kiếm...' %}" aria-label="Tìm kiếm">
+                    <button class="btn btn-outline-light" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <ul class="navbar-nav">
+                <!-- Thông báo -->
+                <li class="nav-item dropdown position-relative">
+                    <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger notification-badge" id="notificationCount">0</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                        <h6 class="dropdown-header">Thông báo</h6>
+                        <div id="notificationsContainer">
+                            <!-- Thông báo sẽ được tải vào đây -->
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-center" href="{% url 'notification_list' %}">Xem tất cả thông báo</a>
+                    </div>
+                </li>
+                
+                <!-- Menu người dùng -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        {% if user.employee and user.employee.profile_image %}
+                        <img src="{{ user.employee.profile_image.url }}" alt="{{ user.username }}" class="avatar avatar-sm me-1">
+                        {% else %}
+                        <i class="fas fa-user-circle me-1"></i>
+                        {% endif %}
+                        {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <h6 class="dropdown-header">{{ user.get_role_display }}</h6>
+                        <a class="dropdown-item" href="{% url 'my_profile' %}">
+                            <i class="fas fa-user fa-fw"></i> Hồ sơ của tôi
+                        </a>
+                        <a class="dropdown-item" href="{% url 'change_password' %}">
+                            <i class="fas fa-lock fa-fw"></i> Đổi mật khẩu
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt fa-fw"></i> Đăng xuất
+                        </a>
+                    </div>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>

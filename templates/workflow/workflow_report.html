@@ -1,0 +1,287 @@
+<!-- templates/workflow/workflow_report.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .stats-card {
+        padding: 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .stats-card .number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #007bff;
+    }
+    
+    .stats-card .title {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-top: 10px;
+    }
+    
+    .stats-card.completed {
+        background-color: #e7f5ea;
+    }
+    
+    .stats-card.completed .number {
+        color: #28a745;
+    }
+    
+    .stats-card.cancelled {
+        background-color: #f8e7e7;
+    }
+    
+    .stats-card.cancelled .number {
+        color: #dc3545;
+    }
+    
+    .stats-card.in-progress {
+        background-color: #e7f1f8;
+    }
+    
+    .stats-card.in-progress .number {
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Workflow Reports</h5>
+    </div>
+    <div class="card-body">
+        <!-- Search Filters -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Search Filters</h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="workflow" class="form-label">Workflow</label>
+                        <select name="workflow" id="workflow" class="form-select">
+                            <option value="">All Workflows</option>
+                            {% for def in definitions %}
+                                <option value="{{ def.workflow_id }}" {% if workflow_filter == def.workflow_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ def.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="from_date" class="form-label">From Date</label>
+                        <input type="text" name="from_date" id="from_date" class="form-control datepicker" value="{{ from_date }}" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="to_date" class="form-label">To Date</label>
+                        <input type="text" name="to_date" id="to_date" class="form-control datepicker" value="{{ to_date }}" placeholder="YYYY-MM-DD">
+                    </div>
+                    <div class="col-12 text-center">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-2"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'workflow_report' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-eraser me-2"></i> Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card">
+                    <div class="number">{{ total_workflows }}</div>
+                    <div class="title">Total Workflows</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card completed">
+                    <div class="number">{{ completed_count }}</div>
+                    <div class="title">Completed</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card cancelled">
+                    <div class="number">{{ cancelled_count }}</div>
+                    <div class="title">Cancelled</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card in-progress">
+                    <div class="number">{{ in_progress_count }}</div>
+                    <div class="title">In Progress</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Completion Rate</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ completion_rate }}%;" aria-valuenow="{{ completion_rate }}" aria-valuemin="0" aria-valuemax="100">{{ completion_rate|floatformat:1 }}%</div>
+                        </div>
+                        <div class="text-center mt-2 text-muted">
+                            <small>Percentage of workflows that have been completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Average Completion Time</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        {% if avg_completion_time %}
+                            <h2 class="text-primary">{{ avg_completion_time|floatformat:1 }} days</h2>
+                            <div class="text-muted">
+                                <small>Average time from start to completion</small>
+                            </div>
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="fas fa-info-circle me-2"></i> Not enough data to calculate average
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Table -->
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Workflow Data</h6>
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary" id="exportBtn">
+                        <i class="fas fa-download me-2"></i> Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if workflows %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Workflow Type</th>
+                                    <th>Initiator</th>
+                                    <th>Status</th>
+                                    <th>Started</th>
+                                    <th>Completed</th>
+                                    <th>Duration</th>
+                                    <th>Current Step</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for workflow in workflows %}
+                                <tr>
+                                    <td>{{ workflow.instance_id }}</td>
+                                    <td>{{ workflow.workflow.name }}</td>
+                                    <td>{{ workflow.initiator.get_full_name }}</td>
+                                    <td>
+                                        {% if workflow.status == 'pending' %}
+                                            <span class="badge bg-secondary">Pending</span>
+                                        {% elif workflow.status == 'in_progress' %}
+                                            <span class="badge bg-primary">In Progress</span>
+                                        {% elif workflow.status == 'completed' %}
+                                            <span class="badge bg-success">Completed</span>
+                                        {% elif workflow.status == 'cancelled' %}
+                                            <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ workflow.started_date|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ workflow.completed_date|date:"Y-m-d H:i"|default:"-" }}</td>
+                                    <td>
+                                        {% if workflow.completed_date %}
+                                            {{ workflow.completed_date|timeuntil:workflow.started_date }}
+                                        {% elif workflow.status == 'in_progress' or workflow.status == 'pending' %}
+                                            {{ workflow.started_date|timesince }} (ongoing)
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if workflow.current_step %}
+                                            {{ workflow.current_step.step_name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'workflow_detail' instance_id=workflow.instance_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No workflows match your search criteria.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers
+    flatpickr(".datepicker", {
+        dateFormat: "Y-m-d",
+        allowInput: true
+    });
+    
+    // Export functionality
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        // Create worksheet from table
+        var table = document.querySelector('table');
+        var ws = XLSX.utils.table_to_sheet(table);
+        
+        // Create workbook and add the worksheet
+        var wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Workflow Report');
+        
+        // Generate file name
+        var today = new Date().toISOString().slice(0, 10);
+        var fileName = 'workflow_report_' + today + '.xlsx';
+        
+        // Save file
+        XLSX.writeFile(wb, fileName);
+    });
+});
+</script>
+{% endblock %}

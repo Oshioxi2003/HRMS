@@ -1,0 +1,441 @@
+<!-- templates/reports/salary_report.html -->
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Salary Report" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-box {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3f51b5;
+    }
+    
+    .summary-box h5 {
+        margin-bottom: 15px;
+        color: #3f51b5;
+    }
+    
+    .summary-value {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .summary-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .stat-tile {
+        border-radius: 5px;
+        padding: 15px;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-size: 1.5rem;
+    }
+    
+    .stat-content {
+        flex: 1;
+    }
+    
+    .stat-title {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .table-salary th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% trans "Salary Report" %}</h4>
+                <a href="{% url 'hr_reports' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> {% trans "Back to Reports" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">{% trans "Report Parameters" %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'salary_report' %}">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="{{ form.month.id_for_label }}">{{ form.month.label }}</label>
+                            {{ form.month }}
+                            {% if form.month.errors %}
+                            <div class="invalid-feedback d-block">{{ form.month.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="{{ form.year.id_for_label }}">{{ form.year.label }}</label>
+                            {{ form.year }}
+                            {% if form.year.errors %}
+                            <div class="invalid-feedback d-block">{{ form.year.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">{{ form.department.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.department.help_text }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="{{ form.report_type.id_for_label }}">{{ form.report_type.label }}</label>
+                            {{ form.report_type }}
+                            {% if form.report_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.report_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label for="{{ form.export_format.id_for_label }}">{{ form.export_format.label }}</label>
+                            {{ form.export_format }}
+                            {% if form.export_format.errors %}
+                            <div class="invalid-feedback d-block">{{ form.export_format.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-1 d-flex align-items-end">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> {% trans "Generate" %}
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="submit" name="export" class="btn btn-success">
+                            <i class="fas fa-download me-1"></i> {% trans "Export Report" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if show_results %}
+    <div class="mt-4">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">{% trans "Report Information" %}</h5>
+            <div>
+                <strong>{% trans "Period" %}:</strong> {{ month }}/{{ year }}
+                {% if department %}<strong class="ms-3">{% trans "Department" %}:</strong> {{ department.department_name }}{% endif %}
+            </div>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="row mb-4">
+            <div class="col-lg-4">
+                <div class="summary-box">
+                    <h5>{% trans "Payroll Summary" %}</h5>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <div class="summary-value">{{ summary.total_employees }}</div>
+                            <div class="summary-label">{% trans "Employees" %}</div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="summary-value">{{ summary.total_salary|floatformat:2 }}</div>
+                            <div class="summary-label">{% trans "Total Payroll" %}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="summary-value">{{ summary.avg_salary|floatformat:2 }}</div>
+                            <div class="summary-label">{% trans "Average Salary" %}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="summary-value">{{ summary.total_tax|floatformat:2 }}</div>
+                            <div class="summary-label">{% trans "Total Tax" %}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="stat-tile">
+                            <div class="stat-icon bg-primary-subtle text-primary">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-title">{% trans "Minimum Salary" %}</div>
+                                <div class="stat-value">{{ summary.min_salary|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="stat-tile">
+                            <div class="stat-icon bg-success-subtle text-success">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-title">{% trans "Maximum Salary" %}</div>
+                                <div class="stat-value">{{ summary.max_salary|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="stat-tile">
+                            <div class="stat-icon bg-info-subtle text-info">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-title">{% trans "Total Insurance" %}</div>
+                                <div class="stat-value">{{ summary.total_insurance|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="stat-tile">
+                            <div class="stat-icon bg-warning-subtle text-warning">
+                                <i class="fas fa-gift"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-title">{% trans "Total Bonus" %}</div>
+                                <div class="stat-value">{{ summary.total_bonus|floatformat:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Department Salary Distribution -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Department Salary Distribution" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="deptSalaryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Position Salary Distribution" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="positionSalaryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Salary Data Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">{% trans "Salary Details" %}</h5>
+                <span class="badge bg-primary">{{ summary.total_employees }} {% trans "Employees" %}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover table-striped table-salary mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Employee" %}</th>
+                                <th>{% trans "Department" %}</th>
+                                <th>{% trans "Position" %}</th>
+                                <th>{% trans "Base Salary" %}</th>
+                                <th>{% trans "Allowances" %}</th>
+                                <th>{% trans "Bonus" %}</th>
+                                <th>{% trans "Deductions" %}</th>
+                                <th>{% trans "Net Salary" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for salary in salaries %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if salary.employee.profile_image %}
+                                        <img src="{{ salary.employee.profile_image.url }}" class="rounded-circle me-2" width="32" height="32">
+                                        {% else %}
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        {{ salary.employee.full_name }}
+                                    </div>
+                                </td>
+                                <td>{{ salary.employee.department.department_name|default:"-" }}</td>
+                                <td>{{ salary.employee.position.position_name|default:"-" }}</td>
+                                <td>{{ salary.base_salary|floatformat:2 }}</td>
+                                <td>{{ salary.allowance|add:salary.seniority_allowance|floatformat:2 }}</td>
+                                <td>{{ salary.bonus|floatformat:2 }}</td>
+                                <td>{{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance|floatformat:2 }}</td>
+                                <td><strong>{{ salary.net_salary|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if show_results %}
+    // Department Salary Chart
+    var deptCtx = document.getElementById('deptSalaryChart').getContext('2d');
+    var deptChart = new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for dept in dept_salaries %}'{{ dept.employee__department__department_name|default:"Not Assigned"|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    label: '{% trans "Average Salary" %}',
+                    data: [{% for dept in dept_salaries %}{{ dept.avg|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(63, 81, 181, 0.7)',
+                    borderColor: 'rgba(63, 81, 181, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '{% trans "Average Salary" %}'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '{% trans "Department" %}'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Position Salary Chart
+    var posCtx = document.getElementById('positionSalaryChart').getContext('2d');
+    var posChart = new Chart(posCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for pos in position_salaries %}'{{ pos.employee__position__position_name|default:"Not Assigned"|escapejs }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    label: '{% trans "Average Salary" %}',
+                    data: [{% for pos in position_salaries %}{{ pos.avg|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(76, 175, 80, 0.7)',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '{% trans "Average Salary" %}'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '{% trans "Position" %}'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

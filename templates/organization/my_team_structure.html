@@ -1,0 +1,165 @@
+{% extends "organization/base_organization.html" %}
+
+{% block organization_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/css/jquery.orgchart.min.css">
+<style>
+    .orgchart {
+        background: #f8f9fa;
+    }
+    
+    .orgchart .node {
+        width: 180px;
+    }
+    
+    .orgchart .node .title {
+        background-color: #3f51b5;
+    }
+    
+    .orgchart .node .content {
+        border: 1px solid #3f51b5;
+    }
+    
+    .orgchart .position .title {
+        background-color: #ff9800;
+    }
+    
+    .orgchart .position .content {
+        border: 1px solid #ff9800;
+    }
+    
+    .profile-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 5px auto;
+        display: block;
+    }
+    
+    #chart-container {
+        height: 600px;
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: auto;
+        background-color: #f8f9fa;
+    }
+    
+    .zoom-buttons {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+    
+    .team-overview {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block organization_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">My Team Structure - {{ department.department_name }}</h1>
+    
+    <div>
+        <a href="{% url 'my_team' %}" class="btn btn-outline-primary">
+            <i class="fas fa-users"></i> Team Members
+        </a>
+    </div>
+</div>
+
+<!-- Team Overview -->
+<div class="team-overview mb-4">
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Team Overview</h5>
+            <p>Department: <strong>{{ department.department_name }}</strong></p>
+            <p>Manager: <strong>{{ manager.full_name }}</strong></p>
+            <p>Position: <strong>{{ manager.position.position_name|default:"Manager" }}</strong></p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <p>Team Size: <strong>{{ department.employee_set.count }}</strong></p>
+            <p>Department Code: <strong>{{ department.department_code }}</strong></p>
+            <a href="{% url 'org_department_detail' department_id=department.department_id %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-info-circle"></i> Department Details
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Organization Chart -->
+<div id="chart-container"></div>
+
+<!-- Zoom Controls -->
+<div class="zoom-buttons">
+    <button id="zoom-in" class="btn btn-primary btn-sm"><i class="fas fa-search-plus"></i></button>
+    <button id="zoom-out" class="btn btn-primary btn-sm"><i class="fas fa-search-minus"></i></button>
+    <button id="reset-zoom" class="btn btn-secondary btn-sm"><i class="fas fa-sync"></i></button>
+</div>
+{% endblock %}
+
+{% block organization_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/js/jquery.orgchart.min.js"></script>
+<script>
+$(function() {
+    // Team structure data
+    const teamData = {{ team_data|safe }};
+    
+    // Create org chart
+    const $chartContainer = $('#chart-container');
+    let zoomLevel = 1;
+    
+    const oc = $('#chart-container').orgchart({
+        data: teamData[0],
+        direction: 'l2r',
+        nodeContent: 'title',
+        nodeID: 'id',
+        createNode: function($node, data) {
+            // Add profile image if available
+            if (data.img) {
+                const $nodeContent = $node.find('.content');
+                $nodeContent.before('<img class="profile-image" src="' + data.img + '" alt="' + data.name + '">');
+            }
+            
+            // Add custom class if specified
+            if (data.className) {
+                $node.addClass(data.className);
+            }
+            
+            // Add click event to navigate to employee detail
+            $node.on('click', function() {
+                const id = data.id;
+                if (id.startsWith('emp-')) {
+                    const empId = id.replace('emp-', '');
+                    window.location.href = '/employee/detail/' + empId + '/';
+                }
+            });
+        },
+        'exportButton': true,
+        'exportFilename': 'My Team Structure'
+    });
+    
+    // Zoom functionality
+    $('#zoom-in').on('click', function() {
+        zoomLevel += 0.1;
+        $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+    });
+    
+    $('#zoom-out').on('click', function() {
+        if (zoomLevel > 0.2) {
+            zoomLevel -= 0.1;
+            $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+        }
+    });
+    
+    $('#reset-zoom').on('click', function() {
+        zoomLevel = 1;
+        $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+    });
+});
+</script>
+{% endblock %}

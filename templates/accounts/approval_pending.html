@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Tài Khoản Đang Chờ Phê Duyệt" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-user-clock text-warning fa-5x"></i>
+                    </div>
+                    <h3 class="card-title">{% trans "Tài Khoản Của Bạn Đang Chờ Phê Duyệt" %}</h3>
+                    <p class="card-text mb-4">
+                        {% trans "Cảm ơn bạn đã đăng ký! Hồ sơ của bạn hiện đang được quản trị viên xem xét." %}
+                    </p>
+                    <p class="card-text mb-4">
+                        {% trans "Bạn sẽ nhận được email khi tài khoản được phê duyệt. Sau khi được phê duyệt, bạn sẽ có quyền truy cập đầy đủ vào hệ thống." %}
+                    </p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với phòng Nhân sự." %}
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'logout' %}" class="btn btn-primary">
+                            <i class="fas fa-sign-out-alt me-2"></i>{% trans "Đăng Xuất" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

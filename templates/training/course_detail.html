@@ -1,0 +1,151 @@
+<!-- templates/training/course_detail.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block card_title %}
+    <i class="fas fa-chalkboard-teacher"></i> {{ course.course_name }}
+{% endblock %}
+
+{% block training_content %}
+<div class="row">
+    <div class="col-md-8">
+        <h5 class="border-bottom pb-2 mb-3">Course Information</h5>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <p><strong>Course Name:</strong> {{ course.course_name }}</p>
+                <p><strong>Status:</strong> 
+                    {% if course.status == 'Preparing' %}
+                    <span class="badge bg-warning">Preparing</span>
+                    {% elif course.status == 'In Progress' %}
+                    <span class="badge bg-primary">In Progress</span>
+                    {% elif course.status == 'Completed' %}
+                    <span class="badge bg-success">Completed</span>
+                    {% elif course.status == 'Cancelled' %}
+                    <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </p>
+                <p><strong>Start Date:</strong> {{ course.start_date|default:"Not set" }}</p>
+                <p><strong>End Date:</strong> {{ course.end_date|default:"Not set" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Location:</strong> {{ course.location|default:"Not specified" }}</p>
+                <p><strong>Organizer:</strong> {{ course.organizer|default:"Not specified" }}</p>
+                <p><strong>Supervisor:</strong> {{ course.supervisor|default:"Not specified" }}</p>
+                <p><strong>Cost:</strong> ${{ course.cost }}</p>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6><strong>Description</strong></h6>
+            <p>{{ course.description|default:"No description provided"|linebreaks }}</p>
+        </div>
+        
+        {% if can_manage %}
+        <div class="btn-group mb-4">
+            <a href="{% url 'course_update' pk=course.course_id %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Course
+            </a>
+            <a href="{% url 'course_participants' course_id=course.course_id %}" class="btn btn-success">
+                <i class="fas fa-users"></i> Manage Participants
+            </a>
+            <a href="{% url 'add_participants' course_id=course.course_id %}" class="btn btn-info">
+                <i class="fas fa-user-plus"></i> Add Participants
+            </a>
+        </div>
+        {% endif %}
+        
+        {% if can_register %}
+        <div class="mb-4">
+            <a href="{% url 'register_for_course' course_id=course.course_id %}" class="btn btn-primary">
+                <i class="fas fa-check-circle"></i> Register for this Course
+            </a>
+        </div>
+        {% endif %}
+        
+        {% if user_is_registered %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> You are registered for this course.
+            <p class="mt-2 mb-0"><strong>Status:</strong> {{ user_participation.status }}</p>
+            {% if user_participation.status == 'Registered' %}
+            <div class="mt-2">
+                <a href="{% url 'cancel_registration' participation_id=user_participation.participation_id %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-times-circle"></i> Cancel Registration
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <h5 class="border-bottom pb-2 mb-3">Participation Statistics</h5>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h6 class="card-title">Participants</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="h3">{{ stats.total_participants }}</span>
+                    <i class="fas fa-users fa-2x text-primary"></i>
+                </div>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Registered</span>
+                    <span class="badge bg-warning">{{ stats.registered }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Participating</span>
+                    <span class="badge bg-primary">{{ stats.participating }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Completed</span>
+                    <span class="badge bg-success">{{ stats.completed }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Cancelled</span>
+                    <span class="badge bg-danger">{{ stats.cancelled }}</span>
+                </div>
+            </div>
+        </div>
+        
+        {% if stats.completed > 0 %}
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Average Score</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="h3">{{ stats.avg_score|floatformat:1 }}</span>
+                    <i class="fas fa-chart-line fa-2x text-success"></i>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if participants %}
+        <h5 class="border-bottom pb-2 mt-4 mb-3">Recent Participants</h5>
+        <div class="list-group">
+            {% for participant in participants|slice:":5" %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div>{{ participant.employee.full_name }}</div>
+                        <small class="text-muted">{{ participant.employee.department.department_name|default:"No Department" }}</small>
+                    </div>
+                    <span class="badge {% if participant.status == 'Completed' %}bg-success{% elif participant.status == 'Participating' %}bg-primary{% elif participant.status == 'Registered' %}bg-warning{% else %}bg-danger{% endif %}">
+                        {{ participant.status }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if participants.count > 5 %}
+        <div class="text-center mt-2">
+            <a href="{% url 'course_participants' course_id=course.course_id %}" class="btn btn-sm btn-outline-primary">
+                View All Participants
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

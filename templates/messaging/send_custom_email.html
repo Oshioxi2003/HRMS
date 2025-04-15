@@ -1,0 +1,77 @@
+{% extends "messaging/base_messaging.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block messaging_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Send Custom Email</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> This will send an email without using a template. Use this for one-off emails.
+        </div>
+        
+        <form method="post" id="customEmailForm">
+            {% csrf_token %}
+            
+            {{ form.to_email|as_crispy_field }}
+            {{ form.subject|as_crispy_field }}
+            
+            <h5>Email Content</h5>
+            
+            <ul class="nav nav-tabs mb-3" id="contentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html" type="button" role="tab" aria-controls="html" aria-selected="true">
+                        HTML Content
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text" type="button" role="tab" aria-controls="text" aria-selected="false">
+                        Plain Text
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="contentTabsContent">
+                <div class="tab-pane fade show active" id="html" role="tabpanel" aria-labelledby="html-tab">
+                    {{ form.html_message|as_crispy_field }}
+                </div>
+                <div class="tab-pane fade" id="text" role="tabpanel" aria-labelledby="text-tab">
+                    {{ form.message|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Send Email</button>
+                <a href="{% url 'email_template_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize HTML editor
+        $('.html-editor').summernote({
+            height: 300,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['fontname', ['fontname']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture', 'hr']],
+                ['view', ['fullscreen', 'codeview']]
+            ]
+        });
+    });
+</script>
+{% endblock %}

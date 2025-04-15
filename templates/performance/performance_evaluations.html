@@ -1,0 +1,255 @@
+<!-- templates/performance/performance_evaluations.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Performance Evaluations{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Performance Evaluations</h4>
+                <div>
+                    <a href="{% url 'export_performance' %}{% if employee_filter %}?employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if month_filter %}&month={{ month_filter }}{% endif %}" class="btn btn-secondary">
+                        <i class="fas fa-file-export"></i> Export
+                    </a>
+                    <a href="{% url 'performance_report' %}" class="btn btn-primary ms-2">
+                        <i class="fas fa-chart-pie"></i> Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-2">
+                        <div class="col-md-3">
+                            <select name="department" class="form-select form-select-sm">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ dept.department_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="employee" class="form-select form-select-sm">
+                                <option value="">All Employees</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.employee_id }}" {% if employee_filter == emp.employee_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ emp.full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="year" class="form-select form-select-sm">
+                                {% for year in available_years %}
+                                <option value="{{ year }}" {% if year == year_filter %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="month" class="form-select form-select-sm">
+                                <option value="">All Months</option>
+                                {% for i in "123456789101112"|make_list %}
+                                {% with month_num=i|add:"0" %}
+                                <option value="{{ month_num }}" {% if month_filter == month_num %}selected{% endif %}>
+                                    {{ month_num|get_month_name }}
+                                </option>
+                                {% endwith %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex">
+                                <button type="submit" class="btn btn-sm btn-primary me-2">Filter</button>
+                                {% if employee_filter or department_filter or month_filter or year_filter != date.today.year %}
+                                <a href="{% url 'performance_evaluations' %}" class="btn btn-sm btn-secondary">Clear</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>KPI</th>
+                                    <th>Period</th>
+                                    <th>Target</th>
+                                    <th>Result</th>
+                                    <th>Achievement</th>
+                                    <th>Evaluated By</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for eval in page_obj %}
+                                <tr>
+                                    <td>{{ eval.evaluation_id }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if eval.employee.profile_image %}
+                                            <img src="{{ eval.employee.profile_image.url }}" alt="{{ eval.employee.full_name }}" class="avatar avatar-sm rounded-circle me-2">
+                                            {% else %}
+                                            <div class="avatar avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </div>
+                                            {% endif %}
+                                            <a href="{% url 'employee_evaluations' employee_id=eval.employee.employee_id %}">{{ eval.employee.full_name }}</a>
+                                        </div>
+                                    </td>
+                                    <td>{{ eval.employee.department.department_name|default:"-" }}</td>
+                                    <td>
+                                        {{ eval.kpi.kpi_name }}
+                                        <span class="badge bg-light text-dark">{{ eval.kpi.get_kpi_type_display }}</span>
+                                    </td>
+                                    <td>{{ eval.get_month_display }} {{ eval.year }}</td>
+                                    <td>{{ eval.target }}{% if eval.kpi.unit %} {{ eval.kpi.unit }}{% endif %}</td>
+                                    <td>{{ eval.result }}{% if eval.kpi.unit %} {{ eval.kpi.unit }}{% endif %}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2 
+                                                {% if eval.achievement_rate >= 100 %}text-success
+                                                {% elif eval.achievement_rate >= 80 %}text-info
+                                                {% elif eval.achievement_rate >= 50 %}text-warning
+                                                {% else %}text-danger{% endif %}">
+                                                {{ eval.achievement_rate|floatformat:1 }}%
+                                            </span>
+                                            <div class="progress flex-grow-1" style="height: 5px; width: 60px;">
+                                                <div class="progress-bar 
+                                                    {% if eval.achievement_rate >= 100 %}bg-success
+                                                    {% elif eval.achievement_rate >= 80 %}bg-info
+                                                    {% elif eval.achievement_rate >= 50 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    role="progressbar" style="width: {{ eval.achievement_rate }}%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if eval.evaluated_by %}
+                                        {{ eval.evaluated_by.full_name }}
+                                        {% else %}
+                                        System
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ eval.evaluation_date }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'evaluation_detail' pk=eval.evaluation_id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if user.role == 'HR' or user.role == 'Admin' %}
+                                            <a href="{% url 'evaluation_update' pk=eval.evaluation_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav>
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if month_filter %}&month={{ month_filter }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for i in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if month_filter %}&month={{ month_filter }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}{% if month_filter %}&month={{ month_filter }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center my-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5>No Evaluations Found</h5>
+                        <p class="text-muted">
+                            {% if employee_filter or department_filter or month_filter or year_filter != date.today.year %}
+                            No evaluations match the selected filters. <a href="{% url 'performance_evaluations' %}">Clear filters</a>
+                            {% else %}
+                            No performance evaluations have been recorded yet.
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+$(document).ready(function() {
+    // Enhance employee dropdown with search
+    $('select[name="employee"]').select2({
+        placeholder: 'Select an employee',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,352 @@
+<!-- templates/performance/performance_report.html -->
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Performance Reports{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .summary-card {
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    
+    .summary-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .stat-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .cycle-form-card {
+        border-left: 4px solid #3f51b5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="mb-0">Performance Reports & Analysis</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card summary-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Department Performance Summary ({{ current_year }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Employees</th>
+                                    <th>Evaluated</th>
+                                    <th>Missing</th>
+                                    <th>Evaluations</th>
+                                    <th>Avg. Achievement</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in department_stats %}
+                                <tr>
+                                    <td>{{ dept.department.department_name }}</td>
+                                    <td>{{ dept.total_employees }}</td>
+                                    <td>{{ dept.evaluated_employees }}</td>
+                                    <td>
+                                        {% if dept.missing_evaluations > 0 %}
+                                        <span class="text-danger">{{ dept.missing_evaluations }}</span>
+                                        {% else %}
+                                        <span class="text-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ dept.total_evaluations }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2 
+                                                {% if dept.avg_achievement >= 100 %}text-success
+                                                {% elif dept.avg_achievement >= 80 %}text-info
+                                                {% elif dept.avg_achievement >= 50 %}text-warning
+                                                {% else %}text-danger{% endif %}">
+                                                {{ dept.avg_achievement|floatformat:1 }}%
+                                            </span>
+                                            <div class="progress flex-grow-1" style="height: 5px; width: 60px;">
+                                                <div class="progress-bar 
+                                                    {% if dept.avg_achievement >= 100 %}bg-success
+                                                    {% elif dept.avg_achievement >= 80 %}bg-info
+                                                    {% elif dept.avg_achievement >= 50 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                    role="progressbar" style="width: {{ dept.avg_achievement }}%;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'department_performance' department_id=dept.department.department_id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-chart-pie"></i> Dashboard
+                                            </a>
+                                            <a href="{% url 'export_performance' %}?department={{ dept.department.department_id }}&year={{ current_year }}" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-download"></i> Export
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number text-primary">{{ department_stats|length }}</div>
+                        <div class="stat-label">Departments</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number text-success">
+                            {{ department_stats|sum_attr:"total_employees" }}
+                        </div>
+                        <div class="stat-label">Total Employees</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-box">
+                        <div class="stat-number text-info">
+                            {{ department_stats|sum_attr:"total_evaluations" }}
+                        </div>
+                        <div class="stat-label">Total Evaluations</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceTrendsChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card cycle-form-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Initiate Performance Review Cycle</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-play-circle me-1"></i> Start Review Cycle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Performance Reports</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'export_performance' %}?format=excel" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">All Evaluations Excel Export</h6>
+                                <small><i class="fas fa-file-excel"></i></small>
+                            </div>
+                            <p class="mb-1 small">Download all evaluations in Excel format</p>
+                        </a>
+                        <a href="{% url 'export_performance' %}?format=csv" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">All Evaluations CSV Export</h6>
+                                <small><i class="fas fa-file-csv"></i></small>
+                            </div>
+                            <p class="mb-1 small">Download all evaluations in CSV format</p>
+                        </a>
+                        <a href="{% url 'performance_evaluations' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">All Evaluations</h6>
+                                <small><i class="fas fa-list"></i></small>
+                            </div>
+                            <p class="mb-1 small">View all evaluations with filtering options</p>
+                        </a>
+                        <a href="{% url 'rewards_disciplinary_list' %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Rewards & Disciplinary Report</h6>
+                                <small><i class="fas fa-award"></i></small>
+                            </div>
+                            <p class="mb-1 small">View rewards and disciplinary records</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Links</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'kpi_list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-chart-line me-1"></i> Manage KPIs
+                        </a>
+                        <a href="{% url 'employee_list' %}" class="btn btn-outline-info">
+                            <i class="fas fa-users me-1"></i> Employee List
+                        </a>
+                        <a href="{% url 'department_list' %}" class="btn btn-outline-success">
+                            <i class="fas fa-sitemap me-1"></i> Department Structure
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Enhance department dropdown with search
+    $('#id_department').select2({
+        placeholder: 'Select a department',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    // Performance trends chart
+    var ctx = document.getElementById('performanceTrendsChart').getContext('2d');
+    var performanceTrendsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for dept in department_stats %}
+                "{{ dept.department.department_name }}",
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'Average Achievement Rate (%)',
+                data: [
+                    {% for dept in department_stats %}
+                    {{ dept.avg_achievement|floatformat:1 }},
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(63, 81, 181, 0.2)',
+                borderColor: 'rgba(63, 81, 181, 1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Evaluations per Employee',
+                data: [
+                    {% for dept in department_stats %}
+                    {% if dept.total_employees > 0 %}
+                    {{ dept.total_evaluations|divided_by:dept.total_employees|floatformat:1 }},
+                    {% else %}
+                    0,
+                    {% endif %}
+                    {% endfor %}
+                ],
+                borderColor: 'rgba(76, 175, 80, 1)',
+                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                if (context.datasetIndex === 0) {
+                                    label += context.parsed.y + '%';
+                                } else {
+                                    label += context.parsed.y;
+                                }
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Evaluations per Employee'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

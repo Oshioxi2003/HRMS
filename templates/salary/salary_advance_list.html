@@ -1,0 +1,175 @@
+<!-- templates/salary/salary_advance_list.html -->
+{% extends "salary/base_salary.html" %}
+{% load humanize %}
+
+{% block salary_title %}Salary Advances{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Salary Advances</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Pending Advances</h5>
+                        <h2>{{ total_pending|intcomma }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Approved Advances</h5>
+                        <h2>{{ total_approved|intcomma }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <form method="get" class="d-flex">
+                    <div class="input-group">
+                        <input type="text" name="q" class="form-control" placeholder="Search employee..." value="{{ search_query }}">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-8">
+                <div class="d-flex justify-content-end">
+                    <div class="me-2">
+                        <form method="get" class="d-flex">
+                            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                            {% if department_filter %}<input type="hidden" name="department" value="{{ department_filter }}">{% endif %}
+                            {% if month_filter %}<input type="hidden" name="month" value="{{ month_filter }}">{% endif %}
+                            {% if year_filter %}<input type="hidden" name="year" value="{{ year_filter }}">{% endif %}
+                            
+                            <select name="status" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+                                <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                <option value="Repaid" {% if status_filter == 'Repaid' %}selected{% endif %}>Repaid</option>
+                            </select>
+                        </form>
+                    </div>
+                    <div class="me-2">
+                        <form method="get" class="d-flex">
+                            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                            {% if month_filter %}<input type="hidden" name="month" value="{{ month_filter }}">{% endif %}
+                            {% if year_filter %}<input type="hidden" name="year" value="{{ year_filter }}">{% endif %}
+                            
+                            <select name="department" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Departments</option>
+                                {% for dept_id, dept_name in departments %}
+                                <option value="{{ dept_id }}" {% if department_filter == dept_id|stringformat:"s" %}selected{% endif %}>
+                                    {{ dept_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    <div class="me-2">
+                        <form method="get" class="d-flex">
+                            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                            {% if department_filter %}<input type="hidden" name="department" value="{{ department_filter }}">{% endif %}
+                            {% if year_filter %}<input type="hidden" name="year" value="{{ year_filter }}">{% endif %}
+                            
+                            <select name="month" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Months</option>
+                                {% for i in "123456789101112"|make_list %}
+                                <option value="{{ i }}" {% if month_filter == i %}selected{% endif %}>
+                                    {{ i|add:"0"|slice:"0:2"|get_month_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    <div>
+                        <form method="get" class="d-flex">
+                            {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                            {% if department_filter %}<input type="hidden" name="department" value="{{ department_filter }}">{% endif %}
+                            {% if month_filter %}<input type="hidden" name="month" value="{{ month_filter }}">{% endif %}
+                            
+                            <select name="year" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Years</option>
+                                {% for year in "2020,2021,2022,2023,2024,2025"|split:"," %}
+                                <option value="{{ year }}" {% if year_filter == year %}selected{% endif %}>
+                                    {{ year }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Amount</th>
+                        <th>Request Date</th>
+                        <th>Deduction Month/Year</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for advance in advances %}
+                    <tr>
+                        <td>{{ advance.advance_id }}</td>
+                        <td>{{ advance.employee.full_name }}</td>
+                        <td>{{ advance.employee.department.department_name|default:"-" }}</td>
+                        <td>{{ advance.amount|intcomma }}</td>
+                        <td>{{ advance.advance_date|date:"Y-m-d" }}</td>
+                        <td>{{ advance.deduction_month }}/{{ advance.deduction_year }}</td>
+                        <td>
+                            {% if advance.status == 'Pending' %}
+                            <span class="badge bg-warning">Pending</span>
+                            {% elif advance.status == 'Approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% elif advance.status == 'Rejected' %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% elif advance.status == 'Repaid' %}
+                            <span class="badge bg-info">Repaid</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if advance.status == 'Pending' %}
+                            <div class="btn-group">
+                                <a href="{% url 'approve_salary_advance' pk=advance.advance_id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i> Approve
+                                </a>
+                                <a href="{% url 'reject_salary_advance' pk=advance.advance_id %}" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-times"></i> Reject
+                                </a>
+                            </div>
+                            {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>No Action</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No salary advances found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

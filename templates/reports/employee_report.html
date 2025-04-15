@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Employee Report" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .report-summary {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .report-summary h5 {
+        color: #3f51b5;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .summary-item {
+        margin-bottom: 10px;
+    }
+    
+    .summary-label {
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .summary-value {
+        font-weight: 600;
+        float: right;
+    }
+    
+    .filter-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 5px 10px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% trans "Employee Report" %}</h4>
+                <a href="{% url 'hr_reports' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> {% trans "Back to Reports" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">{% trans "Report Parameters" %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'employee_report' %}">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">{{ form.department.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.department.help_text }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.position.id_for_label }}">{{ form.position.label }}</label>
+                            {{ form.position }}
+                            {% if form.position.errors %}
+                            <div class="invalid-feedback d-block">{{ form.position.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.position.help_text }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.report_type.id_for_label }}">{{ form.report_type.label }}</label>
+                            {{ form.report_type }}
+                            {% if form.report_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.report_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.export_format.id_for_label }}">{{ form.export_format.label }}</label>
+                            {{ form.export_format }}
+                            {% if form.export_format.errors %}
+                            <div class="invalid-feedback d-block">{{ form.export_format.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-group d-flex">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i> {% trans "Generate Report" %}
+                            </button>
+                            <button type="submit" name="export" class="btn btn-success">
+                                <i class="fas fa-download me-1"></i> {% trans "Export" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if show_results %}
+    <div class="mt-4">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">{% trans "Report Filters" %}</h5>
+            <div>
+                <span class="filter-badge">{% trans "Period" %}: {{ start_date|date:"Y-m-d" }} - {{ end_date|date:"Y-m-d" }}</span>
+                {% if department %}<span class="filter-badge">{% trans "Department" %}: {{ department.department_name }}</span>{% endif %}
+                {% if position %}<span class="filter-badge">{% trans "Position" %}: {{ position.position_name }}</span>{% endif %}
+                {% if status %}<span class="filter-badge">{% trans "Status" %}: {{ status }}</span>{% endif %}
+                <span class="filter-badge">{% trans "Report Type" %}: {{ report_type|title }}</span>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Left Column - Summary Statistics -->
+            <div class="col-md-4">
+                <div class="report-summary">
+                    <h5>{% trans "Summary" %}</h5>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">{% trans "Total Employees" %}</span>
+                        <span class="summary-value">{{ employee_count }}</span>
+                        <div class="clearfix"></div>
+                    </div>
+                    
+                    {% if report_type == 'turnover' %}
+                    <div class="summary-item">
+                        <span class="summary-label">{% trans "New Hires" %}</span>
+                        <span class="summary-value">{{ new_hires }}</span>
+                        <div class="clearfix"></div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">{% trans "Separations" %}</span>
+                        <span class="summary-value">{{ separations }}</span>
+                        <div class="clearfix"></div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">{% trans "Average Headcount" %}</span>
+                        <span class="summary-value">{{ avg_headcount }}</span>
+                        <div class="clearfix"></div>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span class="summary-label">{% trans "Turnover Rate" %}</span>
+                        <span class="summary-value">{{ turnover_rate }}%</span>
+                        <div class="clearfix"></div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if report_type == 'summary' %}
+                    <!-- Gender Distribution -->
+                    <h6 class="mt-4">{% trans "Gender Distribution" %}</h6>
+                    <div class="mb-3">
+                        <canvas id="genderChart" height="200"></canvas>
+                    </div>
+                    
+                    <!-- Department Distribution -->
+                    <h6 class="mt-4">{% trans "Department Distribution" %}</h6>
+                    <div class="mb-3">
+                        <canvas id="departmentChart" height="200"></canvas>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Right Column - Employee List -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">{% trans "Employee List" %}</h5>
+                        <span class="badge bg-primary">{{ employee_count }} {% trans "employees" %}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "ID" %}</th>
+                                        <th>{% trans "Name" %}</th>
+                                        <th>{% trans "Department" %}</th>
+                                        <th>{% trans "Position" %}</th>
+                                        <th>{% trans "Hire Date" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.employee_id }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if employee.profile_image %}
+                                                <img src="{{ employee.profile_image.url }}" class="rounded-circle me-2" width="32" height="32">
+                                                {% else %}
+                                                <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-user text-secondary"></i>
+                                                </div>
+                                                {% endif %}
+                                                {{ employee.full_name }}
+                                            </div>
+                                        </td>
+                                        <td>{{ employee.department.department_name|default:"-" }}</td>
+                                        <td>{{ employee.position.position_name|default:"-" }}</td>
+                                        <td>{{ employee.hire_date|date:"Y-m-d"|default:"-" }}</td>
+                                        <td>
+                                            {% if employee.status == 'Working' %}
+                                            <span class="badge bg-success">{{ employee.status }}</span>
+                                            {% elif employee.status == 'Resigned' %}
+                                            <span class="badge bg-danger">{{ employee.status }}</span>
+                                            {% else %}
+                                            <span class="badge bg-warning">{{ employee.status }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3">{% trans "No employees found matching your criteria." %}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize datepickers
+        $('.datepicker').flatpickr({
+            dateFormat: 'Y-m-d',
+            allowInput: true
+        });
+        
+        {% if show_results and report_type == 'summary' %}
+        // Gender Chart
+        var genderData = {
+            labels: [{% for stat in gender_stats %}'{{ stat.gender|default:"Not Specified" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Gender Distribution',
+                data: [{% for stat in gender_stats %}{{ stat.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(document.getElementById('genderChart'), {
+            type: 'doughnut',
+            data: genderData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Department Chart
+        var deptData = {
+            labels: [{% for stat in dept_stats %}'{{ stat.department__department_name|default:"Not Assigned" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Employees',
+                data: [{% for stat in dept_stats %}{{ stat.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(63, 81, 181, 0.8)',
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(document.getElementById('departmentChart'), {
+            type: 'bar',
+            data: deptData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

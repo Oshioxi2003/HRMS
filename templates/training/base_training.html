@@ -1,0 +1,52 @@
+<!-- templates/training/base_training.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-graduation-cap"></i> Training Navigation
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                    <a href="{% url 'training_admin' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'training_admin' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt fa-fw mr-2"></i> Training Dashboard
+                    </a>
+                    <a href="{% url 'course_list' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'course_list' %}active{% endif %}">
+                        <i class="fas fa-list fa-fw mr-2"></i> All Courses
+                    </a>
+                    <a href="{% url 'course_create' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'course_create' %}active{% endif %}">
+                        <i class="fas fa-plus fa-fw mr-2"></i> Create Course
+                    </a>
+                    <a href="{% url 'training_report' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'training_report' %}active{% endif %}">
+                        <i class="fas fa-chart-bar fa-fw mr-2"></i> Training Reports
+                    </a>
+                    <a href="{% url 'export_training' %}?type=courses" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'export_training' %}active{% endif %}">
+                        <i class="fas fa-file-export fa-fw mr-2"></i> Export Data
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'my_training' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'my_training' %}active{% endif %}">
+                        <i class="fas fa-user-graduate fa-fw mr-2"></i> My Training
+                    </a>
+                </div>
+            </div>
+            
+            {% block sidebar_extra %}{% endblock %}
+        </div>
+        
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% block card_title %}Training Management{% endblock %}</h5>
+                </div>
+                <div class="card-body">
+                    {% block training_content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

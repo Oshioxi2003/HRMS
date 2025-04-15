@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% trans "Documents for" %} {{ employee.full_name }}</h4>
+                <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> {% trans "Back to Employee" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>{% trans "Employee Documents" %}</h5>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="fas fa-upload"></i> {% trans "Upload Document" %}
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Document Type" %}</th>
+                                    <th>{% trans "File Name" %}</th>
+                                    <th>{% trans "Size" %}</th>
+                                    <th>{% trans "Uploaded Date" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in documents %}
+                                <tr>
+                                    <td>{{ document.get_document_type_display }}</td>
+                                    <td>{{ document.file_name }}</td>
+                                    <td>
+                                        {% if document.file_size < 1024 %}
+                                            {{ document.file_size }} KB
+                                        {% else %}
+                                            {{ document.file_size|filesizeformat }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ document.uploaded_date|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ document.description|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'view_document' document_id=document.document_id %}" class="btn btn-sm btn-info" target="_blank">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'view_document' document_id=document.document_id %}?download=1" class="btn btn-sm btn-success">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteDocumentModal{{ document.document_id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        
+                                        <!-- Delete Confirmation Modal -->
+                                        <div class="modal fade" id="deleteDocumentModal{{ document.document_id }}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">{% trans "Confirm Delete" %}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>{% trans "Are you sure you want to delete this document?" %}</p>
+                                                        <p><strong>{% trans "Type" %}:</strong> {{ document.get_document_type_display }}</p>
+                                                        <p><strong>{% trans "File" %}:</strong> {{ document.file_name }}</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                                                        <form method="post" action="{% url 'delete_document' document_id=document.document_id %}">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                        <p class="lead">{% trans "No documents found for this employee." %}</p>
+                        <p>{% trans "Use the Upload Document button to add documents." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "Upload Document" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'upload_document' employee_id=employee.employee_id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">{% trans "Document Type" %}</label>
+                        <select name="document_type" id="document_type" class="form-select" required>
+                            <option value="" selected disabled>{% trans "Select document type" %}</option>
+                            {% for type_value, type_label in document_types %}
+                            <option value="{{ type_value }}">{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="document_file" class="form-label">{% trans "Document File" %}</label>
+                        <input type="file" name="document_file" id="document_file" class="form-control" required>
+                        <small class="form-text text-muted">{% trans "Accepted file types: PDF, DOC, DOCX, JPG, PNG. Max size: 10MB" %}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">{% trans "Description" %} ({% trans "optional" %})</label>
+                        <textarea name="description" id="description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Upload" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add file size validation
+    document.getElementById('document_file').addEventListener('change', function() {
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (this.files[0].size > maxSize) {
+            alert('File size exceeds 10MB limit');
+            this.value = ''; // Clear the input
+        }
+    });
+</script>
+{% endblock %}

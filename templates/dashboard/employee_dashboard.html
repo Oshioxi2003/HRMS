@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bảng Điều Khiển Nhân Viên - HRMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .stat-card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-title {
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+    }
+    
+    .number {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .icon {
+        font-size: 32px;
+        opacity: 0.8;
+    }
+    
+    .action-card {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-icon {
+        font-size: 36px;
+        margin-bottom: 15px;
+        color: #4e73df;
+    }
+    
+    .calendar-item {
+        border-left: 4px solid #4e73df;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    .calendar-item.upcoming {
+        border-left-color: #36b9cc;
+    }
+    
+    .calendar-item.overdue {
+        border-left-color: #e74a3b;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .progress {
+        height: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .checklist-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .checklist-item:last-child {
+        border-bottom: none;
+    }
+    
+    .announcement-card {
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 0 5px 5px 0;
+    }
+    
+    .announcement-date {
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    .clock-container {
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #f8f9fc;
+        margin-bottom: 20px;
+    }
+    
+    .current-time {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #4e73df;
+    }
+    
+    .current-date {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+    
+    .attendance-btn {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="page-title">Xin chào, {{ user.first_name|default:user.username }}!</h4>
+                <div class="clock-container">
+                    <div class="current-time" id="current-time">--:--:--</div>
+                    <div class="current-date" id="current-date">-- --- ----</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Điểm danh thời gian nhanh -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Điểm danh hôm nay</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="mb-2">Giờ vào</div>
+                                <div class="h4">{{ attendance.time_in|default:"--:--" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="mb-2">Giờ ra</div>
+                                <div class="h4">{{ attendance.time_out|default:"--:--" }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="mb-2">Trạng thái</div>
+                                <div class="h4">
+                                    {% if attendance %}
+                                        <span class="badge bg-success">Đã điểm danh</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Chưa điểm danh</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="text-center">
+                                <div class="mb-2">Tổng giờ làm</div>
+                                <div class="h4">{{ attendance.total_hours|default:"0" }} giờ</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6 mb-2">
+                            {% if not attendance.time_in %}
+                                <button class="btn btn-success attendance-btn" id="check-in-btn">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Điểm danh vào
+                                </button>
+                            {% else %}
+                                <button class="btn btn-success attendance-btn" disabled>
+                                    <i class="fas fa-check me-2"></i>Đã điểm danh vào
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            {% if attendance.time_in and not attendance.time_out %}
+                                <button class="btn btn-danger attendance-btn" id="check-out-btn">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Điểm danh ra
+                                </button>
+                            {% elif not attendance.time_in %}
+                                <button class="btn btn-danger attendance-btn" disabled>
+                                    <i class="fas fa-sign-out-alt me-2"></i>Điểm danh ra
+                                </button>
+                            {% else %}
+                                <button class="btn btn-danger attendance-btn" disabled>
+                                    <i class="fas fa-check me-2"></i>Đã điểm danh ra
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Nghỉ phép còn lại</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Nghỉ phép thường niên</span>
+                            <span>{{ leave_balances.annual|default:"0" }}/{{ leave_balances.annual_total|default:"12" }} ngày</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ leave_balances.annual_percent|default:'0' }}%" aria-valuenow="{{ leave_balances.annual_percent|default:'0' }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Nghỉ ốm</span>
+                            <span>{{ leave_balances.sick|default:"0" }}/{{ leave_balances.sick_total|default:"7" }} ngày</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ leave_balances.sick_percent|default:'0' }}%" aria-valuenow="{{ leave_balances.sick_percent|default:'0' }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Nghỉ không lương</span>
+                            <span>{{ leave_balances.unpaid|default:"0" }} ngày đã sử dụng</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'leave_request_create' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus me-2"></i>Yêu cầu nghỉ phép
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Thao tác nhanh -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Thao tác nhanh</h5>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-4">
+            <a href="{% url 'my_profile' %}" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h6>Hồ sơ cá nhân</h6>
+                    <p class="small text-muted mb-0">Xem và cập nhật thông tin</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-4">
+            <a href="{% url 'my_attendance' %}" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h6>Lịch sử chấm công</h6>
+                    <p class="small text-muted mb-0">Xem thống kê chuyên cần</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-4">
+            <a href="{% url 'my_leave_requests' %}" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-umbrella-beach"></i>
+                    </div>
+                    <h6>Yêu cầu nghỉ phép</h6>
+                    <p class="small text-muted mb-0">Quản lý đơn xin nghỉ</p>
+                </div>
+            </a>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-4">
+            <a href="#" class="text-decoration-none">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <i class="fas fa-money-check-alt"></i>
+                    </div>
+                    <h6>Phiếu lương</h6>
+                    <p class="small text-muted mb-0">Xem lương và phúc lợi</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Thông tin lịch và nhiệm vụ -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Lịch sắp tới</h5>
+                    <a href="" class="btn btn-sm btn-primary">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_events %}
+                        {% for event in upcoming_events %}
+                        <div class="calendar-item {% if event.is_today %}upcoming{% endif %}">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1">{{ event.title }}</h6>
+                                <span class="badge {% if event.is_today %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ event.date|date:"d/m/Y" }}
+                                </span>
+                            </div>
+                            <p class="small mb-0">{{ event.description|truncatechars:50 }}</p>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="far fa-calendar fa-3x text-muted mb-3"></i>
+                            <p>Không có sự kiện sắp tới</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Công việc của tôi</h5>
+                    <a href="{% url 'my_tasks' %}" class="btn btn-sm btn-primary">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    {% if tasks %}
+                        {% for task in tasks %}
+                        <div class="checklist-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% if task.status == 'completed' %}
+                                        <i class="fas fa-check-circle text-success fa-lg"></i>
+                                    {% else %}
+                                        <i class="far fa-circle text-muted fa-lg"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ task.title }}</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">Hạn: {{ task.due_date|date:"d/m/Y" }}</small>
+                                        <span class="badge {% if task.priority == 'high' %}bg-danger{% elif task.priority == 'medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                            {{ task.get_priority_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                            <p>Không có công việc nào</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Thống kê -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Thống kê chuyên cần của tôi (tháng này)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tóm tắt hiệu suất</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Tỷ lệ đúng giờ</span>
+                            <span>{{ performance.punctuality_rate|default:"0" }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ performance.punctuality_rate|default:'0' }}%" aria-valuenow="{{ performance.punctuality_rate|default:'0' }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Hoàn thành công việc</span>
+                            <span>{{ performance.task_completion_rate|default:"0" }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ performance.task_completion_rate|default:'0' }}%" aria-valuenow="{{ performance.task_completion_rate|default:'0' }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Hiệu suất tổng thể</span>
+                            <span>{{ performance.overall_performance|default:"0" }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ performance.overall_performance|default:'0' }}%" aria-valuenow="{{ performance.overall_performance|default:'0' }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Thông báo & Sinh nhật -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Thông báo công ty</h5>
+                    <a href="" class="btn btn-sm btn-primary">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    {% if announcements %}
+                        {% for announcement in announcements %}
+                        <div class="announcement-card">
+                            <h6>{{ announcement.title }}</h6>
+                            <p>{{ announcement.content|truncatechars:150 }}</p>
+                            <div class="d-flex justify-content-between">
+                                <span class="announcement-date">{{ announcement.created_at|date:"d/m/Y H:i" }}</span>
+                                <a href="" class="btn btn-sm btn-link">Đọc thêm</a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                            <p>Không có thông báo nào</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Sinh nhật tháng này</h5>
+                </div>
+                <div class="card-body">
+                    {% if birthdays %}
+                        <div class="list-group">
+                            {% for birthday in birthdays %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if birthday.profile_image %}
+                                            <img src="{{ birthday.profile_image.url }}" class="rounded-circle" width="40" height="40" alt="{{ birthday.name }}">
+                                        {% else %}
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ birthday.name }}</h6>
+                                        <small class="text-muted">{{ birthday.birthday|date:"d/m" }}{% if birthday.is_today %} <span class="badge bg-danger">Hôm nay</span>{% endif %}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-birthday-cake fa-3x text-muted mb-3"></i>
+                            <p>Không có sinh nhật nào trong tháng này</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cập nhật đồng hồ thời gian thực
+    function updateClock() {
+        const now = new Date();
+        const timeDisplay = document.getElementById('current-time');
+        const dateDisplay = document.getElementById('current-date');
+        
+        // Format time
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        
+        // Format date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateDisplay.textContent = now.toLocaleDateString('vi-VN', options);
+    }
+    
+    // Cập nhật đồng hồ mỗi giây
+    updateClock();
+    setInterval(updateClock, 1000);
+    
+    // Xử lý điểm danh vào
+    const checkInBtn = document.getElementById('check-in-btn');
+    if (checkInBtn) {
+        checkInBtn.addEventListener('click', function() {
+            // Gửi yêu cầu AJAX để điểm danh vào
+            fetch('/api/attendance/check-in/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload trang để cập nhật trạng thái
+                    location.reload();
+                } else {
+                    alert('Điểm danh không thành công: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Đã xảy ra lỗi khi điểm danh');
+            });
+        });
+    }
+    
+    // Xử lý điểm danh ra
+    const checkOutBtn = document.getElementById('check-out-btn');
+    if (checkOutBtn) {
+        checkOutBtn.addEventListener('click', function() {
+            // Gửi yêu cầu AJAX để điểm danh ra
+            fetch('/api/attendance/check-out/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload trang để cập nhật trạng thái
+                    location.reload();
+                } else {
+                    alert('Điểm danh ra không thành công: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Đã xảy ra lỗi khi điểm danh ra');
+            });
+        });
+    }
+    
+    // Hàm lấy CSRF token từ cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Biểu đồ chấm công
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ attendance_dates_json|default:"[]"|safe }},
+            datasets: [
+                {
+                    label: 'Số giờ làm việc',
+                    data: {{ attendance_hours_json|default:"[]"|safe }},
+                    backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Đi muộn (phút)',
+                    data: {{ attendance_late_minutes_json|default:"[]"|safe }},
+                    backgroundColor: 'rgba(255, 152, 0, 0.8)',
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

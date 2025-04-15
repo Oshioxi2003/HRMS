@@ -1,0 +1,64 @@
+<!-- templates/tasks/category_list.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block task_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Task Categories</h5>
+        <div>
+            <a href="{% url 'task_category_create' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Add Category
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Color</th>
+                        <th>Description</th>
+                        <th>Tasks</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ category.color }}">
+                                {{ category.color }}
+                            </span>
+                        </td>
+                        <td>{{ category.description|truncatechars:50 }}</td>
+                        <td>{{ category.task_count }}</td>
+                        <td>
+                            {% if category.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'task_category_edit' category_id=category.category_id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'task_category_delete' category_id=category.category_id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No categories found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

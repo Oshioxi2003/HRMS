@@ -1,0 +1,203 @@
+<!-- templates/search/search_base.html -->
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .search-container {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .search-header {
+        margin-bottom: 20px;
+    }
+    
+    .search-tabs {
+        margin-bottom: 20px;
+    }
+    
+    .search-filters {
+        padding: 15px;
+        background-color: white;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #eee;
+    }
+    
+    .search-results {
+        min-height: 200px;
+    }
+    
+    .result-count {
+        margin-bottom: 15px;
+        font-weight: 500;
+    }
+    
+    .result-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        background-color: white;
+        border-left: 3px solid #3f51b5;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .result-item:hover {
+        box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .result-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+    
+    .result-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .result-actions {
+        text-align: right;
+    }
+    
+    .filter-chip {
+        display: inline-block;
+        padding: 3px 10px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+        background-color: #e9ecef;
+        border-radius: 15px;
+        font-size: 0.85rem;
+    }
+    
+    .filter-chip .close {
+        margin-left: 5px;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% block search_title %}{% trans "Search" %}{% endblock %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Search container -->
+                    <div class="search-container">
+                        <!-- Search header -->
+                        <div class="search-header">
+                            {% block search_header %}
+                            <form method="get" action="{% block search_form_action %}{% url 'search' %}{% endblock %}">
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-lg" name="q" value="{{ query }}" 
+                                            placeholder="{% trans 'Search...' %}" required>
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i> {% trans "Search" %}
+                                    </button>
+                                </div>
+                            </form>
+                            {% endblock %}
+                        </div>
+                        
+                        <!-- Search tabs -->
+                        <div class="search-tabs">
+                            {% block search_tabs %}
+                            <ul class="nav nav-tabs">
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'global_search' %}active{% endif %}" 
+                                        href="{% url 'global_search' %}?q={{ query }}">
+                                        <i class="fas fa-globe"></i> {% trans "Global" %}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'employee_search' %}active{% endif %}" 
+                                        href="{% url 'employee_search' %}?q={{ query }}">
+                                        <i class="fas fa-user-tie"></i> {% trans "Employees" %}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'document_search' %}active{% endif %}" 
+                                        href="{% url 'document_search' %}?q={{ query }}">
+                                        <i class="fas fa-file-alt"></i> {% trans "Documents" %}
+                                    </a>
+                                </li>
+                                {% if user.role in 'HR,Admin' %}
+                                <li class="nav-item">
+                                    <a class="nav-link {% if request.resolver_match.url_name == 'advanced_search' %}active{% endif %}" 
+                                        href="{% url 'advanced_search' %}?q={{ query }}">
+                                        <i class="fas fa-search-plus"></i> {% trans "Advanced" %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                            {% endblock %}
+                        </div>
+                        
+                        <!-- Search filters -->
+                        {% block search_filters %}{% endblock %}
+                        
+                        <!-- Applied filters -->
+                        {% block applied_filters %}{% endblock %}
+                        
+                        <!-- Search results -->
+                        <div class="search-results">
+                            {% block search_results %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr(".datepicker", {
+            dateFormat: "Y-m-d",
+            allowInput: true
+        });
+        
+        // Handle filter closers
+        document.querySelectorAll('.filter-chip .close').forEach(function(el) {
+            el.addEventListener('click', function() {
+                const paramName = this.getAttribute('data-param');
+                // Remove parameter and submit form
+                const form = document.getElementById('search-filters-form');
+                const input = form.querySelector(`input[name="${paramName}"], select[name="${paramName}"]`);
+                if (input) {
+                    if (input.tagName === 'SELECT') {
+                        input.value = '';
+                    } else {
+                        input.value = '';
+                    }
+                }
+                form.submit();
+            });
+        });
+    });
+</script>
+{% block page_script %}{% endblock %}
+{% endblock %}

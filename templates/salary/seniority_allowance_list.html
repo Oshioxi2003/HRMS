@@ -1,0 +1,83 @@
+<!-- templates/salary/seniority_allowance_list.html -->
+{% extends "salary/base_salary.html" %}
+
+{% block salary_title %}Seniority Allowances{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Seniority Allowances</h5>
+        <a href="{% url 'seniority_allowance_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Allowance
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4 offset-md-8">
+                <form method="get" class="d-flex">
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Status</option>
+                        <option value="1" {% if status_filter == '1' %}selected{% endif %}>Active</option>
+                        <option value="0" {% if status_filter == '0' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Years of Service</th>
+                        <th>Allowance Percentage</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for allowance in allowances %}
+                    <tr>
+                        <td>{{ allowance.allowance_id }}</td>
+                        <td>{{ allowance.years_of_service }} years</td>
+                        <td>{{ allowance.allowance_percentage }}%</td>
+                        <td>{{ allowance.description|truncatechars:50 }}</td>
+                        <td>
+                            {% if allowance.status == 1 %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'seniority_allowance_update' pk=allowance.allowance_id %}">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'seniority_allowance_delete' pk=allowance.allowance_id %}">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No seniority allowances found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

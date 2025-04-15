@@ -1,0 +1,190 @@
+/* static/css/workflow.css */
+/* Timeline styling for workflow progress */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 20px;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 30px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    left: -30px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.timeline-content {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #dee2e6;
+}
+
+/* Status specific styles */
+.timeline-item.approved .timeline-marker {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.timeline-item.approved .timeline-content {
+    border-left-color: #28a745;
+}
+
+.timeline-item.rejected .timeline-marker {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.timeline-item.rejected .timeline-content {
+    border-left-color: #dc3545;
+}
+
+.timeline-item.active .timeline-marker {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.timeline-item.active .timeline-content {
+    border-left-color: #007bff;
+}
+
+.timeline-item.skipped .timeline-marker {
+    background-color: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.timeline-item.skipped .timeline-content {
+    border-left-color: #6c757d;
+}
+
+/* Step reordering */
+.step-item {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    cursor: move;
+}
+
+.step-item:hover {
+    background-color: #e9ecef;
+}
+
+.step-item .step-order {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.step-handle {
+    float: right;
+    color: #6c757d;
+}
+
+.placeholder {
+    border: 1px dashed #007bff;
+    background-color: #e7f3ff;
+    height: 60px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+/* Workflow cards */
+.workflow-card {
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+}
+
+.workflow-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.workflow-card .card-header {
+    font-weight: 600;
+}
+
+/* Stats cards */
+.stats-card {
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stats-card .number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #007bff;
+}
+
+.stats-card .title {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+.stats-card.completed {
+    background-color: #e7f5ea;
+}
+
+.stats-card.completed .number {
+    color: #28a745;
+}
+
+.stats-card.cancelled {
+    background-color: #f8e7e7;
+}
+
+.stats-card.cancelled .number {
+    color: #dc3545;
+}
+
+.stats-card.in-progress {
+    background-color: #e7f1f8;
+}
+
+.stats-card.in-progress .number {
+    color: #007bff;
+}

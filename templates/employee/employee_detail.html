@@ -1,0 +1,718 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ employee.full_name }} - Employee Detail{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Employee Details</h4>
+                <div>
+                    <a href="{% url 'employee_list' %}" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                    <a href="{% url 'employee_update' pk=employee.employee_id %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'employee_documents' employee_id=employee.employee_id %}" class="btn btn-primary">
+                        <i class="fas fa-file-alt"></i> {% trans "View Documents" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Employee Profile Card -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if employee.profile_image %}
+                    <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px; font-size: 60px;">
+                        {{ employee.full_name|first }}
+                    </div>
+                    {% endif %}
+                    
+                    <h4 class="mt-3">{{ employee.full_name }}</h4>
+                    
+                    {% if employee.position %}
+                    <p class="text-muted">{{ employee.position.position_name }}</p>
+                    {% endif %}
+                    
+                    <div class="mt-3 d-flex justify-content-center">
+                        {% if employee.email %}
+                        <a href="mailto:{{ employee.email }}" class="btn btn-sm btn-outline-primary me-2">
+                            <i class="fas fa-envelope"></i> Email
+                        </a>
+                        {% endif %}
+                        
+                        {% if employee.phone %}
+                        <a href="tel:{{ employee.phone }}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-phone"></i> Call
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-start">
+                        <p>
+                            <i class="fas fa-id-card text-primary me-2"></i> 
+                            <strong>Employee ID:</strong> {{ employee.employee_id }}
+                        </p>
+                        
+                        {% if employee.department %}
+                        <p>
+                            <i class="fas fa-building text-primary me-2"></i>
+                            <strong>Department:</strong> {{ employee.department.department_name }}
+                        </p>
+                        {% endif %}
+                        
+                        {% if employee.hire_date %}
+                        <p>
+                            <i class="fas fa-calendar-check text-primary me-2"></i>
+                            <strong>Hire Date:</strong> {{ employee.hire_date|date:"F d, Y" }}
+                        </p>
+                        {% endif %}
+                        
+                        <p>
+                            <i class="fas fa-circle text-{{ employee.status|lower }} me-2"></i>
+                            <strong>Status:</strong> {{ employee.status }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        {% if employee.email %}
+                        <li class="mb-2">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <strong>Email:</strong>
+                            <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if employee.phone %}
+                        <li class="mb-2">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <strong>Phone:</strong>
+                            <a href="tel:{{ employee.phone }}">{{ employee.phone }}</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% if employee.address %}
+                        <li class="mb-2">
+                            <i class="fas fa-home text-primary me-2"></i>
+                            <strong>Address:</strong>
+                            <p class="mb-0 ms-4">{{ employee.address }}</p>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Additional Actions Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'employee_location' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-map-marker-alt"></i> Address Details
+                        </a>
+                        <a href="{% url 'insurance_tax_detail' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-shield-alt"></i> Insurance & Tax
+                        </a>
+                        <a href="{% url 'employee_certificates' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-certificate"></i> Certificates
+                        </a>
+                        <a href="{% url 'employee_contracts' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-file-contract"></i> Contracts
+                        </a>
+                        <a href="{% url 'employee_leave_history' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-calendar"></i> Leave History
+                        </a>
+                        <a href="{% url 'employee_attendance_history' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-clock"></i> Attendance History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee Details Tabs -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">
+                                Personal Info
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="employment-tab" data-bs-toggle="tab" data-bs-target="#employment" type="button" role="tab" aria-controls="employment" aria-selected="false">
+                                Employment
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="education-tab" data-bs-toggle="tab" data-bs-target="#education" type="button" role="tab" aria-controls="education" aria-selected="false">
+                                Education
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+                                Documents
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+                                History
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content pt-4" id="employeeTabsContent">
+                        <!-- Personal Information Tab -->
+                        <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                            <h5 class="mb-4">Personal Information</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Full Name</p>
+                                    <p class="font-weight-bold">{{ employee.full_name }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Date of Birth</p>
+                                    <p class="font-weight-bold">
+                                        {% if employee.date_of_birth %}
+                                            {{ employee.date_of_birth|date:"F d, Y" }}
+                                            ({{ employee.date_of_birth|timesince|split:" years"|first }} years)
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Gender</p>
+                                    <p class="font-weight-bold">{{ employee.gender|default:"--" }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">ID Card</p>
+                                    <p class="font-weight-bold">{{ employee.id_card|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">ID Card Issue Date</p>
+                                    <p class="font-weight-bold">
+                                        {% if employee.id_card_issue_date %}
+                                            {{ employee.id_card_issue_date|date:"F d, Y" }}
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">ID Card Issue Place</p>
+                                    <p class="font-weight-bold">{{ employee.id_card_issue_place|default:"--" }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if employee_location %}
+                            <hr>
+                            <h5 class="mb-4">Address Information</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Current Address</h6>
+                                    <address>
+                                        {{ employee_location.current_address }}<br>
+                                        {% if employee_location.current_ward %}{{ employee_location.current_ward }},{% endif %}
+                                        {% if employee_location.current_district %}{{ employee_location.current_district }},{% endif %}
+                                        {% if employee_location.current_province %}{{ employee_location.current_province }}{% endif %}
+                                    </address>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Permanent Address</h6>
+                                    <address>
+                                        {{ employee_location.permanent_address }}<br>
+                                        {% if employee_location.permanent_ward %}{{ employee_location.permanent_ward }},{% endif %}
+                                        {% if employee_location.permanent_district %}{{ employee_location.permanent_district }},{% endif %}
+                                        {% if employee_location.permanent_province %}{{ employee_location.permanent_province }}{% endif %}
+                                    </address>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted">Hometown</h6>
+                                    <address>
+                                        {{ employee_location.hometown_address }}<br>
+                                        {% if employee_location.hometown_ward %}{{ employee_location.hometown_ward }},{% endif %}
+                                        {% if employee_location.hometown_district %}{{ employee_location.hometown_district }},{% endif %}
+                                        {% if employee_location.hometown_province %}{{ employee_location.hometown_province }}{% endif %}
+                                    </address>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Employment Tab -->
+                        <div class="tab-pane fade" id="employment" role="tabpanel" aria-labelledby="employment-tab">
+                            <h5 class="mb-4">Employment Information</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Department</p>
+                                    <p class="font-weight-bold">{{ employee.department.department_name|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Position</p>
+                                    <p class="font-weight-bold">{{ employee.position.position_name|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Title</p>
+                                    <p class="font-weight-bold">{{ employee.title.title_name|default:"--" }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Hire Date</p>
+                                    <p class="font-weight-bold">
+                                        {% if employee.hire_date %}
+                                            {{ employee.hire_date|date:"F d, Y" }}
+                                            ({{ employee.hire_date|timesince }} ago)
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Status</p>
+                                    <p class="font-weight-bold">
+                                        <span class="badge 
+                                            {% if employee.status == 'Working' %}bg-success
+                                            {% elif employee.status == 'Resigned' %}bg-danger
+                                            {% else %}bg-warning{% endif %}">
+                                            {{ employee.status }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            {% if current_contract %}
+                            <h5 class="mb-4">Current Contract</h5>
+                            
+                            <div class="card border">
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">Contract Type</p>
+                                            <p class="font-weight-bold">{{ current_contract.contract_type }}</p>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">Start Date</p>
+                                            <p class="font-weight-bold">{{ current_contract.start_date|date:"F d, Y" }}</p>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">End Date</p>
+                                            <p class="font-weight-bold">
+                                                {% if current_contract.end_date %}
+                                                    {{ current_contract.end_date|date:"F d, Y" }}
+                                                {% else %}
+                                                    Indefinite
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">Base Salary</p>
+                                            <p class="font-weight-bold">${{ current_contract.base_salary|floatformat:2 }}</p>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">Allowance</p>
+                                            <p class="font-weight-bold">${{ current_contract.allowance|floatformat:2 }}</p>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <p class="text-muted mb-1">Status</p>
+                                            <p class="font-weight-bold">
+                                                <span class="badge
+                                                    {% if current_contract.status == 'Active' %}bg-success
+                                                    {% elif current_contract.status == 'Expired' %}bg-warning
+                                                    {% else %}bg-danger{% endif %}">
+                                                    {{ current_contract.status }}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-end">
+                                        <a href="{% url 'contract_detail' pk=current_contract.contract_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> View Contract
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> No active contract found for this employee.
+                                <a href="{% url 'contract_create' %}?employee_id={{ employee.employee_id }}" class="alert-link">Create Contract</a>
+                            </div>
+                            {% endif %}
+                            
+                            {% if insurance_tax %}
+                            <hr>
+                            <h5 class="mb-4">Insurance & Tax Information</h5>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Social Insurance Number</p>
+                                    <p class="font-weight-bold">{{ insurance_tax.social_insurance_number|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Health Insurance Number</p>
+                                    <p class="font-weight-bold">{{ insurance_tax.health_insurance_number|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <p class="text-muted mb-1">Tax Code</p>
+                                    <p class="font-weight-bold">{{ insurance_tax.tax_code|default:"--" }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="text-end">
+                                <a href="{% url 'insurance_tax_detail' employee_id=employee.employee_id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Education Tab -->
+                        <div class="tab-pane fade" id="education" role="tabpanel" aria-labelledby="education-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5>Education & Qualifications</h5>
+                                <a href="{% url 'add_employee_certificate' employee_id=employee.employee_id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus"></i> Add Certificate
+                                </a>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="text-muted mb-1">Education Level</p>
+                                    <p class="font-weight-bold">{{ employee.education.education_name|default:"--" }}</p>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <p class="text-muted mb-1">Academic Title</p>
+                                    <p class="font-weight-bold">{{ employee.title.title_name|default:"--" }}</p>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <h5 class="mb-4">Certificates</h5>
+                            
+                            {% if certificates %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Certificate</th>
+                                                <th>Type</th>
+                                                <th>Issued By</th>
+                                                <th>Date</th>
+                                                <th>Expiry</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for cert in certificates %}
+                                            <tr>
+                                                <td>{{ cert.certificate_name }}</td>
+                                                <td>{{ cert.type.type_name }}</td>
+                                                <td>{{ cert.issued_by|default:"--" }}</td>
+                                                <td>{{ cert.issued_date|date:"M d, Y"|default:"--" }}</td>
+                                                <td>{{ cert.expiry_date|date:"M d, Y"|default:"Never" }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if cert.status == 'Valid' %}bg-success
+                                                        {% elif cert.status == 'Expired' %}bg-danger
+                                                        {% else %}bg-warning{% endif %}">
+                                                        {{ cert.status }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        {% if cert.attachment_file %}
+                                                        <a href="{{ cert.attachment_file.url }}" class="btn btn-sm btn-info" target="_blank">
+                                                            <i class="fas fa-file-download"></i>
+                                                        </a>
+                                                        {% endif %}
+                                                        <a href="{% url 'edit_certificate' certificate_id=cert.certificate_id %}" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No certificates have been added for this employee.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Documents Tab -->
+                        <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h5>Employee Documents</h5>
+                                <a href="{% url 'upload_document' %}?employee_id={{ employee.employee_id }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-upload"></i> Upload Document
+                                </a>
+                            </div>
+                            
+                            {% if documents %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Document</th>
+                                                <th>Category</th>
+                                                <th>Uploaded</th>
+                                                <th>Size</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for doc in documents %}
+                                            <tr>
+                                                <td>
+                                                    <i class="{{ doc.get_file_icon }} me-2"></i>
+                                                    {{ doc.title }}
+                                                </td>
+                                                <td>{{ doc.category.category_name|default:"--" }}</td>
+                                                <td>{{ doc.created_date|date:"M d, Y" }}</td>
+                                                <td>
+                                                    {% if doc.file_size < 1024 %}
+                                                        {{ doc.file_size }} KB
+                                                    {% else %}
+                                                        {{ doc.file_size|divide:1024|floatformat:2 }} MB
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <a href="{% url 'document_detail' document_id=doc.document_id %}" class="btn btn-sm btn-info">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="{% url 'document_download' document_id=doc.document_id %}" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-download"></i>
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No documents have been uploaded for this employee.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- History Tab -->
+                        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                            <ul class="nav nav-pills mb-4" id="historyTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="contracts-tab" data-bs-toggle="pill" data-bs-target="#contracts" type="button" role="tab" aria-controls="contracts" aria-selected="true">
+                                        Contracts
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="leaves-tab" data-bs-toggle="pill" data-bs-target="#leaves" type="button" role="tab" aria-controls="leaves" aria-selected="false">
+                                        Leave History
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="positions-tab" data-bs-toggle="pill" data-bs-target="#positions" type="button" role="tab" aria-controls="positions" aria-selected="false">
+                                        Position Changes
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <div class="tab-content" id="historyTabsContent">
+                                <!-- Contracts History -->
+                                <div class="tab-pane fade show active" id="contracts" role="tabpanel" aria-labelledby="contracts-tab">
+                                    {% if contract_history %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Contract Type</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Base Salary</th>
+                                                        <th>Status</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for contract in contract_history %}
+                                                    <tr>
+                                                        <td>{{ contract.contract_type }}</td>
+                                                        <td>{{ contract.start_date|date:"M d, Y" }}</td>
+                                                        <td>{{ contract.end_date|date:"M d, Y"|default:"Indefinite" }}</td>
+                                                        <td>${{ contract.base_salary|floatformat:2 }}</td>
+                                                        <td>
+                                                            <span class="badge
+                                                                {% if contract.status == 'Active' %}bg-success
+                                                                {% elif contract.status == 'Expired' %}bg-warning
+                                                                {% else %}bg-danger{% endif %}">
+                                                                {{ contract.status }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-sm btn-primary">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> No contract history found for this employee.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Leave History -->
+                                <div class="tab-pane fade" id="leaves" role="tabpanel" aria-labelledby="leaves-tab">
+                                    {% if leave_history %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Leave Type</th>
+                                                        <th>From</th>
+                                                        <th>To</th>
+                                                        <th>Days</th>
+                                                        <th>Reason</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for leave in leave_history %}
+                                                    <tr>
+                                                        <td>{{ leave.leave_type }}</td>
+                                                        <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                                                        <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                                                        <td>{{ leave.leave_days }}</td>
+                                                        <td>{{ leave.reason|truncatechars:30 }}</td>
+                                                        <td>
+                                                            <span class="badge
+                                                                {% if leave.status == 'Approved' %}bg-success
+                                                                {% elif leave.status == 'Rejected' %}bg-danger
+                                                                {% elif leave.status == 'Cancelled' %}bg-secondary
+                                                                {% else %}bg-warning{% endif %}">
+                                                                {{ leave.status }}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> No leave history found for this employee.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Position Changes -->
+                                <div class="tab-pane fade" id="positions" role="tabpanel" aria-labelledby="positions-tab">
+                                    {% if position_history %}
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Position</th>
+                                                        <th>Department</th>
+                                                        <th>From</th>
+                                                        <th>To</th>
+                                                        <th>Duration</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for position in position_history %}
+                                                    <tr>
+                                                        <td>{{ position.position.position_name }}</td>
+                                                        <td>{{ position.department.department_name }}</td>
+                                                        <td>{{ position.start_date|date:"M d, Y" }}</td>
+                                                        <td>{{ position.end_date|date:"M d, Y"|default:"Present" }}</td>
+                                                        <td>
+                                                            {% if position.end_date %}
+                                                                {{ position.start_date|timesince:position.end_date }}
+                                                            {% else %}
+                                                                {{ position.start_date|timesince }} (ongoing)
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> No position change history found for this employee.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Attendance Dashboard" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+        height: 100%;
+    }
+    
+    .stat-card .card-body {
+        padding: 20px;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .stat-card .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+    
+    .stat-card .icon {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+    
+    .progress-card {
+        background-color: white;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .progress-title {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+    
+    .progress-title .department {
+        font-weight: 600;
+    }
+    
+    .progress-title .rate {
+        font-weight: 700;
+    }
+    
+    .progress {
+        height: 8px;
+        margin-bottom: 5px;
+    }
+    
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% trans "Attendance Dashboard" %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" id="filterForm">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="departmentFilter">{% trans "Department" %}</label>
+                                    <select class="form-select" id="departmentFilter" name="department" onchange="this.form.submit()">
+                                        <option value="">{% trans "All Departments" %}</option>
+                                        {% for dept in departments %}
+                                            <option value="{{ dept.department_id }}" {% if department_id == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                                                {{ dept.department_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label>{% trans "Month & Year" %}</label>
+                                    <div class="input-group">
+                                        <select class="form-select" name="month" onchange="this.form.submit()">
+                                            {% for i in "123456789101112"|make_list %}
+                                                {% with month_num=forloop.counter %}
+                                                    <option value="{{ month_num }}" {% if month == month_num %}selected{% endif %}>
+                                                        {{ month_num|month_name }}
+                                                    </option>
+                                                {% endwith %}
+                                            {% endfor %}
+                                        </select>
+                                        <select class="form-select" name="year" onchange="this.form.submit()">
+                                            {% for y in year_range %}
+                                                <option value="{{ y }}" {% if year == y %}selected{% endif %}>{{ y }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="d-block">&nbsp;</label>
+                                <a href="{% url 'attendance_dashboard' %}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-sync"></i> {% trans "Reset" %}
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Stats -->
+    <div class="row">
+        <div class="col-12">
+            <h5 class="mb-3">{% trans "Today's Attendance" %}</h5>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value text-success">{{ today_stats.present }}</div>
+                            <div class="stat-label">{% trans "Present" %}</div>
+                        </div>
+                        <div class="icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value text-danger">{{ today_stats.absent }}</div>
+                            <div class="stat-label">{% trans "Absent" %}</div>
+                        </div>
+                        <div class="icon text-danger">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value text-warning">{{ today_stats.leave }}</div>
+                            <div class="stat-label">{% trans "On Leave" %}</div>
+                        </div>
+                        <div class="icon text-warning">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="stat-value text-info">
+                                {% if today_stats.total > 0 %}
+                                    {{ today_stats.present|div:today_stats.total|mul:100|floatformat:1 }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </div>
+                            <div class="stat-label">{% trans "Attendance Rate" %}</div>
+                        </div>
+                        <div class="icon text-info">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Attendance Trend -->
+    <div class="row mt-4">
+        <div class="col-12 {% if dept_data %}col-lg-8{% endif %}">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Daily Attendance Trend" %} - {{ month_name }} {{ year }}</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailyTrendChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        {% if dept_data %}
+        <div class="col-12 col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Department Attendance Rate" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% for dept in dept_data %}
+                        <div class="progress-card">
+                            <div class="progress-title">
+                                <span class="department">{{ dept.department.department_name }}</span>
+                                <span class="rate">{{ dept.attendance_rate }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ dept.attendance_rate }}%" aria-valuenow="{{ dept.attendance_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <div class="progress-info">
+                                <span>{% trans "Employees" %}: {{ dept.total_employees }}</span>
+                                <span>{% trans "Present Count" %}: {{ dept.present_count }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Links -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'attendance_report' %}" class="btn btn-primary w-100 mb-2">
+                                <i class="fas fa-file-alt me-2"></i> {% trans "Attendance Reports" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'manage_attendance' %}" class="btn btn-success w-100 mb-2">
+                                <i class="fas fa-plus me-2"></i> {% trans "Add Attendance" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'bulk_upload_attendance' %}" class="btn btn-info w-100 mb-2">
+                                <i class="fas fa-upload me-2"></i> {% trans "Bulk Upload" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'work_shift_list' %}" class="btn btn-secondary w-100 mb-2">
+                                <i class="fas fa-clock me-2"></i> {% trans "Manage Shifts" %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Daily trend chart
+        const dailyTrendChartCtx = document.getElementById('dailyTrendChart').getContext('2d');
+        
+        new Chart(dailyTrendChartCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for item in daily_trend %}"{{ item.date }}",{% endfor %}],
+                datasets: [
+                    {
+                        label: '{% trans "Present" %}',
+                        data: [{% for item in daily_trend %}{{ item.present }},{% endfor %}],
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '{% trans "Absent" %}',
+                        data: [{% for item in daily_trend %}{{ item.absent }},{% endfor %}],
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '{% trans "On Leave" %}',
+                        data: [{% for item in daily_trend %}{{ item.leave }},{% endfor %}],
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

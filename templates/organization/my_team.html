@@ -1,0 +1,180 @@
+{% extends "organization/base_organization.html" %}
+
+{% block organization_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">My Team - {{ department.department_name }}</h1>
+    
+    <div>
+        <a href="{% url 'my_team_structure' %}" class="btn btn-outline-primary">
+            <i class="fas fa-sitemap"></i> Team Structure
+        </a>
+    </div>
+</div>
+
+<!-- Team Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value">{{ total_members }}</div>
+                    <div class="stat-title">Team Members</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-success text-white">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value">{{ position_counts|length }}</div>
+                    <div class="stat-title">Positions</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-info text-white">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value">{{ recent_hires|length }}</div>
+                    <div class="stat-title">Recent Hires</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-warning text-white">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="stat-value">{{ manager.full_name }}</div>
+                    <div class="stat-title">Manager</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" placeholder="Search by name, email or phone..." value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <select class="form-select" name="position" onchange="this.form.submit()">
+                    <option value="">All Positions</option>
+                    {% for position in positions %}
+                    <option value="{{ position.position_id }}" {% if position_filter == position.position_id|stringformat:"i" %}selected{% endif %}>
+                        {{ position.position_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <a href="{% url 'my_team' %}" class="btn btn-outline-secondary w-100">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Team Members -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Team Members ({{ team_members.count }})</h5>
+    </div>
+    <div class="card-body">
+        {% if team_members %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Hire Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in team_members %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if member.profile_image %}
+                                <img src="{{ member.profile_image.url }}" alt="{{ member.full_name }}" class="employee-avatar me-2">
+                                {% else %}
+                                <div class="employee-avatar d-flex align-items-center justify-content-center bg-secondary text-white me-2">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ member.full_name }}</h6>
+                                    <span class="text-muted small">ID: {{ member.employee_id }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ member.position.position_name|default:"--" }}</td>
+                        <td>{{ member.email|default:"--" }}</td>
+                        <td>{{ member.phone|default:"--" }}</td>
+                        <td>{{ member.hire_date|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'employee_detail' pk=member.employee_id %}">
+                                        <i class="fas fa-eye fa-fw me-1"></i> View Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{% url 'create_task' %}?employee_id={{ member.employee_id }}">
+                                        <i class="fas fa-tasks fa-fw me-1"></i> Assign Task
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-chart-line fa-fw me-1"></i> Performance
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#">
+                                        <i class="fas fa-calendar-alt fa-fw me-1"></i> Leave History
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            No team members found matching your search criteria.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

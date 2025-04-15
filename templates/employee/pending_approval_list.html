@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Pending Employee Approvals" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0 font-weight-bold">{% trans "Employees Pending Approval" %}</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'employee_list' %}">{% trans "Employees" %}</a></li>
+                        <li class="breadcrumb-item active">{% trans "Pending Approvals" %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <form method="get" class="d-flex">
+                                <div class="input-group">
+                                    <input type="text" name="q" class="form-control" placeholder="{% trans 'Search employees...' %}" value="{{ query }}">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <form method="get" id="filterForm" class="d-flex">
+                                {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                                <select name="department" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                                    <option value="">{% trans "All Departments" %}</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                                        {{ dept.department_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <span class="badge bg-primary">{% trans "Total" %}: {{ total_count }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Employee List -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Name" %}</th>
+                                    <th>{% trans "Email" %}</th>
+                                    <th>{% trans "Department" %}</th>
+                                    <th>{% trans "Position" %}</th>
+                                    <th>{% trans "Created Date" %}</th>
+                                    <th class="text-center">{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in page_obj %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if employee.profile_image %}
+                                            <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="rounded-circle me-2" style="width: 35px; height: 35px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px;">
+                                                <i class="fas fa-user text-secondary"></i>
+                                            </div>
+                                            {% endif %}
+                                            <span>{{ employee.full_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ employee.email }}</td>
+                                    <td>{{ employee.department.department_name|default:"—" }}</td>
+                                    <td>{{ employee.position.position_name|default:"—" }}</td>
+                                    <td>{{ employee.created_date|date:"M d, Y" }}</td>
+                                    <td class="text-center">
+                                        <a href="{% url 'employee_detail' pk=employee.pk %}" class="btn btn-sm btn-info" title="{% trans 'View Details' %}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'employee_approve' pk=employee.pk %}" class="btn btn-sm btn-success" title="{% trans 'Approve/Reject' %}">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i> {% trans "No pending approvals found" %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}" aria-label="First">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}" aria-label="Previous">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}" aria-label="Next">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}" aria-label="Last">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

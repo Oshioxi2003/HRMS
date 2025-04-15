@@ -1,0 +1,80 @@
+<!-- templates/tasks/base_tasks.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Task Navigation</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'my_tasks' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'my_tasks' %}active{% endif %}">
+                        <i class="fas fa-tasks fa-fw me-2"></i> My Tasks
+                    </a>
+                    <a href="{% url 'my_tasks_calendar' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'my_tasks_calendar' %}active{% endif %}">
+                        <i class="fas fa-calendar-alt fa-fw me-2"></i> Calendar View
+                    </a>
+                    
+                    {% if request.user.role == 'Manager' or request.user.role == 'HR' or request.user.role == 'Admin' %}
+                    <a href="{% url 'department_tasks' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'department_tasks' %}active{% endif %}">
+                        <i class="fas fa-sitemap fa-fw me-2"></i> Department Tasks
+                    </a>
+                    <a href="{% url 'team_tasks' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'team_tasks' %}active{% endif %}">
+                        <i class="fas fa-users fa-fw me-2"></i> Team View
+                    </a>
+                    <a href="{% url 'create_task' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'create_task' %}active{% endif %}">
+                        <i class="fas fa-plus fa-fw me-2"></i> Assign New Task
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                    <a href="{% url 'task_list' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}">
+                        <i class="fas fa-list fa-fw me-2"></i> All Tasks
+                    </a>
+                    <a href="{% url 'task_category_list' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_category_list' %}active{% endif %}">
+                        <i class="fas fa-tag fa-fw me-2"></i> Categories
+                    </a>
+                    <a href="{% url 'task_report' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'task_report' %}active{% endif %}">
+                        <i class="fas fa-chart-pie fa-fw me-2"></i> Reports
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Task Status Legend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-secondary me-2">Not Started</span>
+                        <span class="small text-muted">Task hasn't been started yet</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-primary me-2">In Progress</span>
+                        <span class="small text-muted">Work is underway</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-warning me-2">On Hold</span>
+                        <span class="small text-muted">Temporarily paused</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-success me-2">Completed</span>
+                        <span class="small text-muted">Task is finished</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-danger me-2">Cancelled</span>
+                        <span class="small text-muted">Task has been cancelled</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-9">
+            {% block task_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Tạo Yêu Cầu Chi Phí{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Tạo Yêu Cầu Chi Phí</h4>
+                <a href="{% url 'my_expenses' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay Lại Chi Phí Của Tôi
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.claim_title.id_for_label }}" class="form-label">Tiêu Đề Chi Phí <span class="text-danger">*</span></label>
+                            {{ form.claim_title|addclass:"form-control" }}
+                            {% if form.claim_title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.claim_title.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Nhập tiêu đề mô tả cho yêu cầu chi phí của bạn (ví dụ: "Công tác tại Hà Nội")
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Mô Tả</label>
+                            {{ form.description|addclass:"form-control" }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Thông tin chi tiết bổ sung về yêu cầu chi phí
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Sau khi tạo yêu cầu chi phí, bạn sẽ có thể thêm các khoản chi phí cụ thể (biên lai) vào yêu cầu này.
+                        </div>
+                        
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary me-2" onclick="window.history.back();">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Tạo Yêu Cầu Chi Phí</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

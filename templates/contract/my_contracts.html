@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Contracts{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">My Employment Contracts</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Contract ID</th>
+                                    <th>Contract Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contract in contracts %}
+                                <tr>
+                                    <td>{{ contract.contract_id }}</td>
+                                    <td>{{ contract.contract_type }}</td>
+                                    <td>{{ contract.start_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if contract.end_date %}
+                                            {{ contract.end_date|date:"M d, Y" }}
+                                            {% if contract.status == 'Active' %}
+                                                {% with days_left=contract.end_date|timeuntil %}
+                                                    <span class="badge bg-info">{{ days_left }} left</span>
+                                                {% endwith %}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Indefinite</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if contract.status == 'Active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif contract.status == 'Expired' %}
+                                            <span class="badge bg-secondary">Expired</span>
+                                        {% elif contract.status == 'Terminated' %}
+                                            <span class="badge bg-danger">Terminated</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary view-contract" 
+                                                data-id="{{ contract.contract_id }}"
+                                                data-type="{{ contract.contract_type }}"
+                                                data-start="{{ contract.start_date|date:"M d, Y" }}"
+                                                data-end="{% if contract.end_date %}{{ contract.end_date|date:"M d, Y" }}{% else %}Indefinite{% endif %}"
+                                                data-base-salary="{{ contract.base_salary|floatformat:2 }}"
+                                                data-allowance="{{ contract.allowance|floatformat:2 }}"
+                                                data-sign-date="{% if contract.sign_date %}{{ contract.sign_date|date:"M d, Y" }}{% else %}Not available{% endif %}"
+                                                data-signed-by="{{ contract.signed_by|default:"Not specified" }}"
+                                                data-status="{{ contract.status }}"
+                                                data-file="{% if contract.attached_file %}{{ contract.attached_file.url }}{% endif %}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="empty-state">
+                                            <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                                            <p>You don't have any contracts in the system yet.</p>
+                                            <p class="text-muted">Please contact HR if you believe this is an error.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contract summary card -->
+    {% if contracts.exists %}
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Current Contract Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% with current_contract=contracts|dictsort:"status"|first %}
+                    {% if current_contract.status == 'Active' %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Contract Details</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Contract Type:</th>
+                                    <td>{{ current_contract.contract_type }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Start Date:</th>
+                                    <td>{{ current_contract.start_date|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>End Date:</th>
+                                    <td>
+                                        {% if current_contract.end_date %}
+                                            {{ current_contract.end_date|date:"F d, Y" }}
+                                            <span class="badge bg-info">{{ current_contract.end_date|timeuntil }} left</span>
+                                        {% else %}
+                                            <span class="text-muted">Indefinite</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Status:</th>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Financial Information</h5>
+                            <table class="table">
+                                <tr>
+                                    <th>Base Salary:</th>
+                                    <td>{{ current_contract.base_salary|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Allowance:</th>
+                                    <td>{{ current_contract.allowance|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total:</th>
+                                    <td>{{ current_contract.base_salary|add:current_contract.allowance|floatformat:2 }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        <p><i class="fas fa-exclamation-triangle"></i> You don't have any active contracts at the moment.</p>
+                        <p class="mb-0">Please contact HR for more information.</p>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Contract Detail Modal -->
+<div class="modal fade" id="contractDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contract Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Contract ID</label>
+                            <p class="form-control-static" id="modal-contract-id"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Status</label>
+                            <p id="modal-status"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Contract Type</label>
+                            <p class="form-control-static" id="modal-contract-type"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Sign Date</label>
+                            <p class="form-control-static" id="modal-sign-date"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Start Date</label>
+                            <p class="form-control-static" id="modal-start-date"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">End Date</label>
+                            <p class="form-control-static" id="modal-end-date"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Base Salary</label>
+                            <p class="form-control-static" id="modal-base-salary"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Allowance</label>
+                            <p class="form-control-static" id="modal-allowance"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Signed By</label>
+                            <p class="form-control-static" id="modal-signed-by"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3" id="modal-file-container">
+                            <label class="form-label text-muted">Contract Document</label>
+                            <p id="modal-file-actions"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up contract view buttons
+    const viewButtons = document.querySelectorAll('.view-contract');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = document.getElementById('contractDetailModal');
+            const bootstrapModal = new bootstrap.Modal(modal);
+            
+            // Populate modal with contract data
+            document.getElementById('modal-contract-id').textContent = this.dataset.id;
+            document.getElementById('modal-contract-type').textContent = this.dataset.type;
+            document.getElementById('modal-start-date').textContent = this.dataset.start;
+            document.getElementById('modal-end-date').textContent = this.dataset.end;
+            document.getElementById('modal-base-salary').textContent = this.dataset.baseSalary;
+            document.getElementById('modal-allowance').textContent = this.dataset.allowance;
+            document.getElementById('modal-sign-date').textContent = this.dataset.signDate;
+            document.getElementById('modal-signed-by').textContent = this.dataset.signedBy;
+            
+            // Set status with appropriate badge
+            const statusElem = document.getElementById('modal-status');
+            const status = this.dataset.status;
+            if (status === 'Active') {
+                statusElem.innerHTML = '<span class="badge bg-success">Active</span>';
+            } else if (status === 'Expired') {
+                statusElem.innerHTML = '<span class="badge bg-secondary">Expired</span>';
+            } else if (status === 'Terminated') {
+                statusElem.innerHTML = '<span class="badge bg-danger">Terminated</span>';
+            }
+            
+            // Handle file attachment
+            const fileContainer = document.getElementById('modal-file-container');
+            const fileActions = document.getElementById('modal-file-actions');
+            
+            if (this.dataset.file) {
+                fileContainer.style.display = 'block';
+                fileActions.innerHTML = `
+                    <a href="${this.dataset.file}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="fas fa-eye"></i> View Document
+                    </a>
+                    <a href="${this.dataset.file}" class="btn btn-sm btn-outline-secondary" download>
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                `;
+            } else {
+                fileContainer.style.display = 'block';
+                fileActions.innerHTML = '<span class="text-muted">No document attached</span>';
+            }
+            
+            bootstrapModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

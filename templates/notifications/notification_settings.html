@@ -1,0 +1,141 @@
+{% extends "notifications/base_notification.html" %}
+{% load static %}
+
+{% block notification_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Notification Settings</h5>
+    </div>
+    
+    <div class="card-body">
+        <form method="post" id="notification-settings-form">
+            {% csrf_token %}
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Configure how you receive notifications. You can choose to receive notifications via the system and/or email.
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover notification-settings-table">
+                    <thead>
+                        <tr>
+                            <th>Notification Type</th>
+                            <th class="text-center">System</th>
+                            <th class="text-center">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for type_key, type_name in notification_types %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="notification-icon-small {{ type_key|lower }}">
+                                        <i class="fas {{ type_key|notification_icon }}"></i>
+                                    </div>
+                                    <span class="ms-2">{{ type_name }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="system_{{ type_key }}" name="system_{{ type_key }}"
+                                           {% if settings.system|get_dict_item:type_key %}checked{% endif %}>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="email_{{ type_key }}" name="email_{{ type_key }}"
+                                           {% if settings.email|get_dict_item:type_key %}checked{% endif %}>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-4">
+                <h6>Email Frequency</h6>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="email_frequency" id="immediate" value="immediate"
+                           {% if settings.frequency == 'immediate' %}checked{% endif %}>
+                    <label class="form-check-label" for="immediate">
+                        Immediate - Send emails as notifications arrive
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="email_frequency" id="daily" value="daily"
+                           {% if settings.frequency == 'daily' %}checked{% endif %}>
+                    <label class="form-check-label" for="daily">
+                        Daily Digest - Send a single email with all notifications for the day
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="email_frequency" id="weekly" value="weekly"
+                           {% if settings.frequency == 'weekly' %}checked{% endif %}>
+                    <label class="form-check-label" for="weekly">
+                        Weekly Digest - Send a single email with all notifications for the week
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+                <button type="reset" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    $(document).ready(function() {
+        // Handle form submission
+        $('#notification-settings-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            var formData = $(this).serialize();
+            
+            $.ajax({
+                url: '{% url "notification_settings" %}',
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Settings Saved',
+                            text: 'Your notification settings have been updated successfully.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        // Show error message
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'There was an error saving your settings. Please try again.'
+                        });
+                    }
+                },
+                error: function() {
+                    // Show error message
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'There was an error connecting to the server. Please try again.'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

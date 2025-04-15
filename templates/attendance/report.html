@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Attendance Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Attendance Report</h4>
+                <div>
+                    <a href="{% url 'attendance_record_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add Record
+                    </a>
+                    
+                    <a href="{% url 'attendance_calendar' %}" class="btn btn-info">
+                        <i class="fas fa-calendar-alt me-1"></i> Calendar View
+                    </a>
+                    
+                    <a href="{% url 'export_attendance' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                        <i class="fas fa-file-excel me-1"></i> Export
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="{% url 'attendance_report' %}" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="departmentFilter" class="form-label">Department</label>
+                            <select name="department" id="departmentFilter" class="form-select">
+                                <option value="">All Departments</option>
+                                {% for department in departments %}
+                                <option value="{{ department.department_id }}" {% if department_id == department.department_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ department.department_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="dateFrom" class="form-label">Date From</label>
+                            <input type="date" name="date_from" id="dateFrom" class="form-control" value="{{ date_from }}">
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="dateTo" class="form-label">Date To</label>
+                            <input type="date" name="date_to" id="dateTo" class="form-control" value="{{ date_to }}">
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select name="status" id="statusFilter" class="form-select">
+                                <option value="">All Statuses</option>
+                                {% for status_choice in status_choices %}
+                                <option value="{{ status_choice.0 }}" {% if status == status_choice.0 %}selected{% endif %}>
+                                    {{ status_choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'attendance_report' %}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-title">Present</div>
+                <div class="stat-number text-success">{{ summary.present }}</div>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ summary.present|floatformat:0 }}%;" 
+                         aria-valuenow="{{ summary.present }}" aria-valuemin="0" 
+                         aria-valuemax="{{ summary.total_records }}"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-title">Absent</div>
+                <div class="stat-number text-danger">{{ summary.absent }}</div>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {{ summary.absent|floatformat:0 }}%;" 
+                         aria-valuenow="{{ summary.absent }}" aria-valuemin="0" 
+                         aria-valuemax="{{ summary.total_records }}"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-title">On Leave</div>
+                <div class="stat-number text-warning">{{ summary.on_leave }}</div>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar bg-warning" role="progressbar" 
+                         style="width: {{ summary.on_leave|floatformat:0 }}%;" 
+                         aria-valuenow="{{ summary.on_leave }}" aria-valuemin="0" 
+                         aria-valuemax="{{ summary.total_records }}"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card">
+                <div class="stat-title">Total Hours</div>
+                <div class="stat-number text-primary">{{ summary.total_hours|floatformat:2 }}</div>
+                <div class="mt-2 small text-muted">
+                    Overtime: {{ summary.total_overtime|floatformat:2 }} hours
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Records Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Hours</th>
+                                    <th>Overtime</th>
+                                    <th>Shift</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in page_obj %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'employee_attendance' employee_id=record.employee.employee_id %}">
+                                            {{ record.employee.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ record.employee.department.department_name|default:"--" }}</td>
+                                    <td>{{ record.work_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if record.status == 'Present' %}
+                                        <span class="badge bg-success">{{ record.status }}</span>
+                                        {% elif record.status == 'Absent' %}
+                                        <span class="badge bg-danger">{{ record.status }}</span>
+                                        {% elif record.status == 'On Leave' %}
+                                        <span class="badge bg-warning">{{ record.status }}</span>
+                                        {% elif record.status == 'Holiday' %}
+                                        <span class="badge bg-info">{{ record.status }}</span>
+                                        {% elif record.status == 'Business Trip' %}
+                                        <span class="badge bg-primary">{{ record.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.time_in|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.time_out|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.actual_work_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.overtime_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.shift.shift_name|default:"--" }}</td>
+                                    <td>
+                                        <a href="{% url 'attendance_record_update' pk=record.attendance_id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'attendance_record_delete' pk=record.attendance_id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">No attendance records found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

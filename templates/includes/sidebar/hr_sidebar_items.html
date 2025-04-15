@@ -1,0 +1,72 @@
+<!-- Quản trị nhân sự -->
+<li class="nav-header mt-3 text-uppercase px-3 small text-muted">Quản trị nhân sự</li>
+<li class="nav-item">
+    <a class="nav-link{% if request.resolver_match.url_name == 'hr_dashboard' %} active{% endif %}" href="{% url 'hr_dashboard' %}">
+        <i class="fas fa-briefcase"></i> Bảng điều khiển nhân sự
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'employee' in request.path and 'dashboard' not in request.path %} active{% endif %}" href="{% url 'employee_list' %}">
+        <i class="fas fa-user-tie"></i> Nhân viên
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'department' in request.path or 'position' in request.path %} active{% endif %}" href="{% url 'department_list' %}">
+        <i class="fas fa-sitemap"></i> Tổ chức
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'attendance_report' in request.path %} active{% endif %}" href="{% url 'attendance_report' %}">
+        <i class="fas fa-clipboard-check"></i> Chấm công
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'all_leave_requests' in request.path %} active{% endif %}" href="{% url 'all_leave_requests' %}">
+        <i class="fas fa-calendar"></i> Quản lý nghỉ phép
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'contract' in request.path %} active{% endif %}" href="{% url 'contract_list' %}">
+        <i class="fas fa-file-contract"></i> Hợp đồng
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'salary-admin' in request.path %} active{% endif %}" href="{% url 'salary_admin' %}">
+        <i class="fas fa-dollar-sign"></i> Bảng lương
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'team_performance' in request.path %} active{% endif %}" href="{% url 'team_performance' %}">
+        <i class="fas fa-star"></i> Hiệu suất
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'training-admin' in request.path %} active{% endif %}" href="{% url 'training_admin' %}">
+        <i class="fas fa-chalkboard-teacher"></i> Đào tạo
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'asset-admin' in request.path %} active{% endif %}" href="{% url 'asset_list' %}">
+        <i class="fas fa-laptop-house"></i> Tài sản
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'expense-admin' in request.path %} active{% endif %}" href="{% url 'processed_expenses' %}">
+        <i class="fas fa-money-check-alt"></i> Chi phí
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'onboarding' in request.path %} active{% endif %}" href="{% url 'onboarding_list' %}">
+        <i class="fas fa-user-plus"></i> Tiếp nhận nhân viên mới
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'reports' in request.path %} active{% endif %}" href="{% url 'hr_reports' %}">
+        <i class="fas fa-chart-pie"></i> Báo cáo
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'search' in request.path %} active{% endif %}" href="{% url 'advanced_search' %}">
+        <i class="fas fa-search"></i> Tìm kiếm nâng cao
+    </a>
+</li>

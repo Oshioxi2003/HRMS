@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<style>
+    .user-card {
+        transition: all 0.3s ease;
+        border-radius: 10px;
+    }
+    .user-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        border-radius: 30px;
+        padding: 5px 15px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .action-btn {
+        border-radius: 50px;
+        margin: 0 3px;
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    .pagination-custom .page-link {
+        border-radius: 50%;
+        margin: 0 3px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .search-container {
+        position: relative;
+        max-width: 300px;
+    }
+    .search-container i {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    .search-input {
+        padding-left: 40px;
+        border-radius: 50px;
+    }
+    .filter-dropdown {
+        border-radius: 50px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary font-weight-bold"><i class="fas fa-users mr-2"></i>{% trans "Quản Lý Người Dùng" %}</h2>
+        <a href="{% url 'user_create' %}" class="btn btn-primary rounded-pill px-4">
+            <i class="fas fa-user-plus mr-2"></i>{% trans "Thêm Người Dùng Mới" %}
+        </a>
+    </div>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="search-container">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control search-input" id="userSearch" placeholder="{% trans 'Tìm kiếm người dùng...' %}">
+                    </div>
+                </div>
+                <div class="col-md-8 d-flex justify-content-end">
+                    <select class="form-control filter-dropdown mr-2" style="width: auto;">
+                        <option value="">{% trans "Tất cả vai trò" %}</option>
+                        <option value="admin">{% trans "Quản trị viên" %}</option>
+                        <option value="staff">{% trans "Nhân viên" %}</option>
+                        <option value="user">{% trans "Người dùng" %}</option>
+                    </select>
+                    <select class="form-control filter-dropdown" style="width: auto;">
+                        <option value="">{% trans "Tất cả trạng thái" %}</option>
+                        <option value="active">{% trans "Đang hoạt động" %}</option>
+                        <option value="inactive">{% trans "Không hoạt động" %}</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>{% trans "Tên đăng nhập" %}</th>
+                            <th>{% trans "Email" %}</th>
+                            <th>{% trans "Họ" %}</th>
+                            <th>{% trans "Tên" %}</th>
+                            <th>{% trans "Vai trò" %}</th>
+                            <th>{% trans "Trạng thái" %}</th>
+                            <th class="text-center">{% trans "Thao tác" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in page_obj %}
+                        <tr class="user-card">
+                            <td class="align-middle font-weight-bold">{{ user.username }}</td>
+                            <td class="align-middle">{{ user.email }}</td>
+                            <td class="align-middle">{{ user.last_name }}</td>
+                            <td class="align-middle">{{ user.first_name }}</td>
+                            <td class="align-middle">
+                                <span class="badge bg-info text-white px-3 py-2">{{ user.get_role_display }}</span>
+                            </td>
+                            <td class="align-middle">
+                                {% if user.is_active %}
+                                    <span class="status-badge status-active">
+                                        <i class="fas fa-check-circle mr-1"></i>{% trans "Đang hoạt động" %}
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">
+                                        <i class="fas fa-times-circle mr-1"></i>{% trans "Không hoạt động" %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="align-middle text-center">
+                                <a href="{% url 'user_detail' user.pk %}" class="btn btn-info action-btn" title="{% trans 'Xem chi tiết' %}">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'user_edit' user.pk %}" class="btn btn-warning action-btn" title="{% trans 'Chỉnh sửa' %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if user.is_active %}
+                                <a href="{% url 'user_deactivate' user.pk %}" class="btn btn-danger action-btn" title="{% trans 'Vô hiệu hóa' %}">
+                                    <i class="fas fa-user-times"></i>
+                                </a>
+                                {% else %}
+                                <a href="{% url 'user_activate' user.pk %}" class="btn btn-success action-btn" title="{% trans 'Kích hoạt' %}">
+                                    <i class="fas fa-user-check"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">{% trans "Không tìm thấy người dùng nào." %}</p>
+                                    <a href="{% url 'user_create' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-user-plus mr-2"></i>{% trans "Thêm người dùng mới" %}
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if page_obj %}
+            <div class="mt-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted">{% trans "Hiển thị" %} {{ page_obj.start_index }} - {{ page_obj.end_index }} {% trans "trong tổng số" %} {{ page_obj.paginator.count }} {% trans "người dùng" %}</span>
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-custom mb-0">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if i == page_obj.number %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ i }}</span>
+                            </li>
+                            {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tìm kiếm người dùng
+    const userSearch = document.getElementById('userSearch');
+    userSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr.user-card');
+        
+        rows.forEach(row => {
+            const username = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
+            const email = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+            const lastName = row.querySelector('td:nth-child(3)').innerText.toLowerCase();
+            const firstName = row.querySelector('td:nth-child(4)').innerText.toLowerCase();
+            
+            if (username.includes(searchTerm) || 
+                email.includes(searchTerm) || 
+                lastName.includes(searchTerm) || 
+                firstName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

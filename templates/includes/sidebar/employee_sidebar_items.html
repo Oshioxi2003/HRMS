@@ -1,0 +1,51 @@
+<!-- Tính năng dành cho nhân viên -->
+<li class="nav-item">
+    <a class="nav-link{% if request.resolver_match.url_name == 'employee_dashboard' %} active{% endif %}" href="{% url 'employee_dashboard' %}">
+        <i class="fas fa-tachometer-alt"></i> Bảng điều khiển
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'attendance' in request.path %} active{% endif %}" href="{% url 'my_attendance' %}">
+        <i class="fas fa-clock"></i> Chấm công
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'leave' in request.path %} active{% endif %}" href="{% url 'my_leave_requests' %}">
+        <i class="fas fa-calendar-alt"></i> Yêu cầu nghỉ phép
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'tasks' in request.path %} active{% endif %}" href="{% url 'my_tasks' %}">
+        <i class="fas fa-tasks"></i> Nhiệm vụ của tôi
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'salary' in request.path %} active{% endif %}" href="{% url 'my_salary' %}">
+        <i class="fas fa-money-bill-wave"></i> Lương & Phúc lợi
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'expenses' in request.path %} active{% endif %}" href="{% url 'my_expenses' %}">
+        <i class="fas fa-receipt"></i> Chi phí
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'assets' in request.path %} active{% endif %}" href="{% url 'my_assets' %}">
+        <i class="fas fa-laptop"></i> Tài sản của tôi
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'training' in request.path %} active{% endif %}" href="{% url 'my_training' %}">
+        <i class="fas fa-graduation-cap"></i> Đào tạo
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'documents' in request.path %} active{% endif %}" href="{% url 'document_list' %}">
+        <i class="fas fa-file-alt"></i> Tài liệu
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link{% if 'performance' in request.path %} active{% endif %}" href="{% url 'my_performance' %}">
+        <i class="fas fa-chart-line"></i> Hiệu suất
+    </a>
+</li>

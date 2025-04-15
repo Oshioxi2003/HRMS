@@ -1,0 +1,43 @@
+<!-- templates/training/cancel_registration.html -->
+{% extends "training/base_training.html" %}
+
+{% block card_title %}
+    <i class="fas fa-times-circle"></i> Cancel Registration
+{% endblock %}
+
+{% block training_content %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle"></i> 
+    Are you sure you want to cancel your registration for <strong>"{{ participation.course.course_name }}"</strong>?
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">{{ participation.course.course_name }}</h5>
+        <p class="card-text">{{ participation.course.description|default:"No description"|linebreaks }}</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Status:</strong> {{ participation.status }}</p>
+                <p><strong>Registration Date:</strong> {{ participation.registration_date }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Start Date:</strong> {{ participation.course.start_date|default:"Not set" }}</p>
+                <p><strong>End Date:</strong> {{ participation.course.end_date|default:"Not set" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mt-4">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-times-circle"></i> Confirm Cancellation
+        </button>
+        <a href="{% url 'my_training' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to My Training
+        </a>
+    </div>
+</form>
+{% endblock %}

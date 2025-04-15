@@ -1,0 +1,153 @@
+{% extends "messaging/base_messaging.html" %}
+{% load crispy_forms_tags %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+<style>
+    .variable-list {
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .variable-badge {
+        display: inline-block;
+        padding: 5px 10px;
+        margin: 3px;
+        border-radius: 20px;
+        background-color: #e9ecef;
+        cursor: pointer;
+    }
+    
+    .variable-badge:hover {
+        background-color: #dee2e6;
+    }
+    
+    .note-editor {
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block messaging_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{% if is_create %}Create New Email Template{% else %}Edit Email Template{% endif %}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" id="templateForm">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.name|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.template_code|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.category|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.is_active|as_crispy_field }}
+                </div>
+            </div>
+            
+            {{ form.subject|as_crispy_field }}
+            
+            <div class="mb-3">
+                {{ form.variables|as_crispy_field }}
+                <div class="variable-list" id="variableList" style="display: none;">
+                    <p class="mb-1"><strong>Available Variables:</strong> Click to insert</p>
+                    <div id="variables"></div>
+                </div>
+            </div>
+            
+            <h5>HTML Content</h5>
+            {{ form.body_html|as_crispy_field }}
+            
+            <h5>Plain Text Content</h5>
+            {{ form.body_text|as_crispy_field }}
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    {% if is_create %}Create Template{% else %}Update Template{% endif %}
+                </button>
+                <a href="{% url 'email_template_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize HTML editor
+        $('.html-editor').summernote({
+            height: 300,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'italic', 'underline', 'clear']],
+                ['fontname', ['fontname']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link', 'picture', 'hr']],
+                ['view', ['fullscreen', 'codeview']]
+            ]
+        });
+        
+        // Handle variables field
+        const variablesField = $('#id_variables');
+        const variableList = $('#variableList');
+        const variablesContainer = $('#variables');
+        
+        function updateVariableList() {
+            const variableText = variablesField.val();
+            variablesContainer.empty();
+            
+            if (variableText) {
+                const variables = variableText.split(',');
+                variables.forEach(function(variable) {
+                    const trimmedVar = variable.trim();
+                    if (trimmedVar) {
+                        const badge = $('<span class="variable-badge">{{ ' + trimmedVar + ' }}</span>');
+                        badge.click(function() {
+                            // Insert the variable at cursor position or append to field
+                            insertAtCursor(document.activeElement, '{{ ' + trimmedVar + ' }}');
+                        });
+                        variablesContainer.append(badge);
+                    }
+                });
+                variableList.show();
+            } else {
+                variableList.hide();
+            }
+        }
+        
+        function insertAtCursor(field, text) {
+            if (field.tagName === 'TEXTAREA') {
+                const startPos = field.selectionStart;
+                const endPos = field.selectionEnd;
+                field.value = field.value.substring(0, startPos) + text + field.value.substring(endPos, field.value.length);
+                field.selectionStart = startPos + text.length;
+                field.selectionEnd = startPos + text.length;
+                field.focus();
+            } else if ($(field).hasClass('note-editor')) {
+                const editor = $('.html-editor').summernote();
+                editor.summernote('editor.insertText', text);
+            }
+        }
+        
+        variablesField.on('input', updateVariableList);
+        updateVariableList();
+    });
+</script>
+{% endblock %}

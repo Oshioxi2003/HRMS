@@ -1,0 +1,223 @@
+<!-- templates/performance/rewards_disciplinary_list.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Rewards & Disciplinary Records{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Rewards & Disciplinary Records</h4>
+                {% if perms.performance.add_rewardsanddisciplinary or user.role == 'HR' or user.role == 'Admin' %}
+                <a href="{% url 'rewards_disciplinary_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Add New Record
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-2">
+                        <div class="col-md-3">
+                            <select name="department" class="form-select form-select-sm">
+                                <option value="">All Departments</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ dept.department_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="employee" class="form-select form-select-sm">
+                                <option value="">All Employees</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.employee_id }}" {% if employee_filter == emp.employee_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ emp.full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="">All Types</option>
+                                <option value="Reward" {% if type_filter == 'Reward' %}selected{% endif %}>Rewards</option>
+                                <option value="Disciplinary" {% if type_filter == 'Disciplinary' %}selected{% endif %}>Disciplinary</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="year" class="form-select form-select-sm">
+                                <option value="">All Years</option>
+                                {% for year_date in available_years %}
+                                <option value="{{ year_date.year }}" {% if year_filter == year_date.year|stringformat:"i" %}selected{% endif %}>
+                                    {{ year_date.year }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="d-flex">
+                                <button type="submit" class="btn btn-sm btn-primary me-2">Filter</button>
+                                {% if employee_filter or department_filter or type_filter or year_filter %}
+                                <a href="{% url 'rewards_disciplinary_list' %}" class="btn btn-sm btn-secondary">Clear</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-centered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Type</th>
+                                    <th>Content</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Decided By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for action in page_obj %}
+                                <tr>
+                                    <td>{{ action.rad_id }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if action.employee.profile_image %}
+                                            <img src="{{ action.employee.profile_image.url }}" alt="{{ action.employee.full_name }}" class="avatar avatar-sm rounded-circle me-2">
+                                            {% else %}
+                                            <div class="avatar avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </div>
+                                            {% endif %}
+                                            <a href="{% url 'employee_detail' pk=action.employee.employee_id %}">{{ action.employee.full_name }}</a>
+                                        </div>
+                                    </td>
+                                    <td>{{ action.employee.department.department_name|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {% if action.type == 'Reward' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ action.get_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ action.content|truncatechars:50 }}</td>
+                                    <td>{{ action.decision_date }}</td>
+                                    <td>
+                                        {% if action.amount > 0 %}
+                                        {{ action.amount|floatformat:2 }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ action.decided_by.full_name|default:"System" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'rewards_disciplinary_detail' pk=action.rad_id %}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if perms.performance.change_rewardsanddisciplinary or user.role == 'HR' or user.role == 'Admin' %}
+                                            <a href="{% url 'rewards_disciplinary_update' pk=action.rad_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if perms.performance.delete_rewardsanddisciplinary or user.role == 'HR' or user.role == 'Admin' %}
+                                            <a href="{% url 'rewards_disciplinary_delete' pk=action.rad_id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav>
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for i in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if employee_filter %}&employee={{ employee_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if year_filter %}&year={{ year_filter }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center my-5">
+                        <i class="fas fa-award fa-3x text-muted mb-3"></i>
+                        <h5>No Records Found</h5>
+                        <p class="text-muted">
+                            {% if employee_filter or department_filter or type_filter or year_filter %}
+                            No records match the selected filters. <a href="{% url 'rewards_disciplinary_list' %}">Clear filters</a>
+                            {% else %}
+                            No rewards or disciplinary records have been created yet.
+                            {% if perms.performance.add_rewardsanddisciplinary or user.role == 'HR' or user.role == 'Admin' %}
+                            <br>
+                            <a href="{% url 'rewards_disciplinary_create' %}">Create your first record</a>
+                            {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

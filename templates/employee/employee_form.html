@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if is_create %}Add New Employee{% else %}Edit Employee{% endif %}{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% if is_create %}Add New Employee{% else %}Edit Employee{% endif %}</h4>
+                <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-user me-2"></i> Personal Information
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.full_name.id_for_label }}" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    {{ form.full_name|addclass:"form-control" }}
+                                    {% if form.full_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.full_name.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                                    {{ form.date_of_birth|addclass:"form-control" }}
+                                    {% if form.date_of_birth.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.date_of_birth.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+                                    {{ form.gender|addclass:"form-select" }}
+                                    {% if form.gender.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.gender.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.id_card.id_for_label }}" class="form-label">ID Card Number</label>
+                                    {{ form.id_card|addclass:"form-control" }}
+                                    {% if form.id_card.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.id_card.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.id_card_issue_date.id_for_label }}" class="form-label">ID Card Issue Date</label>
+                                    {{ form.id_card_issue_date|addclass:"form-control" }}
+                                    {% if form.id_card_issue_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.id_card_issue_date.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.id_card_issue_place.id_for_label }}" class="form-label">ID Card Issue Place</label>
+                                    {{ form.id_card_issue_place|addclass:"form-control" }}
+                                    {% if form.id_card_issue_place.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.id_card_issue_place.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-envelope me-2"></i> Contact Information
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                                    {{ form.email|addclass:"form-control" }}
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.phone.id_for_label }}" class="form-label">Phone Number</label>
+                                    {{ form.phone|addclass:"form-control" }}
+                                    {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.phone.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                                    {{ form.address|addclass:"form-control" }}
+                                    {% if form.address.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.address.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-briefcase me-2"></i> Employment Information
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                                    {{ form.department|addclass:"form-select select2" }}
+                                    {% if form.department.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.department.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.position.id_for_label }}" class="form-label">Position</label>
+                                    {{ form.position|addclass:"form-select select2" }}
+                                    {% if form.position.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.position.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.hire_date.id_for_label }}" class="form-label">Hire Date</label>
+                                    {{ form.hire_date|addclass:"form-control" }}
+                                    {% if form.hire_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.hire_date.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                                    {{ form.status|addclass:"form-select" }}
+                                    {% if form.status.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.status.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-graduation-cap me-2"></i> Education & Qualifications
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.education.id_for_label }}" class="form-label">Education Level</label>
+                                    {{ form.education|addclass:"form-select select2" }}
+                                    {% if form.education.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.education.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">Academic Title</label>
+                                    {{ form.title|addclass:"form-select select2" }}
+                                    {% if form.title.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.title.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-image me-2"></i> Profile Image
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.profile_image.id_for_label }}" class="form-label">Profile Image</label>
+                                    {{ form.profile_image|addclass:"form-control" }}
+                                    {% if form.profile_image.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.profile_image.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {% if form.instance.profile_image %}
+                                <div class="mb-3 text-center">
+                                    <p>Current Image:</p>
+                                    <img src="{{ form.instance.profile_image.url }}" alt="Current Profile Image" style="max-height: 150px; max-width: 100%;" class="img-thumbnail">
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        {% if location_form %}
+                        <div class="row mb-4">
+                            <div class="col">
+                                <h5 class="text-primary">
+                                    <i class="fas fa-map-marker-alt me-2"></i> Address Information
+                                </h5>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Address -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6>Current Address</h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.current_province.id_for_label }}" class="form-label">Province</label>
+                                    {{ location_form.current_province|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.current_district.id_for_label }}" class="form-label">District</label>
+                                    {{ location_form.current_district|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.current_ward.id_for_label }}" class="form-label">Ward</label>
+                                    {{ location_form.current_ward|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.current_address.id_for_label }}" class="form-label">Street Address</label>
+                                    {{ location_form.current_address|addclass:"form-control" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Permanent Address -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6>Permanent Address</h6>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="sameAsCurrentAddress">
+                                    <label class="form-check-label" for="sameAsCurrentAddress">
+                                        Same as Current Address
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.permanent_province.id_for_label }}" class="form-label">Province</label>
+                                    {{ location_form.permanent_province|addclass:"form-control permanent-address" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.permanent_district.id_for_label }}" class="form-label">District</label>
+                                    {{ location_form.permanent_district|addclass:"form-control permanent-address" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.permanent_ward.id_for_label }}" class="form-label">Ward</label>
+                                    {{ location_form.permanent_ward|addclass:"form-control permanent-address" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.permanent_address.id_for_label }}" class="form-label">Street Address</label>
+                                    {{ location_form.permanent_address|addclass:"form-control permanent-address" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hometown -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h6>Hometown</h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.hometown_province.id_for_label }}" class="form-label">Province</label>
+                                    {{ location_form.hometown_province|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.hometown_district.id_for_label }}" class="form-label">District</label>
+                                    {{ location_form.hometown_district|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.hometown_ward.id_for_label }}" class="form-label">Ward</label>
+                                    {{ location_form.hometown_ward|addclass:"form-control" }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label for="{{ location_form.hometown_address.id_for_label }}" class="form-label">Street Address</label>
+                                    {{ location_form.hometown_address|addclass:"form-control" }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back();">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    {% if is_create %}Create Employee{% else %}Update Employee{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap-5'
+        });
+        
+        // Same as current address checkbox
+        $('#sameAsCurrentAddress').change(function() {
+            if(this.checked) {
+                $('#{{ location_form.permanent_province.id_for_label }}').val($('#{{ location_form.current_province.id_for_label }}').val());
+                $('#{{ location_form.permanent_district.id_for_label }}').val($('#{{ location_form.current_district.id_for_label }}').val());
+                $('#{{ location_form.permanent_ward.id_for_label }}').val($('#{{ location_form.current_ward.id_for_label }}').val());
+                $('#{{ location_form.permanent_address.id_for_label }}').val($('#{{ location_form.current_address.id_for_label }}').val());
+                $('.permanent-address').prop('disabled', true);
+            } else {
+                $('.permanent-address').prop('disabled', false);
+            }
+        });
+        
+        // Example of enabling form validation (optional)
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+</script>
+{% endblock %}

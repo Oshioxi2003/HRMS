@@ -1,0 +1,101 @@
+{% extends "messaging/base_messaging.html" %}
+
+{% block messaging_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Email Log Details</h5>
+        <a href="{% url 'email_log_list' %}" class="btn btn-secondary btn-sm">Back to Logs</a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>Status</h6>
+                <p>
+                    {% if log.status == 'sent' %}
+                    <span class="badge bg-success">Sent</span>
+                    {% elif log.status == 'failed' %}
+                    <span class="badge bg-danger">Failed</span>
+                    {% else %}
+                    <span class="badge bg-warning">Pending</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h6>Date</h6>
+                <p>{{ log.created_date|date:"F j, Y, g:i a" }}</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6>From</h6>
+                <p>{{ log.from_email }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6>To</h6>
+                <p>{{ log.to_email }}</p>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6>Template</h6>
+            <p>
+                {% if log.template %}
+                <a href="{% url 'email_template_detail' template_id=log.template.template_id %}">{{ log.template.name }}</a>
+                {% else %}
+                <span class="text-muted">{{ log.template_code }}</span>
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="mb-4">
+            <h6>Subject</h6>
+            <p>{{ log.subject }}</p>
+        </div>
+        
+        {% if log.status == 'failed' and log.error_message %}
+        <div class="mb-4">
+            <h6>Error Message</h6>
+            <div class="alert alert-danger">
+                {{ log.error_message }}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if context_data %}
+        <div class="mb-4">
+            <h6>Context Data</h6>
+            <div class="bg-light p-3 rounded">
+                <pre>{{ context_data|pprint }}</pre>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="mb-4">
+            <h6>Email Content</h6>
+            <div class="border rounded p-0">
+                <ul class="nav nav-tabs" id="emailTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html" type="button" role="tab" aria-controls="html" aria-selected="true">
+                            HTML
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab" aria-controls="preview" aria-selected="false">
+                            Preview
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="emailTabContent">
+                    <div class="tab-pane fade show active p-3 bg-light" id="html" role="tabpanel" aria-labelledby="html-tab">
+                        <pre style="max-height: 500px; overflow: auto;"><code>{{ log.body }}</code></pre>
+                    </div>
+                    <div class="tab-pane fade p-3" id="preview" role="tabpanel" aria-labelledby="preview-tab">
+                        <iframe id="htmlPreview" style="width: 100%; height: 500px; border: none;" srcdoc="{{ log.body|escapejs }}"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

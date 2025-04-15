@@ -1,0 +1,131 @@
+<!-- templates/workflow/workflow_step_reorder.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+<style>
+    .step-item {
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        cursor: move;
+    }
+    
+    .step-item:hover {
+        background-color: #e9ecef;
+    }
+    
+    .step-item .step-order {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        line-height: 30px;
+        text-align: center;
+        background-color: #007bff;
+        color: white;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .step-handle {
+        float: right;
+        color: #6c757d;
+    }
+    
+    .placeholder {
+        border: 1px dashed #007bff;
+        background-color: #e7f3ff;
+        height: 60px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Reorder Workflow Steps</h5>
+        <span class="badge bg-primary">Workflow: {{ workflow.name }}</span>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i> Drag and drop steps to reorder them. Changes will take effect after you save.
+        </div>
+        
+        <form method="post" id="reorderForm">
+            {% csrf_token %}
+            <input type="hidden" name="step_order" id="stepOrderInput" value="">
+            
+            <div id="stepList">
+                {% for step in steps %}
+                <div class="step-item" data-id="{{ step.step_id }}">
+                    <span class="step-order">{{ step.order }}</span>
+                    <strong>{{ step.step_name }}</strong>
+                    <span class="text-muted ms-2">({{ step.get_step_type_display }})</span>
+                    <span class="step-handle"><i class="fas fa-grip-lines"></i></span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i> Save Order
+                </button>
+                <a href="{% url 'workflow_definition_detail' workflow_id=workflow.workflow_id %}" class="btn btn-secondary ms-2">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Make step list sortable
+    $("#stepList").sortable({
+        placeholder: "placeholder",
+        handle: ".step-handle",
+        update: function(event, ui) {
+            updateStepOrder();
+        }
+    });
+    
+    // Update step order numbers
+    function updateStepOrder() {
+        const steps = [];
+        
+        $('#stepList .step-item').each(function(index) {
+            const stepId = $(this).data('id');
+            const newOrder = index + 1;
+            
+            // Update displayed order
+            $(this).find('.step-order').text(newOrder);
+            
+            // Add to steps array
+            steps.push({
+                id: stepId,
+                order: newOrder
+            });
+        });
+        
+        // Update hidden input with JSON data
+        $('#stepOrderInput').val(JSON.stringify(steps));
+    }
+    
+    // Initialize order on page load
+    updateStepOrder();
+    
+    // Update form before submit
+    $('#reorderForm').on('submit', function() {
+        updateStepOrder();
+        return true;
+    });
+});
+</script>
+{% endblock %}

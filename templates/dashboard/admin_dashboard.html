@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load dashboard_tags %}
+
+{% load static %}
+
+{% block title %}Admin Dashboard - HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Admin Dashboard</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Key Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white">Total Users</h5>
+                            <h2 class="mt-3 text-white">{{ total_users }}</h2>
+                        </div>
+                        <div class="avatar-lg rounded-circle bg-soft-light">
+                            <i class="fas fa-users fa-3x text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white">Active Users</h5>
+                            <h2 class="mt-3 text-white">{{ active_users }}</h2>
+                        </div>
+                        <div class="avatar-lg rounded-circle bg-soft-light">
+                            <i class="fas fa-user-check fa-3x text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white">Inactive Users</h5>
+                            <h2 class="mt-3 text-white">{{ total_users|add:"-"|add:active_users }}</h2>
+                        </div>
+                        <div class="avatar-lg rounded-circle bg-soft-light">
+                            <i class="fas fa-user-times fa-3x text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white">User Roles</h5>
+                            <h2 class="mt-3 text-white">{{ user_by_role|length }}</h2>
+                        </div>
+                        <div class="avatar-lg rounded-circle bg-soft-light">
+                            <i class="fas fa-user-tag fa-3x text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- User Distribution -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">User Distribution by Role</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Count</th>
+                                    <th>Percentage</th>
+                                    <th>Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for role in user_by_role %}
+                                <tr>
+                                    <td><span class="badge bg-primary">{{ role.role }}</span></td>
+                                    <td>{{ role.count }}</td>
+                                    <td>{{ role.count|div:total_users|mul:100|floatformat:1 }}%</td>
+                                    <td>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" 
+                                                 style="width: {{ role.count|div:total_users|mul:100 }}%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Health -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">System Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">Database Size</h6>
+                            <h4>{{ system_health.database_size }}</h4>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">Total Tables</h6>
+                            <h4>{{ system_health.total_tables }}</h4>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">Total Records</h6>
+                            <h4>{{ system_health.total_records }}</h4>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">Disk Usage</h6>
+                            <div class="d-flex align-items-center">
+                                <h4 class="mb-0 me-2">{{ system_health.disk_usage }}</h4>
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: {{ system_health.disk_usage }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">Memory Usage</h6>
+                            <div class="d-flex align-items-center">
+                                <h4 class="mb-0 me-2">{{ system_health.memory_usage }}</h4>
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ system_health.memory_usage }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 class="fw-normal text-muted">CPU Usage</h6>
+                            <div class="d-flex align-items-center">
+                                <h4 class="mb-0 me-2">{{ system_health.cpu_usage }}</h4>
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         style="width: {{ system_health.cpu_usage }}"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent System Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                                    <td>{{ log.user.username|default:"System" }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if log.action == 'create' %}bg-success
+                                            {% elif log.action == 'update' %}bg-primary
+                                            {% elif log.action == 'delete' %}bg-danger
+                                            {% elif log.action == 'login' %}bg-info
+                                            {% elif log.action == 'logout' %}bg-warning
+                                            {% else %}bg-secondary
+                                            {% endif %}">
+                                            {{ log.action }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.details|truncatechars:50 }}</td>
+                                    <td>{{ log.ip|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No recent activity</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'system_logs' %}" class="btn btn-primary">View All Logs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a href="{% url 'employee_create' %}" class="btn btn-success w-100">
+                                <i class="fas fa-user-plus"></i> Add New Employee
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'leave_request_create' %}" class="btn btn-info w-100">
+                                <i class="fas fa-calendar-check"></i> New Leave Request
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'asset_requests' %}" class="btn btn-warning w-100">
+                                <i class="fas fa-box"></i> New Asset Request
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <a href="{% url 'training_create' %}" class="btn btn-primary w-100">
+                                <i class="fas fa-chalkboard-teacher"></i> Create Training
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'create_expense_claim' %}" class="btn btn-danger w-100">
+                                <i class="fas fa-receipt"></i> New Expense Claim
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{% url 'kpi_create' %}" class="btn btn-secondary w-100">
+                                <i class="fas fa-trophy"></i> Create KPI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

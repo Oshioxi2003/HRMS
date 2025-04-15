@@ -1,0 +1,36 @@
+<div class="sidebar">
+    <div class="p-3">
+        <ul class="nav flex-column">
+            <!-- Employee section -->
+            {% include "includes/sidebar/employee_sidebar_items.html" %}
+            
+            <!-- Manager section -->
+            <li class="nav-header mt-3 text-uppercase px-3 small text-muted">Quản lý</li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.resolver_match.url_name == 'manager_dashboard' %} active{% endif %}" href="{% url 'manager_dashboard' %}">
+                    <i class="fas fa-chart-line"></i> Bảng điều khiển quản lý
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'department-tasks' in request.path %} active{% endif %}" href="{% url 'department_tasks' %}">
+                    <i class="fas fa-clipboard-list"></i> Nhiệm vụ phòng ban
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'approve-leave' in request.path %} active{% endif %}" href="{% url 'pending_leave_requests' %}">
+                    <i class="fas fa-calendar-check"></i> Duyệt nghỉ phép
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'approve-expense' in request.path %} active{% endif %}" href="{% url 'pending_expenses' %}">
+                    <i class="fas fa-file-invoice-dollar"></i> Duyệt chi phí
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'approvals' in request.path %} active{% endif %}" href="{% url 'my_approval_requests' %}">
+                    <i class="fas fa-thumbs-up"></i> Phê duyệt quy trình
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

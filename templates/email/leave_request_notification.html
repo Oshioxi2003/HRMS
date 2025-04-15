@@ -1,0 +1,22 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+<h2>New Leave Request</h2>
+<p>Hello {{ manager_name }},</p>
+<p>{{ employee.full_name }} has submitted a new leave request:</p>
+
+<div style="background-color: white; padding: 15px; border-radius: 4px; margin: 15px 0; border: 1px solid #ddd;">
+    <p><strong>Leave Type:</strong> {{ leave_request.leave_type }}</p>
+    <p><strong>From:</strong> {{ leave_request.start_date }}</p>
+    <p><strong>To:</strong> {{ leave_request.end_date }}</p>
+    <p><strong>Total Days:</strong> {{ leave_request.leave_days }}</p>
+    <p><strong>Reason:</strong> {{ leave_request.reason }}</p>
+</div>
+
+<p>Please review this request at your earliest convenience:</p>
+
+<a href="{{ protocol }}://{{ domain }}{% url 'leave_approval' leave_request.request_id %}" class="button">Review Request</a>
+
+<p>Thank you,<br>
+The HR System</p>
+{% endblock %}

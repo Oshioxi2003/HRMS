@@ -1,0 +1,356 @@
+<!-- templates/tasks/task_report.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        padding: 15px;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card .number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .stat-card .title {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block task_content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Task Statistics and Reports</h5>
+        <div>
+            <a href="{% url 'export_tasks' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-download"></i> Export All Tasks
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Date Range Selector -->
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Update Report
+                </button>
+            </div>
+        </form>
+        
+        <!-- Key Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="number">{{ total_tasks }}</div>
+                    <div class="title">Total Tasks</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="number">{{ completed_tasks }}</div>
+                    <div class="title">Completed Tasks</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="number">{{ completion_rate }}%</div>
+                    <div class="title">Completion Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="number">{{ avg_completion_time }}</div>
+                    <div class="title">Avg. Days to Complete</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 1 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tasks by Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tasks by Priority</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row 2 -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tasks Created Over Time</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="timelineChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- More Details -->
+        <div class="row">
+            <!-- Tasks by Department -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tasks by Department</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Department</th>
+                                        <th>Task Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for dept in dept_counts %}
+                                    <tr>
+                                        <td>{{ dept.department__department_name|default:"No Department" }}</td>
+                                        <td>{{ dept.count }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center">No data available</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tasks by Category -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Tasks by Category</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Task Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cat in category_counts %}
+                                    <tr>
+                                        <td>{{ cat.category__name|default:"No Category" }}</td>
+                                        <td>{{ cat.count }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center">No data available</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Assignees -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Top Assignees</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Assigned Tasks</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignee in assignee_counts %}
+                                    <tr>
+                                        <td>{{ assignee.assignee__full_name|default:"Unassigned" }}</td>
+                                        <td>{{ assignee.count }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center">No data available</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Overdue Statistics -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Overdue Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="stat-card mb-3">
+                            <div class="number text-danger">{{ overdue_count }}</div>
+                            <div class="title">Overdue Tasks</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="number text-danger">{{ overdue_rate }}%</div>
+                            <div class="title">Overdue Rate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart
+        var statusCtx = document.getElementById('statusChart').getContext('2d');
+        var statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ status_labels|safe }},
+                datasets: [{
+                    data: {{ status_data|safe }},
+                    backgroundColor: [
+                        '#6c757d',  // Not Started - gray
+                        '#3f51b5',  // In Progress - blue
+                        '#ffc107',  // On Hold - yellow
+                        '#4caf50',  // Completed - green
+                        '#f44336'   // Cancelled - red
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Priority Chart
+        var priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        var priorityChart = new Chart(priorityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ priority_labels|safe }},
+                datasets: [{
+                    data: {{ priority_data|safe }},
+                    backgroundColor: [
+                        '#4caf50',  // Low - green
+                        '#3f51b5',  // Medium - blue
+                        '#ffc107',  // High - yellow
+                        '#f44336'   // Urgent - red
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Timeline Chart
+        var timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        var timelineChart = new Chart(timelineCtx, {
+            type: 'line',
+            data: {
+                labels: {{ date_labels|safe }},
+                datasets: [{
+                    label: 'Tasks Created',
+                    data: {{ date_counts|safe }},
+                    borderColor: '#3f51b5',
+                    backgroundColor: 'rgba(63, 81, 181, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,419 @@
+<!-- templates/search/advanced_search.html -->
+{% extends "search/search_base.html" %}
+{% load i18n %}
+
+{% block search_title %}{% trans "Advanced Search" %}{% endblock %}
+
+{% block search_form_action %}{% url 'advanced_search' %}{% endblock %}
+
+{% block search_filters %}
+<div class="search-filters">
+    <form id="search-filters-form" method="get">
+        <input type="hidden" name="q" value="{{ query }}">
+        
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="entityType">{% trans "Entity Type" %}</label>
+                    <select class="form-select" id="entityType" name="type">
+                        <option value="employee" {% if entity_type == 'employee' %}selected{% endif %}>{% trans "Employees" %}</option>
+                        <option value="leave" {% if entity_type == 'leave' %}selected{% endif %}>{% trans "Leave Requests" %}</option>
+                        <option value="attendance" {% if entity_type == 'attendance' %}selected{% endif %}>{% trans "Attendance" %}</option>
+                        <option value="task" {% if entity_type == 'task' %}selected{% endif %}>{% trans "Tasks" %}</option>
+                        <option value="contract" {% if entity_type == 'contract' %}selected{% endif %}>{% trans "Contracts" %}</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="departmentFilter">{% trans "Department" %}</label>
+                    <select class="form-select" id="departmentFilter" name="department">
+                        <option value="">{% trans "All Departments" %}</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                            {{ dept.department_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="statusFilter">{% trans "Status" %}</label>
+                    <select class="form-select" id="statusFilter" name="status">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        {% for status_value, status_label in status_options %}
+                        <option value="{{ status_value }}" {% if status_filter == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-3 mt-2">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="dateFrom">{% trans "Date From" %}</label>
+                    <input type="text" class="form-control datepicker" id="dateFrom" name="date_from" value="{{ date_from }}" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="dateTo">{% trans "Date To" %}</label>
+                    <input type="text" class="form-control datepicker" id="dateTo" name="date_to" value="{{ date_to }}" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="d-block">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> {% trans "Search" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block applied_filters %}
+{% if entity_type != 'employee' or department_filter or status_filter or date_from or date_to %}
+<div class="applied-filters mb-3">
+    <span class="me-2">{% trans "Applied Filters:" %}</span>
+    
+    {% if entity_type != 'employee' %}
+    <span class="filter-chip">
+        {% trans "Entity:" %} 
+        {% if entity_type == 'leave' %}{% trans "Leave Requests" %}
+        {% elif entity_type == 'attendance' %}{% trans "Attendance" %}
+        {% elif entity_type == 'task' %}{% trans "Tasks" %}
+        {% elif entity_type == 'contract' %}{% trans "Contracts" %}
+        {% endif %}
+    </span>
+    {% endif %}
+    
+    {% if department_filter %}
+    {% for dept in departments %}
+    {% if department_filter == dept.department_id|stringformat:"i" %}
+    <span class="filter-chip">
+        {% trans "Department:" %} {{ dept.department_name }}
+        <span class="close" data-param="department">&times;</span>
+    </span>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    
+    {% if status_filter %}
+    <span class="filter-chip">
+        {% trans "Status:" %} {{ status_filter }}
+        <span class="close" data-param="status">&times;</span>
+    </span>
+    {% endif %}
+    
+    {% if date_from %}
+    <span class="filter-chip">
+        {% trans "From:" %} {{ date_from }}
+        <span class="close" data-param="date_from">&times;</span>
+    </span>
+    {% endif %}
+    
+    {% if date_to %}
+    <span class="filter-chip">
+        {% trans "To:" %} {{ date_to }}
+        <span class="close" data-param="date_to">&times;</span>
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block search_results %}
+{% if query or department_filter or status_filter or date_from or date_to %}
+    <div class="result-count">
+        {% blocktrans with count=result_count type=entity_type %}Found {{ count }} {{ type }} results{% endblocktrans %}
+    </div>
+    
+    {% if result_count > 0 %}
+        <div class="table-responsive">
+            {% if entity_type == 'employee' %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Position" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Hire Date" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in results %}
+                    <tr>
+                        <td>{{ employee.employee_id }}</td>
+                        <td>{{ employee.full_name }}</td>
+                        <td>{{ employee.department.department_name|default:"--" }}</td>
+                        <td>{{ employee.position.position_name|default:"--" }}</td>
+                        <td>{{ employee.email|default:"--" }}</td>
+                        <td>{{ employee.status }}</td>
+                        <td>{{ employee.hire_date|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% elif entity_type == 'leave' %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Employee" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Leave Type" %}</th>
+                        <th>{% trans "From" %}</th>
+                        <th>{% trans "To" %}</th>
+                        <th>{% trans "Days" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in results %}
+                    <tr>
+                        <td>{{ leave.request_id }}</td>
+                        <td>{{ leave.employee.full_name }}</td>
+                        <td>{{ leave.employee.department.department_name|default:"--" }}</td>
+                        <td>{{ leave.leave_type }}</td>
+                        <td>{{ leave.start_date|date:"Y-m-d" }}</td>
+                        <td>{{ leave.end_date|date:"Y-m-d" }}</td>
+                        <td>{{ leave.leave_days }}</td>
+                        <td>
+                            <span class="badge {% if leave.status == 'Approved' %}bg-success{% elif leave.status == 'Rejected' %}bg-danger{% elif leave.status == 'Pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ leave.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'leave_detail' pk=leave.request_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% elif entity_type == 'attendance' %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Employee" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Time In" %}</th>
+                        <th>{% trans "Time Out" %}</th>
+                        <th>{% trans "Hours" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in results %}
+                    <tr>
+                        <td>{{ attendance.attendance_id }}</td>
+                        <td>{{ attendance.employee.full_name }}</td>
+                        <td>{{ attendance.employee.department.department_name|default:"--" }}</td>
+                        <td>{{ attendance.work_date|date:"Y-m-d" }}</td>
+                        <td>{{ attendance.time_in|time:"H:i"|default:"--" }}</td>
+                        <td>{{ attendance.time_out|time:"H:i"|default:"--" }}</td>
+                        <td>{{ attendance.actual_work_hours|default:"--" }}</td>
+                        <td>
+                            <span class="badge {% if attendance.status == 'Present' %}bg-success{% elif attendance.status == 'Absent' %}bg-danger{% elif attendance.status == 'On Leave' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ attendance.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'attendance_detail' pk=attendance.attendance_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% elif entity_type == 'task' %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Title" %}</th>
+                        <th>{% trans "Assignee" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Priority" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Due Date" %}</th>
+                        <th>{% trans "Progress" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in results %}
+                    <tr>
+                        <td>{{ task.task_id }}</td>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.assignee.full_name }}</td>
+                        <td>{{ task.assignee.department.department_name|default:"--" }}</td>
+                        <td>
+                            <span class="badge {% if task.priority == 'High' or task.priority == 'Urgent' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ task.priority }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-info{% elif task.status == 'Not Started' %}bg-warning{% elif task.status == 'On Hold' %}bg-secondary{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </td>
+                        <td>{{ task.due_date|date:"Y-m-d" }}</td>
+                        <td>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ task.progress }}%;" 
+                                    aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small>{{ task.progress }}%</small>
+                        </td>
+                        <td>
+                            <a href="{% url 'view_task' task_id=task.task_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            {% elif entity_type == 'contract' %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Employee" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Contract Type" %}</th>
+                        <th>{% trans "Start Date" %}</th>
+                        <th>{% trans "End Date" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contract in results %}
+                    <tr>
+                        <td>{{ contract.contract_id }}</td>
+                        <td>{{ contract.employee.full_name }}</td>
+                        <td>{{ contract.employee.department.department_name|default:"--" }}</td>
+                        <td>{{ contract.contract_type }}</td>
+                        <td>{{ contract.start_date|date:"Y-m-d" }}</td>
+                        <td>{{ contract.end_date|date:"Y-m-d"|default:"--" }}</td>
+                        <td>
+                            <span class="badge {% if contract.status == 'Active' %}bg-success{% elif contract.status == 'Expired' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ contract.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            {% trans "No results found matching your search criteria." %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search-plus fa-4x mb-3 text-muted"></i>
+        <h4 class="text-muted">{% trans "Advanced Search" %}</h4>
+        <p class="text-muted">{% trans "Use the filters above to search across different entity types" %}</p>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block page_script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update status options when entity type changes
+        document.getElementById('entityType').addEventListener('change', function() {
+            const entityType = this.value;
+            const statusFilter = document.getElementById('statusFilter');
+            
+            // Clear current options
+            statusFilter.innerHTML = '<option value="">All Statuses</option>';
+            
+            // Add new options based on entity type
+            if (entityType === 'employee') {
+                addOptions(statusFilter, [
+                    ['Working', 'Working'],
+                    ['Resigned', 'Resigned'],
+                    ['On Leave', 'On Leave']
+                ]);
+            } else if (entityType === 'leave') {
+                addOptions(statusFilter, [
+                    ['Pending', 'Pending'],
+                    ['Approved', 'Approved'],
+                    ['Rejected', 'Rejected'],
+                    ['Cancelled', 'Cancelled']
+                ]);
+            } else if (entityType === 'attendance') {
+                addOptions(statusFilter, [
+                    ['Present', 'Present'],
+                    ['Absent', 'Absent'],
+                    ['On Leave', 'On Leave'],
+                    ['Holiday', 'Holiday']
+                ]);
+            } else if (entityType === 'task') {
+                addOptions(statusFilter, [
+                    ['Not Started', 'Not Started'],
+                    ['In Progress', 'In Progress'],
+                    ['Completed', 'Completed'],
+                    ['On Hold', 'On Hold']
+                ]);
+            } else if (entityType === 'contract') {
+                addOptions(statusFilter, [
+                    ['Active', 'Active'],
+                    ['Expired', 'Expired'],
+                    ['Terminated', 'Terminated']
+                ]);
+            }
+        });
+        
+        function addOptions(selectElement, options) {
+            options.forEach(function(option) {
+                const optionElement = document.createElement('option');
+                optionElement.value = option[0];
+                optionElement.textContent = option[1];
+                selectElement.appendChild(optionElement);
+            });
+        }
+    });
+</script>
+{% endblock %}

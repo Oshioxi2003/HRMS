@@ -1,0 +1,29 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+<h2>Leave Request {{ leave_request.status }}</h2>
+<p>Hello {{ employee.full_name }},</p>
+
+<p>Your leave request has been <strong>{{ leave_request.status|lower }}</strong>.</p>
+
+<div style="background-color: white; padding: 15px; border-radius: 4px; margin: 15px 0; border: 1px solid #ddd;">
+    <p><strong>Leave Type:</strong> {{ leave_request.leave_type }}</p>
+    <p><strong>From:</strong> {{ leave_request.start_date }}</p>
+    <p><strong>To:</strong> {{ leave_request.end_date }}</p>
+    <p><strong>Total Days:</strong> {{ leave_request.leave_days }}</p>
+    
+    {% if leave_request.approval_notes %}
+    <p><strong>Notes:</strong> {{ leave_request.approval_notes }}</p>
+    {% endif %}
+    
+    {% if leave_request.approved_by %}
+    <p><strong>Approved By:</strong> {{ leave_request.approved_by.full_name }}</p>
+    <p><strong>Approval Date:</strong> {{ leave_request.approval_date }}</p>
+    {% endif %}
+</div>
+
+<a href="{{ protocol }}://{{ domain }}{% url 'my_leave_requests' %}" class="button">View My Leave Requests</a>
+
+<p>Thank you,<br>
+The HR System</p>
+{% endblock %}

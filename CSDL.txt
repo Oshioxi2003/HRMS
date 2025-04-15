@@ -1,0 +1,589 @@
+-- Create database with proper character encoding
+CREATE DATABASE hrms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE hrms;
+
+-- =============================================
+-- EMPLOYEE MANAGEMENT TABLES
+-- =============================================
+
+-- Department Table
+CREATE TABLE department (
+    department_id INT AUTO_INCREMENT PRIMARY KEY,
+    department_name VARCHAR(100) NOT NULL,
+    department_code VARCHAR(20) UNIQUE NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Position Table
+CREATE TABLE position (
+    position_id INT AUTO_INCREMENT PRIMARY KEY,
+    position_name VARCHAR(100) NOT NULL,
+    position_code VARCHAR(20) UNIQUE NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Academic Title Table
+CREATE TABLE academic_title (
+    title_id INT AUTO_INCREMENT PRIMARY KEY,
+    title_name VARCHAR(50) NOT NULL,
+    title_code VARCHAR(20) UNIQUE,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Education Level Table
+CREATE TABLE education_level (
+    education_id INT AUTO_INCREMENT PRIMARY KEY,
+    education_name VARCHAR(100) NOT NULL,
+    education_code VARCHAR(20) UNIQUE NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Employee Table
+CREATE TABLE employee (
+    employee_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    date_of_birth DATE,
+    gender VARCHAR(10) COMMENT 'Male, Female, Other',
+    id_card VARCHAR(20) UNIQUE,
+    id_card_issue_date DATE,
+    id_card_issue_place VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    phone VARCHAR(15),
+    address TEXT,
+    department_id INT,
+    position_id INT,
+    education_id INT,
+    title_id INT,
+    hire_date DATE,
+    profile_image VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'Working' COMMENT 'Working, Resigned, On Leave',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES department(department_id) ON DELETE SET NULL,
+    FOREIGN KEY (position_id) REFERENCES position(position_id) ON DELETE SET NULL,
+    FOREIGN KEY (education_id) REFERENCES education_level(education_id) ON DELETE SET NULL,
+    FOREIGN KEY (title_id) REFERENCES academic_title(title_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Employee Location Table
+CREATE TABLE employee_location (
+    location_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    hometown_province VARCHAR(100),
+    hometown_district VARCHAR(100),
+    hometown_ward VARCHAR(100),
+    hometown_address VARCHAR(255),
+    permanent_province VARCHAR(100),
+    permanent_district VARCHAR(100),
+    permanent_ward VARCHAR(100),
+    permanent_address VARCHAR(255),
+    current_province VARCHAR(100),
+    current_district VARCHAR(100),
+    current_ward VARCHAR(100),
+    current_address VARCHAR(255),
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    UNIQUE (employee_id)
+) ENGINE=InnoDB;
+
+-- =============================================
+-- WORK SCHEDULE AND ATTENDANCE TABLES
+-- =============================================
+
+-- Work Shift Table
+CREATE TABLE work_shift (
+    shift_id INT AUTO_INCREMENT PRIMARY KEY,
+    shift_name VARCHAR(50) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    salary_coefficient DECIMAL(3,2) DEFAULT 1.0,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Attendance Table
+CREATE TABLE attendance (
+    attendance_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    work_date DATE NOT NULL,
+    time_in TIME,
+    time_out TIME,
+    shift_id INT,
+    actual_work_hours DECIMAL(5,2),
+    overtime_hours DECIMAL(5,2) DEFAULT 0,
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'Present' COMMENT 'Present, On Leave, Absent, Holiday, Business Trip',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (shift_id) REFERENCES work_shift(shift_id) ON DELETE SET NULL,
+    UNIQUE (employee_id, work_date)
+) ENGINE=InnoDB;
+
+-- Shift Assignment Table
+CREATE TABLE shift_assignment (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    shift_id INT NOT NULL,
+    assignment_date DATE NOT NULL,
+    effective_date DATE NOT NULL,
+    end_date DATE,
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'Active' COMMENT 'Active, Ended, Cancelled',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (shift_id) REFERENCES work_shift(shift_id) ON DELETE CASCADE,
+    UNIQUE (employee_id, shift_id, effective_date)
+) ENGINE=InnoDB;
+
+-- =============================================
+-- LEAVE MANAGEMENT TABLES
+-- =============================================
+
+-- Leave Request Table
+CREATE TABLE leave_request (
+    request_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    leave_type VARCHAR(20) NOT NULL COMMENT 'Annual Leave, Sick Leave, Maternity Leave, Personal Leave, Other',
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    leave_days DECIMAL(3,1) NOT NULL,
+    reason TEXT,
+    attached_file VARCHAR(255),
+    approved_by INT,
+    approval_date DATE,
+    approval_notes TEXT,
+    status VARCHAR(20) DEFAULT 'Pending' COMMENT 'Pending, Approved, Rejected, Cancelled',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (approved_by) REFERENCES employee(employee_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =============================================
+-- CONTRACT MANAGEMENT TABLES
+-- =============================================
+
+-- Employment Contract Table
+CREATE TABLE employment_contract (
+    contract_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    contract_type VARCHAR(20) NOT NULL COMMENT 'Probation, Fixed-term, Indefinite-term, Seasonal',
+    start_date DATE NOT NULL,
+    end_date DATE,
+    base_salary DECIMAL(15,2) NOT NULL,
+    allowance DECIMAL(15,2) DEFAULT 0,
+    attached_file VARCHAR(255),
+    sign_date DATE,
+    signed_by VARCHAR(100),
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'Active' COMMENT 'Active, Expired, Terminated',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =============================================
+-- INSURANCE AND TAX TABLES
+-- =============================================
+
+-- Insurance and Tax Table
+CREATE TABLE insurance_and_tax (
+    insurance_tax_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    social_insurance_number VARCHAR(20),
+    social_insurance_date DATE,
+    social_insurance_place VARCHAR(100),
+    health_insurance_number VARCHAR(20),
+    health_insurance_date DATE,
+    health_insurance_place VARCHAR(100),
+    health_care_provider VARCHAR(100),
+    tax_code VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'Active' COMMENT 'Active, Inactive',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    UNIQUE (employee_id)
+) ENGINE=InnoDB;
+
+-- =============================================
+-- CERTIFICATES AND QUALIFICATIONS TABLES
+-- =============================================
+
+-- Certificate Type Table
+CREATE TABLE certificate_type (
+    type_id INT AUTO_INCREMENT PRIMARY KEY,
+    type_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Employee Certificate Table
+CREATE TABLE employee_certificate (
+    certificate_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    type_id INT NOT NULL,
+    certificate_name VARCHAR(200) NOT NULL,
+    issued_by VARCHAR(200),
+    issued_date DATE,
+    expiry_date DATE,
+    certificate_number VARCHAR(100),
+    attachment_file VARCHAR(255),
+    notes TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'Valid' COMMENT 'Valid, Expired, Revoked',
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (type_id) REFERENCES certificate_type(type_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- =============================================
+-- SALARY AND COMPENSATION TABLES
+-- =============================================
+
+-- Salary Grade Table
+CREATE TABLE salary_grade (
+    grade_id INT AUTO_INCREMENT PRIMARY KEY,
+    grade_name VARCHAR(50) NOT NULL,
+    grade_code VARCHAR(20) UNIQUE,
+    base_salary_amount DECIMAL(15,2) NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Salary Advance Table
+CREATE TABLE salary_advance (
+    advance_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    advance_date DATE NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    reason TEXT,
+    deduction_month INT NOT NULL,
+    deduction_year INT NOT NULL,
+    approved_by INT,
+    approval_date DATE,
+    status VARCHAR(20) DEFAULT 'Pending' COMMENT 'Pending, Approved, Rejected, Repaid',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (approved_by) REFERENCES employee(employee_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Seniority Allowance Table
+CREATE TABLE seniority_allowance (
+    allowance_id INT AUTO_INCREMENT PRIMARY KEY,
+    years_of_service INT UNIQUE NOT NULL,
+    allowance_percentage DECIMAL(5,2) NOT NULL,
+    description TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status INT DEFAULT 1 COMMENT '1: Active, 0: Inactive'
+) ENGINE=InnoDB;
+
+-- Employee Salary Grade Table
+CREATE TABLE employee_salary_grade (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    grade_id INT NOT NULL,
+    effective_date DATE NOT NULL,
+    end_date DATE,
+    decision_number VARCHAR(50),
+    notes TEXT,
+    status VARCHAR(20) DEFAULT 'Active' COMMENT 'Active, Inactive',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (grade_id) REFERENCES salary_grade(grade_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Salary Table
+CREATE TABLE salary (
+    salary_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    work_days INT DEFAULT 0,
+    leave_days INT DEFAULT 0,
+    overtime_hours DECIMAL(5,2) DEFAULT 0,
+    base_salary DECIMAL(15,2) NOT NULL,
+    allowance DECIMAL(15,2) DEFAULT 0,
+    seniority_allowance DECIMAL(15,2) DEFAULT 0,
+    income_tax DECIMAL(15,2) DEFAULT 0,
+    social_insurance DECIMAL(15,2) DEFAULT 0,
+    health_insurance DECIMAL(15,2) DEFAULT 0,
+    unemployment_insurance DECIMAL(15,2) DEFAULT 0,
+    bonus DECIMAL(15,2) DEFAULT 0,
+    deductions DECIMAL(15,2) DEFAULT 0,
+    advance DECIMAL(15,2) DEFAULT 0,
+    net_salary DECIMAL(15,2),
+    is_paid BOOLEAN DEFAULT FALSE,
+    payment_date DATE,
+    notes TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    UNIQUE (employee_id, month, year)
+) ENGINE=InnoDB;
+
+-- =============================================
+-- PERFORMANCE MANAGEMENT TABLES
+-- =============================================
+
+-- KPI Table
+CREATE TABLE kpi (
+    kpi_id INT AUTO_INCREMENT PRIMARY KEY,
+    kpi_name VARCHAR(150) NOT NULL,
+    description TEXT,
+    unit VARCHAR(50),
+    min_target DECIMAL(10,2),
+    max_target DECIMAL(10,2),
+    weight_factor DECIMAL(3,2) DEFAULT 1.0,
+    kpi_type VARCHAR(20) DEFAULT 'Individual' COMMENT 'Individual, Department, Company',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Employee Evaluation Table
+CREATE TABLE employee_evaluation (
+    evaluation_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    kpi_id INT NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    result DECIMAL(10,2) NOT NULL,
+    target DECIMAL(10,2) NOT NULL,
+    achievement_rate DECIMAL(5,2),
+    feedback TEXT,
+    evaluation_date DATE NOT NULL,
+    evaluated_by INT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (kpi_id) REFERENCES kpi(kpi_id) ON DELETE CASCADE,
+    FOREIGN KEY (evaluated_by) REFERENCES employee(employee_id) ON DELETE SET NULL,
+    UNIQUE (employee_id, kpi_id, month, year)
+) ENGINE=InnoDB;
+
+-- Rewards and Disciplinary Table
+CREATE TABLE rewards_and_disciplinary (
+    rad_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    type VARCHAR(20) NOT NULL COMMENT 'Reward, Disciplinary',
+    content TEXT NOT NULL,
+    decision_date DATE NOT NULL,
+    decision_number VARCHAR(50),
+    amount DECIMAL(15,2) DEFAULT 0,
+    decided_by INT,
+    attached_file VARCHAR(255),
+    notes TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (decided_by) REFERENCES employee(employee_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =============================================
+-- TRAINING MANAGEMENT TABLES
+-- =============================================
+
+-- Training Course Table
+CREATE TABLE training_course (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(200) NOT NULL,
+    description TEXT,
+    start_date DATE,
+    end_date DATE,
+    location VARCHAR(200),
+    cost DECIMAL(15,2) DEFAULT 0,
+    organizer VARCHAR(100),
+    supervisor VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'Preparing' COMMENT 'Preparing, In Progress, Completed, Cancelled',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Training Participation Table
+CREATE TABLE training_participation (
+    participation_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    course_id INT NOT NULL,
+    registration_date DATE NOT NULL,
+    score DECIMAL(5,2),
+    achievement VARCHAR(100),
+    feedback TEXT,
+    certificate VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'Registered' COMMENT 'Registered, Participating, Completed, Cancelled',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES training_course(course_id) ON DELETE CASCADE,
+    UNIQUE (employee_id, course_id)
+) ENGINE=InnoDB;
+
+-- =============================================
+-- USER AND AUTHORIZATION TABLES
+-- =============================================
+
+-- User Table
+CREATE TABLE user (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(150) NOT NULL UNIQUE,
+    password VARCHAR(128) NOT NULL,
+    first_name VARCHAR(150),
+    last_name VARCHAR(150),
+    email VARCHAR(254),
+    is_staff TINYINT(1) DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
+    is_superuser TINYINT(1) DEFAULT 0,
+    date_joined DATETIME NOT NULL,
+    employee_id INT,
+    role VARCHAR(20) DEFAULT 'Employee' COMMENT 'Admin, HR, Manager, Employee',
+    status VARCHAR(20) DEFAULT 'Pending Activation' COMMENT 'Active, Locked, Pending Activation',
+    last_login DATETIME,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES employee(employee_id) ON DELETE SET NULL,
+    UNIQUE (employee_id)
+) ENGINE=InnoDB;
+
+-- Permission Table
+CREATE TABLE permission (
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    role VARCHAR(20) NOT NULL COMMENT 'Admin, HR, Manager, Employee',
+    module VARCHAR(50) NOT NULL,
+    access_right VARCHAR(10) NOT NULL COMMENT 'View, Edit, Delete, All',
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (role, module)
+) ENGINE=InnoDB;
+
+-- System Log Table
+CREATE TABLE system_log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(200) NOT NULL,
+    object_type VARCHAR(50),
+    object_id INT,
+    details TEXT,
+    ip VARCHAR(50),
+    user_agent VARCHAR(255),
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =============================================
+-- HR REPORT TABLES
+-- =============================================
+
+-- HR Report Table
+CREATE TABLE hr_report (
+    report_id INT AUTO_INCREMENT PRIMARY KEY,
+    report_type VARCHAR(20) NOT NULL COMMENT 'Personnel Changes, Performance, Salary, Overview, Other',
+    title VARCHAR(200) NOT NULL,
+    content TEXT,
+    report_period DATE,
+    report_file VARCHAR(255),
+    created_by INT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES employee(employee_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Analytics Data Table
+CREATE TABLE analytics_data (
+    data_id INT AUTO_INCREMENT PRIMARY KEY,
+    metric VARCHAR(100) NOT NULL,
+    value DECIMAL(10,2),
+    unit VARCHAR(20),
+    period DATE,
+    notes TEXT,
+    created_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =============================================
+-- TRIGGERS FOR CALCULATED FIELDS
+-- =============================================
+
+DELIMITER //
+
+-- Calculate net_salary in Salary table
+CREATE TRIGGER calculate_net_salary_before_insert 
+BEFORE INSERT ON salary
+FOR EACH ROW
+BEGIN
+    IF NEW.net_salary IS NULL THEN
+        SET NEW.net_salary = (
+            NEW.base_salary 
+            + NEW.allowance 
+            + NEW.seniority_allowance 
+            + NEW.bonus 
+            - NEW.income_tax 
+            - NEW.social_insurance 
+            - NEW.health_insurance 
+            - NEW.unemployment_insurance 
+            - NEW.deductions 
+            - NEW.advance
+        );
+    END IF;
+END//
+
+CREATE TRIGGER calculate_net_salary_before_update
+BEFORE UPDATE ON salary
+FOR EACH ROW
+BEGIN
+    IF NEW.net_salary IS NULL THEN
+        SET NEW.net_salary = (
+            NEW.base_salary 
+            + NEW.allowance 
+            + NEW.seniority_allowance 
+            + NEW.bonus 
+            - NEW.income_tax 
+            - NEW.social_insurance 
+            - NEW.health_insurance 
+            - NEW.unemployment_insurance 
+            - NEW.deductions 
+            - NEW.advance
+        );
+    END IF;
+END//
+
+-- Calculate achievement_rate in EmployeeEvaluation table
+CREATE TRIGGER calculate_achievement_rate_before_insert
+BEFORE INSERT ON employee_evaluation
+FOR EACH ROW
+BEGIN
+    IF NEW.achievement_rate IS NULL AND NEW.target > 0 THEN
+        SET NEW.achievement_rate = (NEW.result / NEW.target) * 100;
+    END IF;
+END//
+
+CREATE TRIGGER calculate_achievement_rate_before_update
+BEFORE UPDATE ON employee_evaluation
+FOR EACH ROW
+BEGIN
+    IF NEW.achievement_rate IS NULL AND NEW.target > 0 THEN
+        SET NEW.achievement_rate = (NEW.result / NEW.target) * 100;
+    END IF;
+END//
+
+DELIMITER ;

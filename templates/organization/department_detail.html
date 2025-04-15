@@ -1,0 +1,267 @@
+{% extends "organization/base_organization.html" %}
+
+{% block organization_css %}
+<style>
+    .department-header {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .department-manager {
+        display: flex;
+        align-items: center;
+        margin-top: 15px;
+    }
+    
+    .manager-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 15px;
+    }
+    
+    .employee-list {
+        margin-top: 20px;
+    }
+    
+    .employee-card {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .employee-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .employee-info {
+        margin-left: 15px;
+    }
+    
+    .gender-chart-container {
+        height: 200px;
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block organization_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ department.department_name }}</h1>
+    
+    <div>
+        <a href="{% url 'department_members' department_id=department.department_id %}" class="btn btn-primary">
+            <i class="fas fa-users"></i> View Members
+        </a>
+        <a href="{% url 'organization_structure' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Structure
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Department Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Department Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Department Name:</strong> {{ department.department_name }}</p>
+                        <p><strong>Department Code:</strong> {{ department.department_code }}</p>
+                        <p><strong>Total Employees:</strong> {{ total_employees }}</p>
+                        <p><strong>Status:</strong> 
+                            {% if department.status == 1 %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Date Created:</strong> {{ department.created_date|date:"M d, Y" }}</p>
+                        <p><strong>Last Updated:</strong> {{ department.updated_date|date:"M d, Y" }}</p>
+                        
+                        {% if department_head %}
+                        <p><strong>Department Head:</strong></p>
+                        <div class="department-manager">
+                            {% if department_head.profile_image %}
+                            <img src="{{ department_head.profile_image.url }}" alt="{{ department_head.full_name }}" class="manager-img">
+                            {% else %}
+                            <div class="manager-img d-flex align-items-center justify-content-center bg-secondary text-white">
+                                <i class="fas fa-user fa-2x"></i>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">{{ department_head.full_name }}</h6>
+                                <p class="text-muted small mb-0">{{ department_head.position.position_name }}</p>
+                                <p class="small mb-0">{{ department_head.email }}</p>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted"><strong>Department Head:</strong> Not assigned</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <h6>Description</h6>
+                    <p>{{ department.description|default:"No description available" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee Statistics -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Department Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Position Distribution</h6>
+                        <div class="position-list">
+                            {% for position, count in position_counts.items %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{{ position }}</span>
+                                <span class="badge bg-primary">{{ count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Gender Distribution</h6>
+                        <div class="gender-chart-container">
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <div class="text-center">
+                                <span class="d-block">Male</span>
+                                <strong>{{ gender_distribution.male }}%</strong>
+                            </div>
+                            <div class="text-center">
+                                <span class="d-block">Female</span>
+                                <strong>{{ gender_distribution.female }}%</strong>
+                            </div>
+                            <div class="text-center">
+                                <span class="d-block">Other</span>
+                                <strong>{{ gender_distribution.other }}%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Recent Hires -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recent Hires</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_hires %}
+                <div class="employee-list">
+                    {% for employee in recent_hires %}
+                    <div class="employee-card">
+                        {% if employee.profile_image %}
+                        <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="employee-avatar">
+                        {% else %}
+                        <div class="employee-avatar d-flex align-items-center justify-content-center bg-secondary text-white">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        {% endif %}
+                        <div class="employee-info">
+                            <h6 class="mb-0">{{ employee.full_name }}</h6>
+                            <p class="text-muted small mb-0">{{ employee.position.position_name|default:"No Position" }}</p>
+                            <p class="small mb-0">Hired: {{ employee.hire_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent hires in the last 3 months.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Department Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Links</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'department_members' department_id=department.department_id %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users fa-fw me-2"></i> View All Members
+                    </a>
+                    {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                    <a href="{% url 'edit_organization_structure' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-edit fa-fw me-2"></i> Edit Department
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'organization_chart' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sitemap fa-fw me-2"></i> View in Org Chart
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block organization_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gender distribution chart
+    const genderCtx = document.getElementById('genderChart').getContext('2d');
+    new Chart(genderCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Male', 'Female', 'Other'],
+            datasets: [{
+                data: [
+                    {{ gender_distribution.male }},
+                    {{ gender_distribution.female }},
+                    {{ gender_distribution.other }}
+                ],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(255, 206, 86, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(255, 206, 86, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            legend: {
+                display: false
+            },
+            cutoutPercentage: 70
+        }
+    });
+});
+</script>
+{% endblock %}

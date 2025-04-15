@@ -1,0 +1,305 @@
+<!-- templates/salary/payslip_pdf.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip - {{ employee.full_name }} - {{ month_name }} {{ year }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            border-bottom: 2px solid #3f51b5;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .company-info {
+            float: left;
+            width: 60%;
+        }
+        .payslip-title {
+            float: right;
+            width: 40%;
+            text-align: right;
+        }
+        .company-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3f51b5;
+        }
+        .company-address {
+            font-size: 12px;
+            color: #666;
+        }
+        h1 {
+            color: #3f51b5;
+            font-size: 18px;
+            margin: 0;
+        }
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        .employee-info {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .employee-info td {
+            padding: 5px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-section h2 {
+            font-size: 14px;
+            color: #3f51b5;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table.data-table th, table.data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        table.data-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+        .summary-table {
+            width: 70%;
+            margin: 0 auto;
+        }
+        .net-salary-row {
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #e6f7e6;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+        .signature-section {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            width: 45%;
+            text-align: center;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 40px;
+            width: 80%;
+            display: inline-block;
+        }
+        .confidential {
+            text-align: center;
+            font-style: italic;
+            color: #999;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header clearfix">
+        <div class="company-info">
+            <div class="company-name">{{ company_name }}</div>
+            <div class="company-address">{{ company_address }}</div>
+        </div>
+        <div class="payslip-title">
+            <h1>PAYSLIP</h1>
+            <div>{{ month_name }} {{ year }}</div>
+        </div>
+    </div>
+    
+    <table class="employee-info">
+        <tr>
+            <td width="20%"><strong>Employee ID:</strong></td>
+            <td width="30%">{{ employee.employee_id }}</td>
+            <td width="20%"><strong>Department:</strong></td>
+            <td width="30%">{{ employee.department.department_name|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Employee Name:</strong></td>
+            <td>{{ employee.full_name }}</td>
+            <td><strong>Position:</strong></td>
+            <td>{{ employee.position.position_name|default:"-" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Issue Date:</strong></td>
+            <td>{{ today|date:"Y-m-d" }}</td>
+            <td><strong>Payment Status:</strong></td>
+            <td>{% if salary.is_paid %}Paid{% if salary.payment_date %} on {{ salary.payment_date|date:"Y-m-d" }}{% endif %}{% else %}Unpaid{% endif %}</td>
+        </tr>
+    </table>
+    
+    <div class="info-section">
+        <h2>Work Information</h2>
+        <table class="data-table">
+            <tr>
+                <th>Work Days</th>
+                <th>Leave Days</th>
+                <th>Overtime Hours</th>
+            </tr>
+            <tr>
+                <td>{{ salary.work_days }} days</td>
+                <td>{{ salary.leave_days }} days</td>
+                <td>{{ salary.overtime_hours }} hours</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="info-section">
+        <h2>Earnings</h2>
+        <table class="data-table">
+            <tr>
+                <th width="60%">Description</th>
+                <th width="40%" class="text-right">Amount</th>
+            </tr>
+            <tr>
+                <td>Base Salary</td>
+                <td class="text-right">{{ salary.base_salary|floatformat:2 }}</td>
+            </tr>
+            {% if salary.allowance > 0 %}
+            <tr>
+                <td>Allowance</td>
+                <td class="text-right">{{ salary.allowance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.seniority_allowance > 0 %}
+            <tr>
+                <td>Seniority Allowance</td>
+                <td class="text-right">{{ salary.seniority_allowance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.bonus > 0 %}
+            <tr>
+                <td>Bonus</td>
+                <td class="text-right">{{ salary.bonus|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+                <td>Total Earnings</td>
+                <td class="text-right">{{ salary.base_salary|add:salary.allowance|add:salary.seniority_allowance|add:salary.bonus|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="info-section">
+        <h2>Deductions</h2>
+        <table class="data-table">
+            <tr>
+                <th width="60%">Description</th>
+                <th width="40%" class="text-right">Amount</th>
+            </tr>
+            {% if salary.income_tax > 0 %}
+            <tr>
+                <td>Income Tax</td>
+                <td class="text-right">{{ salary.income_tax|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.social_insurance > 0 %}
+            <tr>
+                <td>Social Insurance</td>
+                <td class="text-right">{{ salary.social_insurance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.health_insurance > 0 %}
+            <tr>
+                <td>Health Insurance</td>
+                <td class="text-right">{{ salary.health_insurance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.unemployment_insurance > 0 %}
+            <tr>
+                <td>Unemployment Insurance</td>
+                <td class="text-right">{{ salary.unemployment_insurance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.deductions > 0 %}
+            <tr>
+                <td>Other Deductions</td>
+                <td class="text-right">{{ salary.deductions|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if salary.advance > 0 %}
+            <tr>
+                <td>Salary Advance</td>
+                <td class="text-right">{{ salary.advance|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-row">
+                <td>Total Deductions</td>
+                <td class="text-right">{{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="info-section">
+        <h2>Salary Summary</h2>
+        <table class="data-table summary-table">
+            <tr>
+                <th width="60%">Description</th>
+                <th width="40%" class="text-right">Amount</th>
+            </tr>
+            <tr>
+                <td>Total Earnings</td>
+                <td class="text-right">{{ salary.base_salary|add:salary.allowance|add:salary.seniority_allowance|add:salary.bonus|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td>Total Deductions</td>
+                <td class="text-right">{{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance|floatformat:2 }}</td>
+            </tr>
+            <tr class="net-salary-row">
+                <td>Net Salary</td>
+                <td class="text-right">{{ salary.net_salary|floatformat:2 }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="signature-section">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Employer's Signature</p>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <p>Employee's Signature</p>
+        </div>
+    </div>
+    
+    <div class="confidential">
+        This is a confidential document. Please handle with appropriate care.
+    </div>
+    
+    <div class="footer">
+        <p>Generated on {{ today|date:"Y-m-d" }} | {{ company_name }}</p>
+    </div>
+</body>
+</html>

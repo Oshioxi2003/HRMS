@@ -1,0 +1,182 @@
+<!-- templates/settings/system_info.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Information{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">System Information</h4>
+                <div>
+                    <a href="{% url 'system_settings' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- System Overview -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th width="40%">Python Version</th>
+                                    <td>{{ system_info.python_version }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Django Version</th>
+                                    <td>{{ system_info.django_version }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Database Engine</th>
+                                    <td>{{ system_info.database_engine }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Operating System</th>
+                                    <td>{{ system_info.os_info }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Hostname</th>
+                                    <td>{{ system_info.hostname }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Timezone</th>
+                                    <td>{{ system_info.timezone }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Debug Mode</th>
+                                    <td>
+                                        <span class="badge bg-{% if system_info.debug_mode == 'Enabled' %}warning{% else %}success{% endif %}">
+                                            {{ system_info.debug_mode }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Server Time</th>
+                                    <td>{{ system_info.server_time }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Migrations Count</th>
+                                    <td>{{ system_info.migrations_count }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Database Stats -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Database Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="accordionModels">
+                        {% for app in model_counts %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" 
+                                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                        aria-controls="collapse{{ forloop.counter }}">
+                                    {{ app.app_name }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                 aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#accordionModels">
+                                <div class="accordion-body p-0">
+                                    <table class="table table-sm mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Model</th>
+                                                <th>Record Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for model_name, count in app.models.items %}
+                                            <tr>
+                                                <td>{{ model_name }}</td>
+                                                <td>{{ count }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">System Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'test_email' %}" class="btn btn-primary">
+                                    <i class="fas fa-envelope"></i> Test Email Configuration
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'audit_logs' %}" class="btn btn-info">
+                                    <i class="fas fa-history"></i> View Audit Logs
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearCacheModal">
+                                    <i class="fas fa-trash"></i> Clear System Cache
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Cache Confirmation Modal -->
+<div class="modal fade" id="clearCacheModal" tabindex="-1" aria-labelledby="clearCacheModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clearCacheModalLabel">Clear System Cache</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear the system cache? This will remove all cached data and might temporarily slow down the system.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" class="btn btn-danger">Clear Cache</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

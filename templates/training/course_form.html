@@ -1,0 +1,71 @@
+<!-- templates/training/course_form.html -->
+{% extends "training/base_training.html" %}
+{% load crispy_forms_tags %}
+
+{% block card_title %}
+    {% if is_create %}
+    <i class="fas fa-plus"></i> Create New Training Course
+    {% else %}
+    <i class="fas fa-edit"></i> Update Training Course
+    {% endif %}
+{% endblock %}
+
+{% block training_content %}
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.course_name|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.status|as_crispy_field }}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.start_date|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.end_date|as_crispy_field }}
+        </div>
+    </div>
+    
+    {{ form.description|as_crispy_field }}
+    
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.location|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.cost|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.organizer|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.supervisor|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> 
+            {% if is_create %}Create Course{% else %}Update Course{% endif %}
+        </button>
+        <a href="{% if is_create %}{% url 'course_list' %}{% else %}{% url 'course_detail' pk=course.course_id %}{% endif %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+        
+        {% if not is_create %}
+        <a href="{% url 'course_delete' pk=course.course_id %}" class="btn btn-danger float-end">
+            <i class="fas fa-trash"></i> Delete
+        </a>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

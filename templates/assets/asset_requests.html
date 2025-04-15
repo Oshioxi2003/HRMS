@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Asset Requests" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{% trans "Asset Requests" %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filter options -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <select class="form-select" name="status">
+                                <option value="">{% trans "All Statuses" %}</option>
+                                <option value="Pending" {% if status_filter == "Pending" %}selected{% endif %}>{% trans "Pending" %}</option>
+                                <option value="Approved" {% if status_filter == "Approved" %}selected{% endif %}>{% trans "Approved" %}</option>
+                                <option value="Rejected" {% if status_filter == "Rejected" %}selected{% endif %}>{% trans "Rejected" %}</option>
+                                <option value="Fulfilled" {% if status_filter == "Fulfilled" %}selected{% endif %}>{% trans "Fulfilled" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-1"></i> {% trans "Filter" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    {% if requests %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Request Date" %}</th>
+                                    <th>{% trans "Employee" %}</th>
+                                    <th>{% trans "Department" %}</th>
+                                    <th>{% trans "Asset Requested" %}</th>
+                                    <th>{% trans "Category" %}</th>
+                                    <th>{% trans "Needed From" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr>
+                                    <td>{{ request.requested_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <a href="{% url 'employee_detail' pk=request.employee.employee_id %}">
+                                            {{ request.employee.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ request.employee.department.department_name|default:"-" }}</td>
+                                    <td>{{ request.asset_name }}</td>
+                                    <td>
+                                        {% if request.category %}
+                                        <span class="badge bg-info">{{ request.category.name }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Uncategorized" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ request.needed_from|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if request.status == 'Pending' %}
+                                        <span class="badge bg-warning">{% trans "Pending" %}</span>
+                                        {% elif request.status == 'Approved' %}
+                                        <span class="badge bg-success">{% trans "Approved" %}</span>
+                                        {% elif request.status == 'Rejected' %}
+                                        <span class="badge bg-danger">{% trans "Rejected" %}</span>
+                                        {% elif request.status == 'Fulfilled' %}
+                                        <span class="badge bg-primary">{% trans "Fulfilled" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ request.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'Pending' %}
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'process_asset_request' request_id=request.request_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-check-circle"></i> {% trans "Process" %}
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#requestModal{{ request.request_id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        {% else %}
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#requestModal{{ request.request_id }}">
+                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <!-- Request Details Modal -->
+                                        <div class="modal fade" id="requestModal{{ request.request_id }}" tabindex="-1" aria-labelledby="requestModalLabel{{ request.request_id }}" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="requestModalLabel{{ request.request_id }}">{% trans "Request Details" %}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <h5>{{ request.asset_name }}</h5>
+                                                                <p>
+                                                                    {% if request.category %}
+                                                                    <span class="badge bg-info">{{ request.category.name }}</span>
+                                                                    {% endif %}
+                                                                    <span class="badge bg-{{ request.status|lower }}">{{ request.status }}</span>
+                                                                </p>
+                                                                
+                                                                <div class="mt-4">
+                                                                    <h6>{% trans "Employee Information:" %}</h6>
+                                                                    <p><strong>{% trans "Name:" %}</strong> {{ request.employee.full_name }}</p>
+                                                                    <p><strong>{% trans "Department:" %}</strong> {{ request.employee.department.department_name|default:"-" }}</p>
+                                                                    <p><strong>{% trans "Position:" %}</strong> {{ request.employee.position.position_name|default:"-" }}</p>
+                                                                    <p><strong>{% trans "Email:" %}</strong> {{ request.employee.email|default:"-" }}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="card h-100">
+                                                                    <div class="card-header">
+                                                                        <h6 class="mb-0">{% trans "Request Details" %}</h6>
+                                                                    </div>
+                                                                    <div class="card-body">
+                                                                        <p><strong>{% trans "Request Date:" %}</strong> {{ request.requested_date|date:"Y-m-d" }}</p>
+                                                                        <p><strong>{% trans "Needed From:" %}</strong> {{ request.needed_from|date:"Y-m-d" }}</p>
+                                                                        {% if request.needed_until %}
+                                                                        <p><strong>{% trans "Needed Until:" %}</strong> {{ request.needed_until|date:"Y-m-d" }}</p>
+                                                                        {% endif %}
+                                                                        
+                                                                        {% if request.status != 'Pending' %}
+                                                                        <div class="mt-3">
+                                                                            {% if request.approved_by %}
+                                                                            <p><strong>{% trans "Processed By:" %}</strong> {{ request.approved_by.get_full_name }}</p>
+                                                                            {% endif %}
+                                                                            
+                                                                            {% if request.approval_date %}
+                                                                            <p><strong>{% trans "Processed On:" %}</strong> {{ request.approval_date|date:"Y-m-d" }}</p>
+                                                                            {% endif %}
+                                                                            
+                                                                            {% if request.status == 'Rejected' and request.rejection_reason %}
+                                                                            <p><strong>{% trans "Rejection Reason:" %}</strong> {{ request.rejection_reason }}</p>
+                                                                            {% endif %}
+                                                                            
+                                                                            {% if request.status == 'Fulfilled' and request.fulfilled_with %}
+                                                                            <p><strong>{% trans "Fulfilled With:" %}</strong> {{ request.fulfilled_with.asset_name }} ({{ request.fulfilled_with.asset_tag }})</p>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="row mt-4">
+                                                            <div class="col-md-6">
+                                                                <h6>{% trans "Description:" %}</h6>
+                                                                <p>{{ request.description|linebreaks }}</p>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <h6>{% trans "Reason:" %}</h6>
+                                                                <p>{{ request.reason|linebreaks }}</p>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {% if request.status == 'Pending' %}
+                                                        <div class="mt-4">
+                                                            <a href="{% url 'process_asset_request' request_id=request.request_id %}" class="btn btn-primary">
+                                                                <i class="fas fa-check-circle me-1"></i> {% trans "Process Request" %}
+                                                            </a>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                        <h5>{% trans "No asset requests found" %}</h5>
+                        <p class="text-muted">{% trans "There are no asset requests matching your filter criteria." %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

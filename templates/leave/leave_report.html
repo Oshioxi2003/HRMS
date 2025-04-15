@@ -1,0 +1,237 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}Leave Reports{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid leave-container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3 mb-0">Leave Reports</h1>
+            <p class="text-muted">
+                {% if month > 0 %}
+                {{ month|month_name }} {{ year }}
+                {% else %}
+                Year: {{ year }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{% url 'all_leave_requests' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Leave Requests
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter Controls -->
+    <div class="card leave-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="yearFilter" class="form-label">Year:</label>
+                    <select id="yearFilter" name="year" class="form-select" onchange="this.form.submit()">
+                        {% for yr in available_years %}
+                        <option value="{{ yr }}" {% if yr == year %}selected{% endif %}>{{ yr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="monthFilter" class="form-label">Month:</label>
+                    <select id="monthFilter" name="month" class="form-select" onchange="this.form.submit()">
+                        <option value="0" {% if month == 0 %}selected{% endif %}>All Months</option>
+                        {% for m_num, m_name in months %}
+                        <option value="{{ m_num }}" {% if m_num == month %}selected{% endif %}>{{ m_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <a href="{% url 'export_leave_requests' %}" class="btn btn-success">
+                        <i class="fas fa-file-excel"></i> Export Data
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Department Chart -->
+    <div class="card leave-card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Leave by Department</h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="departmentChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Department Statistics Table -->
+    <div class="card leave-card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Department Leave Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Department</th>
+                            <th>Annual Leave</th>
+                            <th>Sick Leave</th>
+                            <th>Other Leave</th>
+                            <th>Total</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dept in department_stats %}
+                        <tr>
+                            <td>{{ dept.department.department_name }}</td>
+                            <td>
+                                {{ dept.annual_count }} requests
+                                <span class="d-block small text-muted">{{ dept.annual_days }} days</span>
+                            </td>
+                            <td>
+                                {{ dept.sick_count }} requests
+                                <span class="d-block small text-muted">{{ dept.sick_days }} days</span>
+                            </td>
+                            <td>
+                                {{ dept.other_count }} requests
+                                <span class="d-block small text-muted">{{ dept.other_days }} days</span>
+                            </td>
+                            <td>
+                                <strong>{{ dept.total_count }} requests</strong>
+                                <span class="d-block small text-muted">{{ dept.total_days }} days</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'department_leave_report' department_id=dept.department.department_id %}?year={{ year }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-chart-bar"></i> Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    {% if month == 0 %}
+    <!-- Monthly Distribution Chart -->
+    <div class="card leave-card">
+        <div class="card-header">
+            <h5 class="mb-0">Leave by Month</h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Department Chart
+        const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+        new Chart(departmentCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for dept in department_stats %}'{{ dept.department.department_name }}',{% endfor %}],
+                datasets: [
+                    {
+                        label: 'Annual Leave (days)',
+                        data: [{% for dept in department_stats %}{{ dept.annual_days }},{% endfor %}],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Sick Leave (days)',
+                        data: [{% for dept in department_stats %}{{ dept.sick_days }},{% endfor %}],
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Other Leave (days)',
+                        data: [{% for dept in department_stats %}{{ dept.other_days }},{% endfor %}],
+                        backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Leave Days'
+                        }
+                    }
+                }
+            }
+        });
+        
+        {% if month == 0 %}
+        // Monthly Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for m in month_stats %}'{{ m.month }}',{% endfor %}],
+                datasets: [
+                    {
+                        label: 'Leave Days',
+                        data: [{% for m in month_stats %}{{ m.days }},{% endfor %}],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Leave Requests',
+                        data: [{% for m in month_stats %}{{ m.count }},{% endfor %}],
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

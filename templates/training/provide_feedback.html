@@ -1,0 +1,50 @@
+<!-- templates/training/provide_feedback.html -->
+{% extends "training/base_training.html" %}
+
+{% block card_title %}
+    <i class="fas fa-comment"></i> Provide Feedback for "{{ participation.course.course_name }}"
+{% endblock %}
+
+{% block training_content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">{{ participation.course.course_name }}</h5>
+        <p class="card-text">{{ participation.course.description|default:"No description"|linebreaks }}</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Status:</strong> {{ participation.status }}</p>
+                <p><strong>Score:</strong> {{ participation.score|default:"Not graded" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Completion Date:</strong> {{ participation.actual_completion_date|default:"Not recorded" }}</p>
+                <p><strong>Certificate:</strong> {{ participation.certificate|default:"Not issued" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> Please provide your feedback about this training course. Your feedback helps us improve future training programs.
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="form-group mb-4">
+        <label for="feedback"><strong>Your Feedback:</strong></label>
+        <textarea name="feedback" id="feedback" rows="6" class="form-control">{{ participation.feedback }}</textarea>
+        <small class="form-text text-muted">
+            Please be specific about what you liked and what could be improved. Comment on the content, delivery, materials, and overall experience.
+        </small>
+    </div>
+    
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Submit Feedback
+        </button>
+        <a href="{% url 'my_training' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,227 @@
+<!-- templates/training/training_admin.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block card_title %}
+    <i class="fas fa-tachometer-alt"></i> Training Administration Dashboard
+{% endblock %}
+
+{% block training_content %}
+<div class="row">
+    <!-- Statistics cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-book fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Total Courses</h5>
+                <p class="card-text display-5">{{ total_courses }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-chalkboard-teacher fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Active Courses</h5>
+                <p class="card-text display-5">{{ active_courses }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-user-graduate fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Total Participants</h5>
+                <p class="card-text display-5">{{ total_participants }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-award fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Completed</h5>
+                <p class="card-text display-5">{{ completed_participants }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'course_create' %}" class="btn btn-primary btn-block w-100 mb-2">
+                            <i class="fas fa-plus-circle"></i> Create New Course
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'course_list' %}" class="btn btn-info btn-block w-100 mb-2">
+                            <i class="fas fa-list"></i> Manage Courses
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'training_report' %}" class="btn btn-success btn-block w-100 mb-2">
+                            <i class="fas fa-chart-bar"></i> View Reports
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary btn-block w-100 dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-export"></i> Export Data
+                            </button>
+                            <ul class="dropdown-menu w-100" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="{% url 'export_training' %}?type=courses&format=csv">Export Courses (CSV)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'export_training' %}?type=courses&format=excel">Export Courses (Excel)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'export_training' %}?type=participants&format=csv">Export Participants (CSV)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'export_training' %}?type=participants&format=excel">Export Participants (Excel)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Courses -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recently Added Courses</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_courses %}
+                <div class="list-group">
+                    {% for course in recent_courses %}
+                    <a href="{% url 'course_detail' pk=course.course_id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ course.course_name }}</h6>
+                            <small>{{ course.created_date|date }}</small>
+                        </div>
+                        <p class="mb-1">{{ course.description|truncatechars:80 }}</p>
+                        <small>
+                            <span class="badge {% if course.status == 'Preparing' %}bg-warning{% elif course.status == 'In Progress' %}bg-primary{% elif course.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ course.status }}
+                            </span>
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">No courses added recently</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'course_list' %}" class="btn btn-sm btn-outline-primary">View All Courses</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Courses -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Top Courses by Participation</h5>
+            </div>
+            <div class="card-body">
+                {% if top_courses %}
+                <div class="list-group">
+                    {% for course in top_courses %}
+                    <a href="{% url 'course_detail' pk=course.course_id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ course.course_name }}</h6>
+                            <span class="badge bg-primary">{{ course.participant_count }} participants</span>
+                        </div>
+                        <p class="mb-1">{{ course.description|truncatechars:80 }}</p>
+                        <small>
+                            <span class="badge {% if course.status == 'Preparing' %}bg-warning{% elif course.status == 'In Progress' %}bg-primary{% elif course.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ course.status }}
+                            </span>
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">No courses with participants</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{% url 'training_report' %}" class="btn btn-sm btn-outline-primary">View Detailed Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Upcoming Courses -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Upcoming Courses</h5>
+            </div>
+            <div class="card-body">
+                {% if upcoming_courses %}
+                <div class="list-group">
+                    {% for course in upcoming_courses %}
+                    <a href="{% url 'course_detail' pk=course.course_id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ course.course_name }}</h6>
+                            <small>Starts: {{ course.start_date }}</small>
+                        </div>
+                        <p class="mb-1">{{ course.description|truncatechars:80 }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">No upcoming courses</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- In Progress Courses -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Courses In Progress</h5>
+            </div>
+            <div class="card-body">
+                {% if in_progress_courses %}
+                <div class="list-group">
+                    {% for course in in_progress_courses %}
+                    <a href="{% url 'course_detail' pk=course.course_id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ course.course_name }}</h6>
+                            <small>Ends: {{ course.end_date|default:"Not set" }}</small>
+                        </div>
+                        <p class="mb-1">{{ course.description|truncatechars:80 }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">No courses currently in progress</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

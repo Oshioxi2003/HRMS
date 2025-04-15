@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">{% trans "User Detail" %}</h2>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ user.username }}</h5>
+            <p class="card-text"><strong>{% trans "Email" %}:</strong> {{ user.email }}</p>
+            <p class="card-text"><strong>{% trans "First Name" %}:</strong> {{ user.first_name }}</p>
+            <p class="card-text"><strong>{% trans "Last Name" %}:</strong> {{ user.last_name }}</p>
+            <p class="card-text"><strong>{% trans "Role" %}:</strong> {{ user.get_role_display }}</p>
+            <p class="card-text"><strong>{% trans "Status" %}:</strong> {{ user.is_active|yesno:"Active,Inactive" }}</p>
+            <p class="card-text"><strong>{% trans "Joined on" %}:</strong> {{ user.date_joined|date:"Y-m-d" }}</p>
+            <a href="{% url 'user_edit' user.pk %}" class="btn btn-warning">{% trans "Edit" %}</a>
+            <a href="{% url 'user_list' %}" class="btn btn-secondary">{% trans "Back to User List" %}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

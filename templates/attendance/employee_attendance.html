@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ employee.full_name }} Attendance{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{{ employee.full_name }} Attendance</h4>
+                <div>
+                    <a href="{% url 'attendance_report' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Back to Report
+                    </a>
+                    
+                    <a href="{% url 'attendance_record_create' %}?employee_id={{ employee.employee_id }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Add Record
+                    </a>
+                    
+                    <a href="{% url 'attendance_calendar' %}" class="btn btn-info">
+                        <i class="fas fa-calendar-alt me-1"></i> Calendar View
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Employee Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Employee Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            {% if employee.profile_image %}
+                            <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="img-fluid rounded mb-3">
+                            {% else %}
+                            <div class="text-center bg-light p-3 rounded mb-3">
+                                <i class="fas fa-user-circle fa-4x text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <p><strong>ID:</strong> {{ employee.employee_id }}</p>
+                            <p><strong>Department:</strong> {{ employee.department.department_name|default:"Not assigned" }}</p>
+                            <p><strong>Position:</strong> {{ employee.position.position_name|default:"Not assigned" }}</p>
+                            <p><strong>Status:</strong> {{ employee.status }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Current Shift Assignment</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_shift %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Shift:</strong> {{ current_shift.shift.shift_name }}</p>
+                            <p><strong>Start Time:</strong> {{ current_shift.shift.start_time|time:"H:i" }}</p>
+                            <p><strong>End Time:</strong> {{ current_shift.shift.end_time|time:"H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Effective Date:</strong> {{ current_shift.effective_date|date:"Y-m-d" }}</p>
+                            <p><strong>End Date:</strong> {{ current_shift.end_date|date:"Y-m-d"|default:"Not specified" }}</p>
+                            <p><strong>Status:</strong> {{ current_shift.status }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{% url 'shift_assignment_update' pk=current_shift.assignment_id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-edit me-1"></i> Edit Assignment
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <p>No active shift assignment found.</p>
+                        <a href="{% url 'shift_assignment_create' %}?employee_id={{ employee.employee_id }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Assign Shift
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Date Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" action="{% url 'employee_attendance' employee_id=employee.employee_id %}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="dateFrom" class="form-label">Date From</label>
+                            <input type="date" name="date_from" id="dateFrom" class="form-control" value="{{ date_from }}">
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="dateTo" class="form-label">Date To</label>
+                            <input type="date" name="date_to" id="dateTo" class="form-control" value="{{ date_to }}">
+                        </div>
+                        
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{% url 'employee_attendance' employee_id=employee.employee_id %}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Summary -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card text-center">
+                <div class="stat-title">Present</div>
+                <div class="stat-number text-success">{{ summary.present }}</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card text-center">
+                <div class="stat-title">Absent</div>
+                <div class="stat-number text-danger">{{ summary.absent }}</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card text-center">
+                <div class="stat-title">On Leave</div>
+                <div class="stat-number text-warning">{{ summary.on_leave }}</div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="stat-card text-center">
+                <div class="stat-title">Total Hours</div>
+                <div class="stat-number text-primary">{{ summary.total_hours|floatformat:2 }}</div>
+                <div class="mt-2 small text-muted">
+                    Overtime: {{ summary.total_overtime|floatformat:2 }} hours
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Attendance Records</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Status</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
+                                    <th>Hours</th>
+                                    <th>Overtime</th>
+                                    <th>Shift</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.work_date|date:"Y-m-d" }}</td>
+                                    <td>{{ record.work_date|date:"l" }}</td>
+                                    <td>
+                                        {% if record.status == 'Present' %}
+                                        <span class="badge bg-success">{{ record.status }}</span>
+                                        {% elif record.status == 'Absent' %}
+                                        <span class="badge bg-danger">{{ record.status }}</span>
+                                        {% elif record.status == 'On Leave' %}
+                                        <span class="badge bg-warning">{{ record.status }}</span>
+                                        {% elif record.status == 'Holiday' %}
+                                        <span class="badge bg-info">{{ record.status }}</span>
+                                        {% elif record.status == 'Business Trip' %}
+                                        <span class="badge bg-primary">{{ record.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.time_in|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.time_out|time:"H:i"|default:"--" }}</td>
+                                    <td>{{ record.actual_work_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.overtime_hours|floatformat:2|default:"--" }}</td>
+                                    <td>{{ record.shift.shift_name|default:"--" }}</td>
+                                    <td>{{ record.notes|truncatechars:20|default:"--" }}</td>
+                                    <td>
+                                        <a href="{% url 'attendance_record_update' pk=record.attendance_id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'attendance_record_delete' pk=record.attendance_id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-center">No attendance records found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

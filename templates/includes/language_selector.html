@@ -1,0 +1,21 @@
+{% load i18n %}
+<div class="dropdown">
+    <button class="btn btn-light dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-globe"></i> {% trans "Language" %}
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+        {% get_current_language as CURRENT_LANGUAGE %}
+        {% get_available_languages as LANGUAGES %}
+        {% for lang_code, lang_name in LANGUAGES %}
+        <li>
+            <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="language" value="{{ lang_code }}">
+                <button type="submit" class="dropdown-item{% if lang_code == CURRENT_LANGUAGE %} active{% endif %}">
+                    {{ lang_name }}
+                </button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+</div>

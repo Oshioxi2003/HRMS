@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ asset.asset_name }} | {% trans "Asset Details" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="mb-0">{% trans "Asset Details" %}</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'asset_list' %}">{% trans "Assets" %}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ asset.asset_tag }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                
+                <div class="page-title-right">
+                    <div class="btn-group" role="group">
+                        {% if perms.assets.change_asset %}
+                        <a href="{% url 'edit_asset' asset_id=asset.asset_id %}" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i> {% trans "Edit" %}
+                        </a>
+                        {% endif %}
+                        
+                        {% if can_assign %}
+                        <a href="{% url 'assign_asset' asset_id=asset.asset_id %}" class="btn btn-success">
+                            <i class="fas fa-user-plus me-1"></i> {% trans "Assign" %}
+                        </a>
+                        {% endif %}
+                        
+                        {% if can_maintain %}
+                        <a href="{% url 'asset_maintenance' asset_id=asset.asset_id %}" class="btn btn-info">
+                            <i class="fas fa-tools me-1"></i> {% trans "Maintenance" %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Asset Information -->
+    <div class="row mt-3">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{% trans "Asset Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4 text-center">
+                        <div class="asset-icon bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                            {% if asset.category and asset.category.name %}
+                                {% if 'laptop' in asset.category.name|lower %}
+                                <i class="fas fa-laptop fa-3x text-primary"></i>
+                                {% elif 'desktop' in asset.category.name|lower %}
+                                <i class="fas fa-desktop fa-3x text-primary"></i>
+                                {% elif 'phone' in asset.category.name|lower %}
+                                <i class="fas fa-mobile-alt fa-3x text-primary"></i>
+                                {% elif 'furniture' in asset.category.name|lower %}
+                                <i class="fas fa-chair fa-3x text-primary"></i>
+                                {% elif 'vehicle' in asset.category.name|lower %}
+                                <i class="fas fa-car fa-3x text-primary"></i>
+                                {% else %}
+                                <i class="fas fa-box fa-3x text-primary"></i>
+                                {% endif %}
+                            {% else %}
+                            <i class="fas fa-box fa-3x text-primary"></i>
+                            {% endif %}
+                        </div>
+                        <h4 class="mt-3">{{ asset.asset_name }}</h4>
+                        <p class="text-muted mb-0">{{ asset.asset_tag }}</p>
+                        <div class="mt-2">
+                            {% if asset.status == 'Available' %}
+                            <span class="badge bg-success fs-6">{% trans "Available" %}</span>
+                            {% elif asset.status == 'Assigned' %}
+                            <span class="badge bg-warning fs-6">{% trans "Assigned" %}</span>
+                            {% elif asset.status == 'Under Maintenance' %}
+                            <span class="badge bg-danger fs-6">{% trans "Maintenance" %}</span>
+                            {% else %}
+                            <span class="badge bg-secondary fs-6">{% trans "Retired" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th width="40%">{% trans "Category" %}</th>
+                                    <td>{{ asset.category.name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Condition" %}</th>
+                                    <td>{{ asset.condition }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Serial Number" %}</th>
+                                    <td>{{ asset.serial_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Model Number" %}</th>
+                                    <td>{{ asset.model_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Purchase Date" %}</th>
+                                    <td>{{ asset.purchase_date|date:"Y-m-d"|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Purchase Cost" %}</th>
+                                    <td>{% if asset.purchase_cost %}${{ asset.purchase_cost }}{% else %}-{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Warranty Expiry" %}</th>
+                                    <td>{{ asset.warranty_expiry|date:"Y-m-d"|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Location" %}</th>
+                                    <td>{{ asset.location|default:"-" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Current Assignment Information -->
+            {% if asset.current_holder %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h5 class="card-title mb-0">{% trans "Current Assignment" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            {% if asset.current_holder.profile_image %}
+                            <img src="{{ asset.current_holder.profile_image.url }}" alt="{{ asset.current_holder.full_name }}" class="rounded-circle" width="80" height="80">
+                            {% else %}
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                <i class="fas fa-user fa-2x text-secondary"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mt-0">{{ asset.current_holder.full_name }}</h5>
+                            <p class="text-muted mb-0">
+                                {% if asset.current_holder.department %}
+                                {{ asset.current_holder.department.department_name }} |
+                                {% endif %}
+                                {% if asset.current_holder.position %}
+                                {{ asset.current_holder.position.position_name }}
+                                {% endif %}
+                            </p>
+                            
+                            {% for assignment in assignments %}
+                            {% if assignment.status == 'Assigned' %}
+                            <div class="mt-2">
+                                <p class="mb-0"><strong>{% trans "Assigned Date:" %}</strong> {{ assignment.assignment_date|date:"Y-m-d" }}</p>
+                                {% if assignment.expected_return_date %}
+                                <p class="mb-0"><strong>{% trans "Expected Return:" %}</strong> {{ assignment.expected_return_date|date:"Y-m-d" }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            {% if perms.assets.change_assetassignment %}
+                            <div class="mt-3">
+                                <a href="{% url 'return_asset' assignment_id=assignment.assignment_id %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-undo-alt me-1"></i> {% trans "Process Return" %}
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Description -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Description" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if asset.description %}
+                    <p>{{ asset.description|linebreaks }}</p>
+                    {% else %}
+                    <p class="text-muted text-center">{% trans "No description available" %}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Assignment History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Assignment History" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if assignments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Employee" %}</th>
+                                    <th>{% trans "Assignment Date" %}</th>
+                                    <th>{% trans "Return Date" %}</th>
+                                    <th>{% trans "Assigned By" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Notes" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'employee_detail' pk=assignment.employee.employee_id %}">
+                                            {{ assignment.employee.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ assignment.assignment_date|date:"Y-m-d" }}</td>
+                                    <td>{{ assignment.actual_return_date|date:"Y-m-d"|default:"-" }}</td>
+                                    <td>{{ assignment.assigned_by.get_full_name }}</td>
+                                    <td>
+                                        {% if assignment.status == 'Assigned' %}
+                                        <span class="badge bg-warning">{% trans "Assigned" %}</span>
+                                        {% elif assignment.status == 'Returned' %}
+                                        <span class="badge bg-success">{% trans "Returned" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ assignment.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assignment.assignment_notes %}
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ assignment.assignment_notes }}">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "No assignment history found" %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Maintenance History -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Maintenance History" %}</h5>
+                </div>
+                <div class="card-body">
+                    {% if maintenance_records %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Maintenance Type" %}</th>
+                                    <th>{% trans "Start Date" %}</th>
+                                    <th>{% trans "End Date" %}</th>
+                                    <th>{% trans "Provider" %}</th>
+                                    <th>{% trans "Cost" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Details" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in maintenance_records %}
+                                <tr>
+                                    <td>{{ record.maintenance_type }}</td>
+                                    <td>{{ record.start_date|date:"Y-m-d" }}</td>
+                                    <td>{{ record.end_date|date:"Y-m-d"|default:"-" }}</td>
+                                    <td>{{ record.provider|default:"-" }}</td>
+                                    <td>{% if record.cost %}${{ record.cost }}{% else %}-{% endif %}</td>
+                                    <td>
+                                        {% if record.status == 'Scheduled' %}
+                                        <span class="badge bg-info">{% trans "Scheduled" %}</span>
+                                        {% elif record.status == 'In Progress' %}
+                                        <span class="badge bg-warning">{% trans "In Progress" %}</span>
+                                        {% elif record.status == 'Completed' %}
+                                        <span class="badge bg-success">{% trans "Completed" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ record.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#maintenanceModal{{ record.maintenance_id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        
+                                        <!-- Maintenance Details Modal -->
+                                        <div class="modal fade" id="maintenanceModal{{ record.maintenance_id }}" tabindex="-1" aria-labelledby="maintenanceModalLabel{{ record.maintenance_id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="maintenanceModalLabel{{ record.maintenance_id }}">{% trans "Maintenance Details" %}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <h6>{{ record.maintenance_type }}</h6>
+                                                        <p class="text-muted">{{ record.start_date|date:"Y-m-d" }} {% if record.end_date %} - {{ record.end_date|date:"Y-m-d" }}{% endif %}</p>
+                                                        <p>{{ record.details|linebreaks }}</p>
+                                                        
+                                                        {% if record.provider or record.cost %}
+                                                        <div class="mt-3">
+                                                            {% if record.provider %}
+                                                            <p><strong>{% trans "Provider:" %}</strong> {{ record.provider }}</p>
+                                                            {% endif %}
+                                                            {% if record.cost %}
+                                                            <p><strong>{% trans "Cost:" %}</strong> ${{ record.cost }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tools fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">{% trans "No maintenance history found" %}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}

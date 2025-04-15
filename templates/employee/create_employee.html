@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Tạo nhân viên mới" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/employee/create_employee.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0 font-weight-bold">{% trans "Tạo nhân viên mới" %}</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'employee_list' %}">{% trans "Nhân viên" %}</a></li>
+                        <li class="breadcrumb-item active">{% trans "Tạo mới" %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="progress-indicator">
+                        <div class="progress-step active">
+                            <div class="step-indicator">1</div>
+                            <div class="step-label">{% trans "Thông tin cơ bản" %}</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-indicator">2</div>
+                            <div class="step-label">{% trans "Thông tin công việc" %}</div>
+                        </div>
+                        <div class="progress-step">
+                            <div class="step-indicator">3</div>
+                            <div class="step-label">{% trans "Thông tin liên hệ" %}</div>
+                        </div>
+                    </div>
+
+                    <div class="form-header">
+                        <h5 class="mb-0">{% trans "Điền thông tin nhân viên" %}</h5>
+                        <p class="text-muted mb-0">{% trans "Vui lòng điền đầy đủ các trường bắt buộc (*)" %}</p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" id="employee-form" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">
+                                    <i class="fas fa-user me-2"></i>{% trans "Thông tin cá nhân" %}
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button" role="tab" aria-controls="professional" aria-selected="false">
+                                    <i class="fas fa-briefcase me-2"></i>{% trans "Thông tin công việc" %}
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+                                    <i class="fas fa-file-alt me-2"></i>{% trans "Hồ sơ & Tài liệu" %}
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content p-3" id="myTabContent">
+                            <!-- Thông tin cá nhân -->
+                            <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                                <div class="row mb-4">
+                                    <div class="col-md-3 text-center">
+                                        <div class="avatar-wrapper">
+                                            <div class="avatar-placeholder" id="avatar-placeholder">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <img id="preview-avatar" class="d-none" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="profile_image" class="form-label d-block">{% trans "Ảnh đại diện" %}</label>
+                                            <input type="file" name="profile_image" id="profile_image" class="d-none" accept="image/*">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="select-avatar">
+                                                <i class="fas fa-camera me-1"></i>{% trans "Chọn ảnh" %}
+                                            </button>
+                                            {% if form.profile_image.errors %}
+                                                <div class="text-danger small mt-1">
+                                                    {{ form.profile_image.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="full_name" class="form-label field-required">{% trans "Họ và tên" %}</label>
+                                                {{ form.full_name }}
+                                                {% if form.full_name.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.full_name.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="date_of_birth" class="form-label field-required">{% trans "Ngày sinh" %}</label>
+                                                {{ form.date_of_birth }}
+                                                <small class="field-help">{% trans "Định dạng: YYYY-MM-DD" %}</small>
+                                                {% if form.date_of_birth.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.date_of_birth.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="gender" class="form-label">{% trans "Giới tính" %}</label>
+                                                {{ form.gender }}
+                                                {% if form.gender.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.gender.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="id_card" class="form-label field-required">{% trans "Số CMND/CCCD" %}</label>
+                                                {{ form.id_card }}
+                                                {% if form.id_card.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.id_card.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="id_card_issue_date" class="form-label">{% trans "Ngày cấp" %}</label>
+                                                {{ form.id_card_issue_date }}
+                                                {% if form.id_card_issue_date.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.id_card_issue_date.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="id_card_issue_place" class="form-label">{% trans "Nơi cấp" %}</label>
+                                                <select id="id_card_issue_place" name="id_card_issue_place" class="form-select location-select">
+                                                    <option value="">-- Chọn nơi cấp --</option>
+                                                    <!-- Các tỉnh/thành phố sẽ được điền bởi JavaScript -->
+                                                </select>
+                                                {% if form.id_card_issue_place.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.id_card_issue_place.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Thông tin công việc -->
+                            <div class="tab-pane fade" id="professional" role="tabpanel" aria-labelledby="professional-tab">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="email" class="form-label field-required">{% trans "Email" %}</label>
+                                        {{ form.email }}
+                                        <small class="field-help">{% trans "Địa chỉ email công ty" %}</small>
+                                        {% if form.email.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.email.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="phone" class="form-label field-required">{% trans "Số điện thoại" %}</label>
+                                        {{ form.phone }}
+                                        {% if form.phone.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.phone.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="department" class="form-label">{% trans "Phòng ban" %}</label>
+                                        {{ form.department }}
+                                        {% if form.department.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.department.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="position" class="form-label">{% trans "Vị trí" %}</label>
+                                        {{ form.position }}
+                                        {% if form.position.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.position.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="hire_date" class="form-label">{% trans "Ngày vào làm" %}</label>
+                                        {{ form.hire_date }}
+                                        {% if form.hire_date.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.hire_date.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="status" class="form-label">{% trans "Trạng thái" %}</label>
+                                        {{ form.status }}
+                                        {% if form.status.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.status.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="education" class="form-label">{% trans "Trình độ học vấn" %}</label>
+                                        {{ form.education }}
+                                        {% if form.education.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.education.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="title" class="form-label">{% trans "Chức danh" %}</label>
+                                        {{ form.title }}
+                                        {% if form.title.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.title.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hồ sơ & tài liệu -->
+                            <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="address" class="form-label">{% trans "Địa chỉ" %}</label>
+                                        {{ form.address }}
+                                        {% if form.address.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.address.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Thông tin địa chỉ -->
+                                <div class="form-section mb-4">
+                                    <div class="form-section-header">
+                                        <h5 class="mb-0">{% trans "Thông tin địa chỉ cụ thể" %}</h5>
+                                    </div>
+                                    <div class="form-section-body">
+                                        <!-- Địa chỉ quê quán -->
+                                        <h6 class="text-muted mb-3">{% trans "Địa chỉ quê quán" %}</h6>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="hometown_province" class="form-label">{% trans "Tỉnh/TP quê quán" %}</label>
+                                                <select id="hometown_province" name="hometown_province" class="form-select location-select">
+                                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                                    <!-- Các tỉnh/thành phố sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="hometown_district" class="form-label">{% trans "Quận/Huyện quê quán" %}</label>
+                                                <select id="hometown_district" name="hometown_district" class="form-select location-select">
+                                                    <option value="">-- Chọn Quận/Huyện --</option>
+                                                    <!-- Các quận/huyện sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="hometown_ward" class="form-label">{% trans "Phường/Xã quê quán" %}</label>
+                                                <select id="hometown_ward" name="hometown_ward" class="form-select location-select">
+                                                    <option value="">-- Chọn Phường/Xã --</option>
+                                                    <!-- Các phường/xã sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mb-4">
+                                                <label for="hometown_address" class="form-label">{% trans "Địa chỉ chi tiết quê quán" %}</label>
+                                                <textarea id="hometown_address" name="hometown_address" class="form-control" rows="2" placeholder="Số nhà, đường/thôn/xóm...">{{ location_form.hometown_address.value|default:'' }}</textarea>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Địa chỉ hiện tại -->
+                                        <h6 class="text-muted mb-3">{% trans "Địa chỉ hiện tại" %}</h6>
+                                        <div class="address-copy-container">
+                                            <!-- Nút sao chép địa chỉ sẽ được thêm vào đây bằng JavaScript -->
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="current_province" class="form-label">{% trans "Tỉnh/TP hiện tại" %}</label>
+                                                <select id="current_province" name="current_province" class="form-select location-select">
+                                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                                    <!-- Các tỉnh/thành phố sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="current_district" class="form-label">{% trans "Quận/Huyện hiện tại" %}</label>
+                                                <select id="current_district" name="current_district" class="form-select location-select">
+                                                    <option value="">-- Chọn Quận/Huyện --</option>
+                                                    <!-- Các quận/huyện sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="current_ward" class="form-label">{% trans "Phường/Xã hiện tại" %}</label>
+                                                <select id="current_ward" name="current_ward" class="form-select location-select">
+                                                    <option value="">-- Chọn Phường/Xã --</option>
+                                                    <!-- Các phường/xã sẽ được điền bởi JavaScript -->
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12 mb-3">
+                                                <label for="current_address" class="form-label">{% trans "Địa chỉ hiện tại" %}</label>
+                                                <textarea id="current_address" name="current_address" class="form-control" rows="2" placeholder="Số nhà, đường/thôn/xóm...">{{ location_form.current_address.value|default:'' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                
+                                <!-- Tài liệu & ghi chú -->
+                                <div class="form-section mb-4">
+                                    <div class="form-section-header">
+                                        <h5 class="mb-0">{% trans "Tài liệu đính kèm" %}</h5>
+                                    </div>
+                                    <div class="form-section-body">
+                                        <p class="text-muted">{% trans "Tải lên các tài liệu cần thiết (tùy chọn)" %}</p>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">{% trans "CMND/CCCD (mặt trước)" %}</label>
+                                                <div class="custom-file-upload" id="id-card-front">
+                                                    <i class="fas fa-id-card"></i>
+                                                    <p class="mb-0">{% trans "Nhấp để tải lên mặt trước CMND/CCCD" %}</p>
+                                                    <input type="file" name="id_card_front" class="d-none" accept="image/*,.pdf">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">{% trans "CMND/CCCD (mặt sau)" %}</label>
+                                                <div class="custom-file-upload" id="id-card-back">
+                                                    <i class="fas fa-id-card"></i>
+                                                    <p class="mb-0">{% trans "Nhấp để tải lên mặt sau CMND/CCCD" %}</p>
+                                                    <input type="file" name="id_card_back" class="d-none" accept="image/*,.pdf">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">{% trans "Bằng cấp" %}</label>
+                                                <div class="custom-file-upload" id="diploma-upload">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                    <p class="mb-0">{% trans "Nhấp để tải lên bằng cấp" %}</p>
+                                                    <input type="file" name="diploma" class="d-none" accept="image/*,.pdf">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">{% trans "Hồ sơ khác" %}</label>
+                                                <div class="custom-file-upload" id="other-docs">
+                                                    <i class="fas fa-file-alt"></i>
+                                                    <p class="mb-0">{% trans "Nhấp để tải lên các tài liệu khác" %}</p>
+                                                    <input type="file" name="other_documents" class="d-none" accept="image/*,.pdf">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" onclick="window.history.back();">
+                                <i class="fas fa-arrow-left me-1"></i>{% trans "Quay lại" %}
+                            </button>
+                            <div>
+                                <button type="submit" name="save_continue" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i>{% trans "Lưu" %}
+                                </button>
+                                
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/employee/create_employee.js' %}"></script>
+
+
+{% endblock %}

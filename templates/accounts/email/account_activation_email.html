@@ -1,0 +1,23 @@
+{% extends "email/base_email.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>{% trans "Đăng Ký Tài Khoản Thành Công" %}</h2>
+<p>{% trans "Xin chào" %} {{ user.first_name|default:user.username }},</p>
+<p>{% trans "Cảm ơn bạn đã đăng ký tài khoản với hệ thống HRMS của chúng tôi. Tài khoản của bạn đã được tạo thành công!" %}</p>
+
+<div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
+  <p><strong>{% trans "Thông tin tài khoản của bạn:" %}</strong></p>
+  <p>{% trans "Tên đăng nhập:" %} {{ user.username }}</p>
+  <p>{% trans "Email:" %} {{ user.email }}</p>
+</div>
+
+<a href="{{ protocol }}://{{ domain }}{% url 'login' %}" class="button">{% trans "Đăng Nhập Ngay" %}</a>
+
+<p>{% trans "Bạn có thể đăng nhập ngay bây giờ với mật khẩu đã đăng ký hoặc sử dụng tài khoản Google." %}</p>
+
+<p>{% trans "Nếu bạn không tạo tài khoản này, vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi ngay lập tức." %}</p>
+
+<p>{% trans "Trân trọng," %}<br>
+{% trans "Đội ngũ HR" %}</p>
+{% endblock %}

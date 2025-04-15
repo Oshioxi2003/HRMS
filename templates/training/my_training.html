@@ -1,0 +1,172 @@
+{% extends "training/base_training.html" %}
+
+{% block card_title %}
+    <i class="fas fa-user-graduate"></i> Đào Tạo Của Tôi
+{% endblock %}
+
+{% block training_content %}
+<div class="mb-4">
+    <ul class="nav nav-tabs" id="trainingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab" aria-controls="upcoming" aria-selected="true">
+                Sắp Diễn Ra 
+                <span class="badge bg-primary">{{ upcoming|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-bs-target="#ongoing" type="button" role="tab" aria-controls="ongoing" aria-selected="false">
+                Đang Diễn Ra 
+                <span class="badge bg-success">{{ ongoing|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" aria-controls="completed" aria-selected="false">
+                Đã Hoàn Thành 
+                <span class="badge bg-info">{{ completed|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" data-bs-target="#cancelled" type="button" role="tab" aria-controls="cancelled" aria-selected="false">
+                Đã Hủy 
+                <span class="badge bg-danger">{{ cancelled|length }}</span>
+            </button>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content" id="trainingTabsContent">
+    <!-- Upcoming Courses -->
+    <div class="tab-pane fade show active" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+        {% if upcoming %}
+        <div class="list-group">
+            {% for participation in upcoming %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ participation.course.course_name }}</h5>
+                    <small>Đăng ký vào {{ participation.registration_date }}</small>
+                </div>
+                <div class="mb-1">
+                    {% if participation.course.start_date %}
+                    <span class="badge bg-primary">Bắt đầu: {{ participation.course.start_date }}</span>
+                    {% endif %}
+                    {% if participation.course.end_date %}
+                    <span class="badge bg-info">Kết thúc: {{ participation.course.end_date }}</span>
+                    {% endif %}
+                    <span class="badge bg-secondary">Trạng thái: {{ participation.status }}</span>
+                </div>
+                <p class="mb-1">{{ participation.course.description|truncatechars:200 }}</p>
+                <div class="mt-2">
+                    <a href="{% url 'course_detail' pk=participation.course.course_id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> Chi Tiết Khóa Học
+                    </a>
+                    <a href="{% url 'cancel_registration' participation_id=participation.participation_id %}" class="btn btn-sm btn-outline-danger">
+                        <i class="fas fa-times-circle"></i> Hủy Đăng Ký
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Bạn không có khóa đào tạo nào sắp diễn ra.
+            <a href="{% url 'course_list' %}" class="alert-link">Xem các khóa học hiện có</a>.
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Ongoing Courses -->
+    <div class="tab-pane fade" id="ongoing" role="tabpanel" aria-labelledby="ongoing-tab">
+        {% if ongoing %}
+        <div class="list-group">
+            {% for participation in ongoing %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ participation.course.course_name }}</h5>
+                    <small>Bắt đầu vào {{ participation.course.start_date }}</small>
+                </div>
+                <div class="mb-1">
+                    {% if participation.course.end_date %}
+                    <span class="badge bg-info">Kết thúc: {{ participation.course.end_date }}</span>
+                    {% endif %}
+                    <span class="badge bg-success">Trạng thái: {{ participation.status }}</span>
+                </div>
+                <p class="mb-1">{{ participation.course.description|truncatechars:200 }}</p>
+                <div class="mt-2">
+                    <a href="{% url 'course_detail' pk=participation.course.course_id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> Chi Tiết Khóa Học
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Bạn không có khóa đào tạo nào đang diễn ra.
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Completed Courses -->
+    <div class="tab-pane fade" id="completed" role="tabpanel" aria-labelledby="completed-tab">
+        {% if completed %}
+        <div class="list-group">
+            {% for participation in completed %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ participation.course.course_name }}</h5>
+                    <small>Đã hoàn thành</small>
+                </div>
+                <div class="mb-1">
+                    <span class="badge bg-success">Điểm: {{ participation.score|default:"Chưa chấm điểm" }}</span>
+                    <span class="badge bg-info">Chứng chỉ: {{ participation.certificate|default:"Chưa cấp" }}</span>
+                </div>
+                <p class="mb-1">{{ participation.course.description|truncatechars:200 }}</p>
+                <div class="mt-2">
+                    <a href="{% url 'course_detail' pk=participation.course.course_id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> Chi Tiết Khóa Học
+                    </a>
+                    {% if not participation.feedback %}
+                    <a href="{% url 'provide_feedback' participation_id=participation.participation_id %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-comment"></i> Gửi Phản Hồi
+                    </a>
+                    {% else %}
+                    <span class="badge bg-success">Đã Gửi Phản Hồi</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Bạn chưa hoàn thành khóa đào tạo nào.
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Cancelled Courses -->
+    <div class="tab-pane fade" id="cancelled" role="tabpanel" aria-labelledby="cancelled-tab">
+        {% if cancelled %}
+        <div class="list-group">
+            {% for participation in cancelled %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ participation.course.course_name }}</h5>
+                    <small>Đã hủy vào {{ participation.updated_date|date }}</small>
+                </div>
+                <p class="mb-1">{{ participation.course.description|truncatechars:200 }}</p>
+                <div class="mt-2">
+                    <a href="{% url 'course_detail' pk=participation.course.course_id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> Chi Tiết Khóa Học
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Bạn không có khóa đào tạo nào đã hủy.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

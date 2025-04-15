@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+<style>
+    .calendar-container {
+        padding: 20px;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .calendar-filters {
+        margin-bottom: 20px;
+    }
+    .legend {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+        margin-bottom: 10px;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Attendance & Leave Calendar</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="calendar-filters">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="calendarView">Calendar View</label>
+                                    <select class="form-control" id="calendarView">
+                                        <option value="personal">My Calendar</option>
+                                        {% if request.user.role == 'Manager' or request.user.role == 'HR' or request.user.role == 'Admin' %}
+                                        <option value="department">Department Calendar</option>
+                                        {% endif %}
+                                        {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                                        <option value="company">Company Calendar</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="calendar-container">
+                        <div id="calendar"></div>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #28a745;"></div>
+                            <span>Present</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc3545;"></div>
+                            <span>Absent</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffc107;"></div>
+                            <span>On Leave (Attendance)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #6f42c1;"></div>
+                            <span>Leave Request</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #17a2b8;"></div>
+                            <span>Holiday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Event Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="eventDetails">
+                <!-- Event details will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            var view = document.getElementById('calendarView').value;
+            var startDate = fetchInfo.startStr.substring(0, 10);
+            var endDate = fetchInfo.endStr.substring(0, 10);
+            
+            // Fetch events via AJAX
+            fetch(`/dashboard/calendar-data/?start=${startDate}&end=${endDate}&view=${view}`)
+                .then(response => response.json())
+                .then(data => {
+                    successCallback(data.events);
+                })
+                .catch(error => {
+                    console.error('Error fetching calendar data:', error);
+                    failureCallback(error);
+                });
+        },
+        eventClick: function(info) {
+            var event = info.event;
+            var modalBody = document.getElementById('eventDetails');
+            var content = '';
+            
+            if (event.extendedProps.type === 'attendance') {
+                content = `
+                    <p><strong>Date:</strong> ${event.start.toLocaleDateString()}</p>
+                    <p><strong>Status:</strong> ${event.extendedProps.status}</p>
+                    ${event.extendedProps.time_in ? `<p><strong>Time In:</strong> ${event.extendedProps.time_in}</p>` : ''}
+                    ${event.extendedProps.time_out ? `<p><strong>Time Out:</strong> ${event.extendedProps.time_out}</p>` : ''}
+                `;
+            } else if (event.extendedProps.type === 'leave') {
+                content = `
+                    <p><strong>Date:</strong> ${event.start.toLocaleDateString()}</p>
+                    <p><strong>Leave Type:</strong> ${event.extendedProps.leave_type}</p>
+                    ${event.extendedProps.employee ? `<p><strong>Employee:</strong> ${event.extendedProps.employee}</p>` : ''}
+                    ${event.extendedProps.department ? `<p><strong>Department:</strong> ${event.extendedProps.department}</p>` : ''}
+                `;
+            } else if (event.extendedProps.type === 'holiday') {
+                content = `
+                    <p><strong>Date:</strong> ${event.start.toLocaleDateString()}</p>
+                    <p><strong>Holiday:</strong> ${event.title.replace('Holiday: ', '')}</p>
+                `;
+            }
+            
+            modalBody.innerHTML = content;
+            $('#eventDetailModal').modal('show');
+        }
+    });
+    
+    calendar.render();
+    
+    // Handle view changes
+    document.getElementById('calendarView').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+</script>
+{% endblock %}

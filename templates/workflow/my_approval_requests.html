@@ -1,0 +1,71 @@
+<!-- templates/workflow/my_approval_requests.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">My Approval Requests</h5>
+        <div class="badge bg-primary">{{ pending_count }} Pending</div>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#pending">Pending ({{ pending_count }})</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#completed">Completed ({{ completed_count }})</a>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="pending">
+                {% if step_instances %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Workflow</th>
+                                    <th>Current Step</th>
+                                    <th>Initiated By</th>
+                                    <th>Started</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for step_instance in step_instances %}
+                                <tr>
+                                    <td>{{ step_instance.workflow_instance.workflow.name }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ step_instance.workflow_step.step_name }}</span>
+                                    </td>
+                                    <td>{{ step_instance.workflow_instance.initiator.get_full_name }}</td>
+                                    <td>{{ step_instance.started_date|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'approve_workflow_step' step_instance_id=step_instance.step_instance_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-check-circle"></i> Review
+                                        </a>
+                                        <a href="{% url 'workflow_detail' instance_id=step_instance.workflow_instance.instance_id %}" class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-eye"></i> Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> You don't have any pending approval requests.
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="tab-pane fade" id="completed">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> This section will display your completed approvals.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

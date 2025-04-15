@@ -1,0 +1,155 @@
+<!-- templates/performance/rewards_disciplinary_form.html -->
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="mb-0">{{ title }}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.employee|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.type|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.decision_date|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.decision_number|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.amount|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.decided_by|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.content|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.notes|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.attached_file|as_crispy_field }}
+                                {% if action and action.attached_file %}
+                                <div class="mb-3">
+                                    <p class="mb-1">Current file:</p>
+                                    <a href="{{ action.attached_file.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-file me-1"></i> {{ action.attached_file.name|split:'/'|last }}
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
+                            <a href="{% url 'rewards_disciplinary_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">About Rewards & Disciplinary Actions</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Rewards:</h6>
+                    <p>Rewards recognize exceptional performance, dedication, and contributions to the organization. They can include bonuses, certificates, promotions, or other forms of recognition.</p>
+                    
+                    <h6>Disciplinary Actions:</h6>
+                    <p>Disciplinary actions address performance issues, policy violations, or misconduct. They can range from verbal warnings to written warnings, suspension, or termination.</p>
+                    
+                    <h6>Important Notes:</h6>
+                    <ul>
+                        <li>All actions must be documented properly with dates and details</li>
+                        <li>For monetary rewards, enter the amount in the "Amount" field</li>
+                        <li>For disciplinary actions, the amount should typically be 0</li>
+                        <li>Attach any relevant documentation to the record</li>
+                    </ul>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> These records will be visible to HR, the employee, and their managers.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+$(document).ready(function() {
+    // Show/hide amount field based on type
+    function toggleAmountField() {
+        var type = $('#id_type').val();
+        if (type === 'Reward') {
+            $('#div_id_amount').show();
+        } else {
+            $('#div_id_amount').hide();
+            $('#id_amount').val('0.00');
+        }
+    }
+    
+    // Initial setup
+    toggleAmountField();
+    
+    // On change
+    $('#id_type').change(function() {
+        toggleAmountField();
+    });
+    
+    // Enhance employee dropdown with search
+    $('#id_employee').select2({
+        placeholder: 'Select an employee',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    // Enhance decided_by dropdown with search
+    $('#id_decided_by').select2({
+        placeholder: 'Select who decided this action',
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+{% endblock %}

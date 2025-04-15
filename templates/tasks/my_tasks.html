@@ -1,0 +1,169 @@
+{% extends "tasks/base_tasks.html" %}
+
+{% block task_content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Nhiệm Vụ Của Tôi</h5>
+        <div>
+            <a href="{% url 'my_tasks_calendar' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-calendar-alt"></i> Xem Lịch
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Biểu mẫu Lọc -->
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Trạng Thái</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">Tất Cả Trạng Thái</option>
+                    {% for value, label in task_form.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="priority" class="form-label">Mức Độ Ưu Tiên</label>
+                <select name="priority" id="priority" class="form-select">
+                    <option value="">Tất Cả Mức Độ</option>
+                    {% for value, label in task_form.PRIORITY_CHOICES %}
+                    <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">Danh Mục</label>
+                <select name="category" id="category" class="form-select">
+                    <option value="">Tất Cả Danh Mục</option>
+                    {% for category in categories %}
+                    <option value="{{ category.category_id }}" {% if category_filter == category.category_id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Lọc
+                </button>
+            </div>
+        </form>
+        
+        <!-- Nhiệm Vụ Quá Hạn -->
+        {% if overdue_tasks %}
+        <div class="mb-4">
+            <h6 class="border-bottom pb-2 text-danger">
+                <i class="fas fa-exclamation-triangle"></i> Nhiệm Vụ Quá Hạn ({{ overdue_tasks|length }})
+            </h6>
+            <div class="list-group">
+                {% for task in overdue_tasks %}
+                <a href="{% url 'view_task' task_id=task.task_id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 text-danger">{{ task.title }}</h6>
+                        <small class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</small>
+                    </div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <div>
+                            <small class="d-block">Hạn: {{ task.due_date }}</small>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <small class="badge bg-secondary">{{ task.status }}</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Nhiệm Vụ Hôm Nay -->
+        {% if today_tasks %}
+        <div class="mb-4">
+            <h6 class="border-bottom pb-2 text-primary">
+                <i class="fas fa-calendar-day"></i> Nhiệm Vụ Hôm Nay ({{ today_tasks|length }})
+            </h6>
+            <div class="list-group">
+                {% for task in today_tasks %}
+                <a href="{% url 'view_task' task_id=task.task_id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ task.title }}</h6>
+                        <small class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</small>
+                    </div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <div>
+                            <small class="d-block">Hạn: {{ task.due_date }}</small>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <small class="badge {% if task.status == 'Not Started' %}bg-secondary{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'On Hold' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">{{ task.status }}</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Nhiệm Vụ Sắp Tới -->
+        {% if upcoming_tasks %}
+        <div class="mb-4">
+            <h6 class="border-bottom pb-2 text-success">
+                <i class="fas fa-calendar-alt"></i> Nhiệm Vụ Sắp Tới ({{ upcoming_tasks|length }})
+            </h6>
+            <div class="list-group">
+                {% for task in upcoming_tasks %}
+                <a href="{% url 'view_task' task_id=task.task_id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ task.title }}</h6>
+                        <small class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</small>
+                    </div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <div>
+                            <small class="d-block">Hạn: {{ task.due_date }}</small>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <small class="badge {% if task.status == 'Not Started' %}bg-secondary{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'On Hold' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">{{ task.status }}</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Nhiệm Vụ Đã Hoàn Thành -->
+        {% if completed_tasks %}
+        <div>
+            <h6 class="border-bottom pb-2 text-muted">
+                <i class="fas fa-check-circle"></i> Nhiệm Vụ Đã Hoàn Thành ({{ completed_tasks|length }})
+            </h6>
+            <div class="list-group">
+                {% for task in completed_tasks %}
+                <a href="{% url 'view_task' task_id=task.task_id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 text-muted">{{ task.title }}</h6>
+                        <small class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</small>
+                    </div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <div>
+                            <small class="d-block">Hoàn thành: {{ task.completion_date|default:"--" }}</small>
+                            <div class="progress mt-1" style="height: 5px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                        <small class="badge bg-success">Đã Hoàn Thành</small>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if not overdue_tasks and not today_tasks and not upcoming_tasks and not completed_tasks %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Bạn không có nhiệm vụ nào được giao. Vui lòng kiểm tra lại sau hoặc liên hệ với quản lý của bạn.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

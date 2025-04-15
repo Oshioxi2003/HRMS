@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Employee Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Employee Dashboard</h4>
+                <p class="text-muted">Welcome back, {{ user.employee.full_name }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Quick Actions Card -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="d-grid gap-2 mt-3">
+                        <a href="{% url 'create_leave_request' %}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus"></i> Request Leave
+                        </a>
+                        <a href="{% url 'create_expense_claim' %}" class="btn btn-success">
+                            <i class="fas fa-receipt"></i> Submit Expense
+                        </a>
+                        <a href="{% url 'request_asset' %}" class="btn btn-info">
+                            <i class="fas fa-laptop"></i> Request Asset
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Card -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Today's Attendance</h5>
+                    <p class="text-muted">{{ today|date:"l, F d, Y" }}</p>
+                    
+                    {% if today_attendance %}
+                        {% if today_attendance.time_in and today_attendance.time_out %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> Checked in at {{ today_attendance.time_in }} and checked out at {{ today_attendance.time_out }}
+                            </div>
+                        {% elif today_attendance.time_in %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-hourglass-half"></i> Checked in at {{ today_attendance.time_in }}
+                            </div>
+                            <div class="d-grid">
+                                <form method="post" action="{% url 'attendance_check_out' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-sign-out-alt"></i> Check Out
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> You haven't checked in today
+                        </div>
+                        <div class="d-grid">
+                            <form method="post" action="{% url 'attendance_check_in' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt"></i> Check In
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <span>This month: <strong>{{ attendance_summary }} days</strong></span>
+                        <a href="{% url 'my_attendance' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Status Card -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Leave Status</h5>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <h3 class="mb-0">{{ leave_days_used }}</h3>
+                            <span class="text-muted">Days used</span>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ 21|sub:leave_days_used }}</h3>
+                            <span class="text-muted">Days remaining</span>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 10px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ leave_days_used|div:21|mul:100 }}%" aria-valuenow="{{ leave_days_used }}" aria-valuemin="0" aria-valuemax="21"></div>
+                    </div>
+                    
+                    {% if pending_leaves %}
+                        <div class="mt-3">
+                            <h6>Pending Requests:</h6>
+                            <ul class="list-group">
+                                {% for leave in pending_leaves %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-primary">{{ leave.leave_type }}</span>
+                                        {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}
+                                    </div>
+                                    <span class="badge rounded-pill bg-warning">Pending</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        <a href="{% url 'my_leave_requests' %}" class="btn btn-sm btn-outline-primary w-100">View All Leave</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Card -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">My Tasks</h5>
+                    {% if tasks %}
+                        <ul class="list-group mt-3">
+                            {% for task in tasks %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="task{{ task.task_id }}" {% if task.status == 'Completed' %}checked{% endif %} disabled>
+                                        <label class="form-check-label" for="task{{ task.task_id }}">
+                                            {{ task.title }}
+                                        </label>
+                                    </div>
+                                    <small class="text-muted">Due: {{ task.due_date|date:"M d" }}</small>
+                                </div>
+                                <span class="badge rounded-pill {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning{% else %}bg-info{% endif %}">{{ task.priority }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            No active tasks
+                        </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        <a href="{% url 'my_tasks' %}" class="btn btn-sm btn-outline-primary w-100">View All Tasks</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Recent Expenses Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Recent Expenses</h5>
+                        <a href="{% url 'create_expense_claim' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus"></i> New Expense
+                        </a>
+                    </div>
+                    
+                    {% if recent_expenses %}
+                        <div class="table-responsive mt-3">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Amount</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for expense in recent_expenses %}
+                                    <tr>
+                                        <td>{{ expense.claim_title }}</td>
+                                        <td>${{ expense.total_amount|floatformat:2 }}</td>
+                                        <td>{{ expense.submission_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="badge rounded-pill 
+                                                {% if expense.status == 'Approved' %}bg-success
+                                                {% elif expense.status == 'Rejected' %}bg-danger
+                                                {% elif expense.status == 'Paid' %}bg-primary
+                                                {% else %}bg-warning{% endif %}">
+                                                {{ expense.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            No recent expenses
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Announcements Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Company Announcements</h5>
+                    
+                    {% if announcements %}
+                        <div class="list-group mt-3">
+                            {% for announcement in announcements %}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ announcement.title }}</h6>
+                                    <small>{{ announcement.created_date|date:"M d" }}</small>
+                                </div>
+                                <p class="mb-1">{{ announcement.content|truncatewords:20 }}</p>
+                                <small>By: {{ announcement.created_by.full_name }}</small>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            No announcements
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Upcoming Training Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Training</h5>
+                    
+                    {% if upcoming_training %}
+                        <div class="list-group mt-3">
+                            {% for training in upcoming_training %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ training.course.course_name }}</h6>
+                                    <small>{{ training.course.start_date|date:"M d" }} - {{ training.course.end_date|date:"M d" }}</small>
+                                </div>
+                                <p class="mb-1">{{ training.course.description|truncatewords:15 }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small>Location: {{ training.course.location }}</small>
+                                    <span class="badge rounded-pill bg-info">{{ training.status }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            No upcoming training
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Events Card -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    
+                    {% if upcoming_events %}
+                        <div class="list-group mt-3">
+                            {% for event in upcoming_events %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ event.title }}</h6>
+                                    <small>{{ event.date|date:"M d, Y" }}</small>
+                                </div>
+                                <p class="mb-1">{{ event.description|truncatewords:15 }}</p>
+                                <small>Location: {{ event.location }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-3">
+                            No upcoming events
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

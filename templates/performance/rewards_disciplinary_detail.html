@@ -1,0 +1,175 @@
+<!-- templates/performance/rewards_disciplinary_detail.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action.get_type_display }} Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ action.get_type_display }} Record Details</h4>
+                <div>
+                    {% if can_edit %}
+                    <a href="{% url 'rewards_disciplinary_update' pk=action.rad_id %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Record
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'rewards_disciplinary_list' %}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header {% if action.type == 'Reward' %}bg-success{% else %}bg-danger{% endif %} text-white">
+                    <h5 class="mb-0">{{ action.get_type_display }} Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Type</h6>
+                                <h5>
+                                    <span class="badge {% if action.type == 'Reward' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ action.get_type_display }}
+                                    </span>
+                                </h5>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Decision Date</h6>
+                                <h5>{{ action.decision_date }}</h5>
+                            </div>
+                            
+                            {% if action.decision_number %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Decision/Reference Number</h6>
+                                <h5>{{ action.decision_number }}</h5>
+                            </div>
+                            {% endif %}
+                            
+                            {% if action.type == 'Reward' and action.amount > 0 %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Amount</h6>
+                                <h5 class="text-success">{{ action.amount|floatformat:2 }}</h5>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Decided By</h6>
+                                <h5>{{ action.decided_by.full_name|default:"System" }}</h5>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Created Date</h6>
+                                <h5>{{ action.created_date }}</h5>
+                            </div>
+                            
+                            {% if action.updated_date != action.created_date %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Last Updated</h6>
+                                <h5>{{ action.updated_date }}</h5>
+                            </div>
+                            {% endif %}
+                            
+                            {% if action.attached_file %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Attached Document</h6>
+                                <a href="{{ action.attached_file.url }}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="fas fa-file-download me-1"></i> Download Document
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Content</h6>
+                                <div class="p-3 border rounded bg-light">
+                                    {{ action.content|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if action.notes %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-1">Additional Notes</h6>
+                                <div class="p-3 border rounded bg-light">
+                                    {{ action.notes|linebreaks }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Employee Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if action.employee.profile_image %}
+                        <img src="{{ action.employee.profile_image.url }}" alt="{{ action.employee.full_name }}" class="avatar avatar-lg rounded-circle">
+                        {% else %}
+                        <div class="avatar avatar-lg rounded-circle bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="mt-3">{{ action.employee.full_name }}</h5>
+                        <p class="text-muted mb-0">
+                            {% if action.employee.position %}
+                            {{ action.employee.position.position_name }}
+                            {% endif %}
+                            {% if action.employee.department %}
+                            <br>{{ action.employee.department.department_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6 class="mb-2">Contact Information</h6>
+                        {% if action.employee.email %}
+                        <p class="mb-1"><i class="fas fa-envelope text-muted me-2"></i> {{ action.employee.email }}</p>
+                        {% endif %}
+                        {% if action.employee.phone %}
+                        <p class="mb-1"><i class="fas fa-phone text-muted me-2"></i> {{ action.employee.phone }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div>
+                        <a href="{% url 'employee_detail' pk=action.employee.employee_id %}" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-user me-1"></i> View Employee Profile
+                        </a>
+                        {% if user.role == 'HR' or user.role == 'Admin' %}
+                        <a href="{% url 'rewards_disciplinary_create' %}?employee={{ action.employee.employee_id }}" class="btn btn-outline-success btn-sm w-100 mt-2">
+                            <i class="fas fa-plus-circle me-1"></i> Add Another Record
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

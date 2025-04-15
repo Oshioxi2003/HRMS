@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Đăng ký - HRMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/accounts/register.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <img src="{% static 'images/logo.png' %}" alt="Logo Công ty" class="logo">
+            <h1>Tạo tài khoản mới</h1>
+            <p class="subtitle">Vui lòng điền thông tin để tạo tài khoản</p>
+        </div>
+
+        {% if messages %}
+        <div class="alert-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-info-circle alert-icon"></i>
+                <div class="alert-content">{{ message }}</div>
+                <button type="button" class="close-alert">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="register-body">
+            <form method="post" class="register-form" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="form-error-box">
+                    {% for error in form.non_field_errors %}
+                    <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_username">
+                            <i class="fas fa-user-tag label-icon"></i> Tên đăng nhập
+                        </label>
+                        <div class="input-group {% if form.username.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-user"></i></span>
+                            <input type="text" name="username" id="id_username" class="form-control" 
+                                placeholder="Nhập tên đăng nhập" value="{{ form.username.value|default:'' }}">
+                            <div class="input-tooltip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltip-text">Tên đăng nhập chỉ chứa chữ cái, số và ký tự đặc biệt (@, ., +, -, _)</span>
+                            </div>
+                        </div>
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row two-column">
+                    <div class="form-group">
+                        <label for="id_first_name">
+                            <i class="fas fa-user-edit label-icon"></i> Tên
+                        </label>
+                        <div class="input-group {% if form.first_name.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-font"></i></span>
+                            <input type="text" name="first_name" id="id_first_name" class="form-control" 
+                                placeholder="Nhập tên của bạn" value="{{ form.first_name.value|default:'' }}">
+                        </div>
+                        {% if form.first_name.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.first_name.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_last_name">
+                            <i class="fas fa-user-edit label-icon"></i> Họ
+                        </label>
+                        <div class="input-group {% if form.last_name.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-font"></i></span>
+                            <input type="text" name="last_name" id="id_last_name" class="form-control" 
+                                placeholder="Nhập họ của bạn" value="{{ form.last_name.value|default:'' }}">
+                        </div>
+                        {% if form.last_name.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.last_name.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_email">
+                            <i class="fas fa-envelope label-icon"></i> Địa chỉ email
+                        </label>
+                        <div class="input-group {% if form.email.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                            <input type="email" name="email" id="id_email" class="form-control" 
+                                placeholder="Nhập địa chỉ email" value="{{ form.email.value|default:'' }}">
+                        </div>
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_password1">
+                            <i class="fas fa-lock label-icon"></i> Mật khẩu
+                        </label>
+                        <div class="input-group {% if form.password1.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-lock"></i></span>
+                            <input type="password" name="password1" id="id_password1" class="form-control password-input" 
+                                placeholder="Nhập mật khẩu">
+                            <span class="toggle-password" title="Hiện/ẩn mật khẩu">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                        <div class="password-strength-meter">
+                            <div class="strength-bar"></div>
+                            <span class="strength-text">Chưa nhập mật khẩu</span>
+                        </div>
+                        {% if form.password1.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.password1.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="password-rules">
+                            <p><i class="fas fa-info-circle"></i> Mật khẩu phải đáp ứng các yêu cầu sau:</p>
+                            <ul>
+                                <li class="rule" data-rule="length">
+                                    <i class="fas fa-times-circle icon-failed"></i>
+                                    <i class="fas fa-check-circle icon-success"></i>
+                                    Tối thiểu 8 ký tự
+                                </li>
+                                <li class="rule" data-rule="letter">
+                                    <i class="fas fa-times-circle icon-failed"></i>
+                                    <i class="fas fa-check-circle icon-success"></i>
+                                    Chứa ít nhất một chữ cái
+                                </li>
+                                <li class="rule" data-rule="digit">
+                                    <i class="fas fa-times-circle icon-failed"></i>
+                                    <i class="fas fa-check-circle icon-success"></i>
+                                    Chứa ít nhất một chữ số
+                                </li>
+                                <li class="rule" data-rule="notcommon">
+                                    <i class="fas fa-times-circle icon-failed"></i>
+                                    <i class="fas fa-check-circle icon-success"></i>
+                                    Không phải mật khẩu phổ biến
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_password2">
+                            <i class="fas fa-key label-icon"></i> Xác nhận mật khẩu
+                        </label>
+                        <div class="input-group {% if form.password2.errors %}error{% endif %}">
+                            <span class="input-icon"><i class="fas fa-key"></i></span>
+                            <input type="password" name="password2" id="id_password2" class="form-control" 
+                                placeholder="Nhập lại mật khẩu">
+                            <span class="toggle-password" title="Hiện/ẩn mật khẩu">
+                                <i class="fas fa-eye"></i>
+                            </span>
+                        </div>
+                        {% if form.password2.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.password2.errors %}
+                            <p><i class="fas fa-exclamation-circle"></i> {{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-check">
+                        <input type="checkbox" id="terms" name="terms" class="form-check-input" required>
+                        <label for="terms" class="form-check-label">
+                            Tôi đồng ý với <a href="#" class="terms-link">Điều khoản sử dụng</a> và <a href="#" class="terms-link">Chính sách bảo mật</a>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <button type="submit" class="btn-register">
+                        <i class="fas fa-user-plus"></i> Đăng ký tài khoản
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="register-footer">
+            <p>Đã có tài khoản? <a href="{% url 'login' %}" class="login-link">Đăng nhập ngay</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/accounts/register.js' %}"></script>
+{% endblock %}

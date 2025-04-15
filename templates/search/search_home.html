@@ -1,0 +1,54 @@
+<!-- templates/search/search_home.html -->
+{% extends "search/search_base.html" %}
+{% load i18n %}
+
+{% block search_title %}{% trans "Search" %}{% endblock %}
+
+{% block search_results %}
+<div class="text-center py-5">
+    <i class="fas fa-search fa-4x mb-3 text-muted"></i>
+    <h4 class="text-muted">{% trans "Enter a search term to begin" %}</h4>
+    <p class="text-muted">{% trans "You can search for employees, documents, leave requests, tasks and more" %}</p>
+    
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-tie fa-3x mb-3 text-primary"></i>
+                    <h5>{% trans "Employee Search" %}</h5>
+                    <p class="text-muted">{% trans "Find employees by name, email, phone or ID" %}</p>
+                    <a href="{% url 'employee_search' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> {% trans "Search Employees" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-alt fa-3x mb-3 text-info"></i>
+                    <h5>{% trans "Document Search" %}</h5>
+                    <p class="text-muted">{% trans "Find documents by title, content or tags" %}</p>
+                    <a href="{% url 'document_search' %}" class="btn btn-outline-info">
+                        <i class="fas fa-search"></i> {% trans "Search Documents" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-search-plus fa-3x mb-3 text-success"></i>
+                    <h5>{% trans "Global Search" %}</h5>
+                    <p class="text-muted">{% trans "Search across all entities in the system" %}</p>
+                    <a href="{% url 'global_search' %}" class="btn btn-outline-success">
+                        <i class="fas fa-search"></i> {% trans "Global Search" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!-- templates/salary/employee_salary_grade_end.html -->
+{% extends "salary/base_salary.html" %}
+
+{% block salary_title %}End Salary Assignment{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">End Salary Assignment</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p><i class="fas fa-info-circle"></i> You are ending the salary assignment for <strong>{{ assignment.employee.full_name }}</strong>.</p>
+            <p>Current salary grade: <strong>{{ assignment.grade.grade_name }}</strong> ({{ assignment.grade.base_salary_amount|floatformat:2 }})</p>
+            <p>Effective date: <strong>{{ assignment.effective_date|date:"Y-m-d" }}</strong></p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="text" class="form-control" id="end_date" name="end_date" required>
+                <div class="form-text">The date when this salary assignment will end.</div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'employee_salary_grade_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check"></i> Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr("#end_date", {
+            dateFormat: "Y-m-d",
+            minDate: "{{ assignment.effective_date|date:'Y-m-d' }}",
+            defaultDate: "today"
+        });
+    });
+</script>
+{% endblock %}

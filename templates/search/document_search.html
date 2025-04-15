@@ -1,0 +1,187 @@
+<!-- templates/search/document_search.html -->
+{% extends "search/search_base.html" %}
+{% load i18n %}
+
+{% block search_title %}{% trans "Document Search" %}{% endblock %}
+
+{% block search_form_action %}{% url 'document_search' %}{% endblock %}
+
+{% block search_filters %}
+<div class="search-filters">
+    <form id="search-filters-form" method="get">
+        <input type="hidden" name="q" value="{{ query }}">
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="categoryFilter">{% trans "Category" %}</label>
+                    <select class="form-select" id="categoryFilter" name="category">
+                        <option value="">{% trans "All Categories" %}</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.category_id }}" {% if category_filter == cat.category_id|stringformat:"i" %}selected{% endif %}>
+                            {{ cat.category_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="visibilityFilter">{% trans "Visibility" %}</label>
+                    <select class="form-select" id="visibilityFilter" name="visibility">
+                        <option value="">{% trans "All Visibility" %}</option>
+                        {% for vis_value, vis_label in visibility_options %}
+                        <option value="{{ vis_value }}" {% if visibility_filter == vis_value %}selected{% endif %}>
+                            {{ vis_label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="dateFrom">{% trans "Date From" %}</label>
+                    <input type="text" class="form-control datepicker" id="dateFrom" name="date_from" value="{{ date_from }}" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="dateTo">{% trans "Date To" %}</label>
+                    <input type="text" class="form-control datepicker" id="dateTo" name="date_to" value="{{ date_to }}" placeholder="YYYY-MM-DD">
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> {% trans "Apply Filters" %}
+                </button>
+                <a href="{% url 'document_search' %}?q={{ query }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> {% trans "Clear Filters" %}
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block applied_filters %}
+{% if category_filter or visibility_filter or date_from or date_to %}
+<div class="applied-filters mb-3">
+    <span class="me-2">{% trans "Applied Filters:" %}</span>
+    
+    {% if category_filter %}
+    {% for cat in categories %}
+    {% if category_filter == cat.category_id|stringformat:"i" %}
+    <span class="filter-chip">
+        {% trans "Category:" %} {{ cat.category_name }}
+        <span class="close" data-param="category">&times;</span>
+    </span>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    
+    {% if visibility_filter %}
+    <span class="filter-chip">
+        {% trans "Visibility:" %} {{ visibility_filter }}
+        <span class="close" data-param="visibility">&times;</span>
+    </span>
+    {% endif %}
+    
+    {% if date_from %}
+    <span class="filter-chip">
+        {% trans "From:" %} {{ date_from }}
+        <span class="close" data-param="date_from">&times;</span>
+    </span>
+    {% endif %}
+    
+    {% if date_to %}
+    <span class="filter-chip">
+        {% trans "To:" %} {{ date_to }}
+        <span class="close" data-param="date_to">&times;</span>
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block search_results %}
+{% if query %}
+    <div class="result-count">
+        {% blocktrans with count=result_count %}Found {{ count }} documents matching "{{ query }}"{% endblocktrans %}
+    </div>
+    
+    {% if documents %}
+        <div class="row">
+            {% for document in documents %}
+            <div class="col-md-6 col-xl-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <div class="me-3">
+                                <i class="{{ document.get_file_icon }} fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="card-title">{{ document.title }}</h5>
+                                <h6 class="card-subtitle text-muted">
+                                    {{ document.created_date|date:"Y-m-d" }}
+                                </h6>
+                            </div>
+                        </div>
+                        
+                        {% if document.description %}
+                        <p class="card-text">{{ document.description|truncatechars:100 }}</p>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            {% if document.category %}
+                            <span class="badge bg-info">{{ document.category.category_name }}</span>
+                            {% endif %}
+                            <span class="badge bg-secondary">{{ document.visibility }}</span>
+                            {% if document.tags %}
+                            {% for tag in document.tags.split(',') %}
+                            <span class="badge bg-light text-dark">{{ tag }}</span>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">
+                                <i class="fas fa-file"></i> {{ document.filename }}
+                            </span>
+                            <span class="text-muted">
+                                {{ document.file_size|filesizeformat }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'document_detail' document_id=document.document_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                            <a href="{% url 'document_download' document_id=document.document_id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-download"></i> {% trans "Download" %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            {% trans "No documents found matching your search criteria." %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-file-alt fa-4x mb-3 text-muted"></i>
+        <h4 class="text-muted">{% trans "Search for documents" %}</h4>
+        <p class="text-muted">{% trans "Enter a title, description or tag to find documents" %}</p>
+    </div>
+{% endif %}
+{% endblock %}

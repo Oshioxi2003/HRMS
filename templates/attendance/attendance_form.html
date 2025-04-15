@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{{ title }}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if attendance %}
+                        <input type="hidden" name="employee_id" value="{{ attendance.employee.employee_id }}">
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.employee.id_for_label }}" class="form-label">Employee</label>
+                            <select name="{{ form.employee.name }}" id="{{ form.employee.id_for_label }}" 
+                                    class="form-select {% if form.employee.errors %}is-invalid{% endif %}" required>
+                                <option value="">Select Employee</option>
+                                {% for choice in form.employee.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.employee.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.employee.errors %}
+                            <div class="invalid-feedback">{{ form.employee.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.work_date.id_for_label }}" class="form-label">Date</label>
+                            <input type="date" name="{{ form.work_date.name }}" id="{{ form.work_date.id_for_label }}" 
+                                   class="form-control {% if form.work_date.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.work_date.value|date:'Y-m-d'|default:'' }}" required>
+                            {% if form.work_date.errors %}
+                            <div class="invalid-feedback">{{ form.work_date.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" 
+                                    class="form-select {% if form.status.errors %}is-invalid{% endif %}" required>
+                                {% for choice in form.status.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.time_in.id_for_label }}" class="form-label">Time In</label>
+                                    <input type="time" name="{{ form.time_in.name }}" id="{{ form.time_in.id_for_label }}" 
+                                           class="form-control {% if form.time_in.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.time_in.value|time:'H:i'|default:'' }}">
+                                    {% if form.time_in.errors %}
+                                    <div class="invalid-feedback">{{ form.time_in.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.time_out.id_for_label }}" class="form-label">Time Out</label>
+                                    <input type="time" name="{{ form.time_out.name }}" id="{{ form.time_out.id_for_label }}" 
+                                           class="form-control {% if form.time_out.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.time_out.value|time:'H:i'|default:'' }}">
+                                    {% if form.time_out.errors %}
+                                    <div class="invalid-feedback">{{ form.time_out.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.shift.id_for_label }}" class="form-label">Shift</label>
+                            <select name="{{ form.shift.name }}" id="{{ form.shift.id_for_label }}" 
+                                    class="form-select {% if form.shift.errors %}is-invalid{% endif %}">
+                                <option value="">Select Shift (Optional)</option>
+                                {% for choice in form.shift.field.choices %}
+                                {% if choice.0 %}
+                                <option value="{{ choice.0 }}" {% if form.shift.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                            {% if form.shift.errors %}
+                            <div class="invalid-feedback">{{ form.shift.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.actual_work_hours.id_for_label }}" class="form-label">Work Hours</label>
+                                    <input type="number" name="{{ form.actual_work_hours.name }}" id="{{ form.actual_work_hours.id_for_label }}" 
+                                           class="form-control {% if form.actual_work_hours.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.actual_work_hours.value|default:'' }}" step="0.01" min="0">
+                                    {% if form.actual_work_hours.errors %}
+                                    <div class="invalid-feedback">{{ form.actual_work_hours.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        This will be calculated automatically if time in/out are provided
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.overtime_hours.id_for_label }}" class="form-label">Overtime Hours</label>
+                                    <input type="number" name="{{ form.overtime_hours.name }}" id="{{ form.overtime_hours.id_for_label }}" 
+                                           class="form-control {% if form.overtime_hours.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.overtime_hours.value|default:'0' }}" step="0.01" min="0">
+                                    {% if form.overtime_hours.errors %}
+                                    <div class="invalid-feedback">{{ form.overtime_hours.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                            <textarea name="{{ form.notes.name }}" id="{{ form.notes.id_for_label }}" 
+                                      class="form-control {% if form.notes.errors %}is-invalid{% endif %}" 
+                                      rows="3">{{ form.notes.value|default:'' }}</textarea>
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

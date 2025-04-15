@@ -1,0 +1,123 @@
+{% extends "organization/base_organization.html" %}
+
+{% block organization_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ department.department_name }} - Members</h1>
+    
+    <div>
+        <a href="{% url 'org_department_detail' department_id=department.department_id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Department
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" placeholder="Search by name, email or phone..." value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <select class="form-select" name="position" onchange="this.form.submit()">
+                    <option value="">All Positions</option>
+                    {% for position in positions %}
+                    <option value="{{ position.position_id }}" {% if position_filter == position.position_id|stringformat:"i" %}selected{% endif %}>
+                        {{ position.position_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <a href="{% url 'department_members' department_id=department.department_id %}" class="btn btn-outline-secondary w-100">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Members List -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Department Members ({{ employees.count }})</h5>
+        
+        {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-download"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv"></i> Export as CSV</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel"></i> Export as Excel</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-print"></i> Print List</a></li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Hire Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if employee.profile_image %}
+                                <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="employee-avatar me-2">
+                                {% else %}
+                                <div class="employee-avatar d-flex align-items-center justify-content-center bg-secondary text-white me-2">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ employee.full_name }}</h6>
+                                    <span class="text-muted small">ID: {{ employee.employee_id }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ employee.position.position_name|default:"--" }}</td>
+                        <td>{{ employee.email|default:"--" }}</td>
+                        <td>{{ employee.phone|default:"--" }}</td>
+                        <td>{{ employee.hire_date|date:"M d, Y" }}</td>
+                        <td>
+                            <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                            <a href="{% url 'employee_update' pk=employee.employee_id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            No employees found matching your search criteria.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

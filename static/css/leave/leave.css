@@ -1,0 +1,226 @@
+/* Main Styles for Leave Management System */
+:root {
+    --primary-color: #4e73df;
+    --primary-hover: #2e59d9;
+    --success-color: #1cc88a;
+    --warning-color: #f6c23e;
+    --danger-color: #e74a3b;
+    --info-color: #36b9cc;
+    --secondary-color: #858796;
+    --light-bg: #f8f9fc;
+    --border-color: #e3e6f0;
+    --text-color: #5a5c69;
+    --dark-text: #2e384d;
+    --box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
+  }
+  
+  /* Container styling */
+  .leave-container {
+    padding: 1.5rem 0;
+  }
+  
+  /* Card styling */
+  .leave-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: var(--box-shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  
+  .leave-card .card-body {
+    padding: 1.5rem;
+  }
+  
+  .leave-card .card-title {
+    color: var(--dark-text);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+  }
+  
+  /* Statistic Cards */
+  .stat-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: var(--box-shadow);
+    padding: 1.5rem;
+    text-align: center;
+    height: 100%;
+    transition: transform 0.2s;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .stat-title {
+    color: var(--text-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-number {
+    color: var(--dark-text);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-subtitle {
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+  }
+  
+  /* Leave type badges */
+  .leave-type-badge {
+    border-radius: 50rem;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.75em;
+    text-transform: uppercase;
+  }
+  
+  .leave-type-annual {
+    background-color: rgba(78, 115, 223, 0.1);
+    color: var(--primary-color);
+  }
+  
+  .leave-type-sick {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: var(--danger-color);
+  }
+  
+  .leave-type-unpaid {
+    background-color: rgba(133, 135, 150, 0.1);
+    color: var(--secondary-color);
+  }
+  
+  .leave-type-parental {
+    background-color: rgba(54, 185, 204, 0.1);
+    color: var(--info-color);
+  }
+  
+  .leave-days-badge {
+    background-color: #f8f9fc;
+    border-radius: 50rem;
+    color: var(--text-color);
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35em 0.75em;
+  }
+  
+  /* Status styling */
+  .leave-status {
+    border-radius: 50rem;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.75em;
+    text-transform: uppercase;
+  }
+  
+  .status-pending {
+    background-color: rgba(246, 194, 62, 0.1);
+    color: var(--warning-color);
+  }
+  
+  .status-approved {
+    background-color: rgba(28, 200, 138, 0.1);
+    color: var(--success-color);
+  }
+  
+  .status-rejected {
+    background-color: rgba(231, 74, 59, 0.1);
+    color: var(--danger-color);
+  }
+  
+  .status-cancelled {
+    background-color: rgba(133, 135, 150, 0.1);
+    color: var(--secondary-color);
+  }
+  
+  /* Table styling */
+  .table {
+    margin-bottom: 0;
+  }
+  
+  .table thead th {
+    background-color: var(--light-bg);
+    border-bottom: 2px solid var(--border-color);
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  
+  .table tbody tr:hover {
+    background-color: var(--light-bg);
+  }
+  
+  .table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+  }
+  
+  /* Button styling */
+  .btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 767.98px) {
+    .col-md-6.text-md-end {
+      margin-top: 1rem;
+      text-align: left !important;
+    }
+    
+    .btn {
+      margin-bottom: 0.5rem;
+      display: block;
+      width: 100%;
+    }
+    
+    .btn + .btn {
+      margin-left: 0 !important;
+    }
+    
+    .stat-card {
+      margin-bottom: 1rem;
+    }
+    
+    .table-responsive {
+      border: 0;
+    }
+    
+    .leave-container {
+      padding: 1rem 0;
+    }
+  }
+  
+  /* Empty state styling */
+  .text-center.py-5 i {
+    color: var(--secondary-color);
+    opacity: 0.3;
+  }
+  
+  /* Animation for notifications */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .notification {
+    animation: fadeIn 0.3s ease-out;
+  }
+  

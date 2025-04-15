@@ -1,0 +1,651 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}{% if is_update %}Cập Nhật Yêu Cầu Nghỉ Phép{% else %}Yêu Cầu Nghỉ Phép Mới{% endif %}{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/leave.css' %}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container leave-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'my_leave_requests' %}">Yêu cầu nghỉ phép</a></li>
+            <li class="breadcrumb-item active">{% if is_update %}Cập nhật yêu cầu{% else %}Yêu cầu mới{% endif %}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Form Column -->
+        <div class="col-lg-8">
+            <div class="card leave-card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        {% if is_update %}
+                        <i class="fas fa-edit me-2"></i> Cập Nhật Yêu Cầu Nghỉ Phép
+                        {% else %}
+                        <i class="fas fa-plus me-2"></i> Yêu Cầu Nghỉ Phép Mới
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>Lỗi:</strong>
+                        <ul class="mb-0 ps-3 mt-1">
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" id="leaveRequestForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.leave_type.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-tag me-2 text-primary"></i>Loại Nghỉ Phép <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.leave_type }}
+                                <span class="input-group-text"><i class="fas fa-chevron-down"></i></span>
+                            </div>
+                            {% if form.leave_type.errors %}
+                            <div class="invalid-feedback d-block">
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ form.leave_type.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text mt-1">Chọn loại nghỉ phép phù hợp với nhu cầu của bạn.</div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar me-2 text-primary"></i>Ngày Bắt Đầu <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.start_date }}
+                                    <span class="input-group-text date-icon"><i class="fas fa-calendar-alt"></i></span>
+                                </div>
+                                {% if form.start_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ form.start_date.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="fas fa-calendar-check me-2 text-primary"></i>Ngày Kết Thúc <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.end_date }}
+                                    <span class="input-group-text date-icon"><i class="fas fa-calendar-alt"></i></span>
+                                </div>
+                                {% if form.end_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    <i class="fas fa-exclamation-circle me-1"></i>{{ form.end_date.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Số ngày nghỉ (được cập nhật bởi JavaScript) -->
+                        <div class="mb-4">
+                            <div class="leave-days-summary p-3 rounded">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="fas fa-calculator text-primary me-2"></i>
+                                        <span class="fw-semibold">Thời gian nghỉ:</span>
+                                    </div>
+                                    <div>
+                                        <span id="leaveDaysCount" class="badge bg-primary">Chưa xác định</span>
+                                    </div>
+                                </div>
+                                <div class="leave-days-detail mt-2 small text-muted" id="leaveDaysDetail"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-comment-alt me-2 text-primary"></i>Lý Do Nghỉ Phép
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                            <div class="invalid-feedback d-block">
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ form.reason.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text mt-1">Cung cấp chi tiết về lý do nghỉ phép để người quản lý có thể xem xét yêu cầu của bạn.</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.attached_file.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-paperclip me-2 text-primary"></i>Tài Liệu Đính Kèm
+                            </label>
+                            <div class="input-group">
+                                <div class="custom-file-container">
+                                    {{ form.attached_file }}
+                                    <label for="{{ form.attached_file.id_for_label }}" class="custom-file-label form-control d-flex align-items-center">
+                                        <span id="file-name" class="file-name text-muted">Chọn tệp tin...</span>
+                                    </label>
+                                </div>
+                                <button class="btn btn-outline-secondary" type="button" id="file-browse-btn">
+                                    <i class="fas fa-folder-open"></i> Duyệt
+                                </button>
+                            </div>
+                            {% if form.attached_file.errors %}
+                            <div class="invalid-feedback d-block">
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ form.attached_file.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text mt-1">
+                                <i class="fas fa-info-circle me-1"></i> Tải lên giấy tờ liên quan (như giấy chứng nhận y tế cho nghỉ ốm). Định dạng được chấp nhận: PDF, DOC, JPG.
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex flex-column flex-md-row justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'my_leave_requests' %}" class="btn btn-outline-secondary mb-3 mb-md-0">
+                                <i class="fas fa-arrow-left me-2"></i> Quay Lại
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if is_update %}
+                                <i class="fas fa-save me-2"></i> Cập Nhật Yêu Cầu
+                                {% else %}
+                                <i class="fas fa-paper-plane me-2"></i> Gửi Yêu Cầu
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar / Info Column -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <!-- Leave Balance Card -->
+            <div class="card leave-card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i> Số Ngày Phép Còn Lại
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="leave-balance-item mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold">Phép Năm</span>
+                            <span class="badge bg-primary">{{ leave_balance.annual|default:"0" }}/{{ leave_balance.annual_total|default:"0" }} ngày</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                style="width: {{ leave_balance.annual_percentage|default:'0' }}%" 
+                                aria-valuenow="{{ leave_balance.annual|default:'0' }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="{{ leave_balance.annual_total|default:'0' }}"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="leave-balance-item mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold">Nghỉ Ốm</span>
+                            <span class="badge bg-danger">{{ leave_balance.sick|default:"0" }}/{{ leave_balance.sick_total|default:"0" }} ngày</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                style="width: {{ leave_balance.sick_percentage|default:'0' }}%" 
+                                aria-valuenow="{{ leave_balance.sick|default:'0' }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="{{ leave_balance.sick_total|default:'0' }}"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="leave-balance-item">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold">Không Lương</span>
+                            <span class="badge bg-secondary">{{ leave_balance.unpaid|default:"0" }} ngày đã dùng</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'my_leave_balance' %}" class="btn btn-sm btn-outline-info w-100">
+                            <i class="fas fa-history me-2"></i> Xem Chi Tiết Lịch Sử Nghỉ Phép
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Information Card -->
+            <div class="card leave-card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i> Thông Tin Hữu Ích
+                    </h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="info-item mb-3 pb-3 border-bottom">
+                        <h6 class="fw-bold"><i class="fas fa-calendar-day me-2 text-primary"></i>Thời Gian Xử Lý</h6>
+                        <p class="mb-0 small">Yêu cầu nghỉ phép thường được xử lý trong vòng 24-48 giờ làm việc.</p>
+                    </div>
+                    
+                    <div class="info-item mb-3 pb-3 border-bottom">
+                        <h6 class="fw-bold"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Lưu Ý Quan Trọng</h6>
+                        <p class="mb-0 small">Yêu cầu nghỉ phép nên được gửi trước ít nhất 3 ngày làm việc (trừ trường hợp khẩn cấp).</p>
+                    </div>
+                    
+                    <div class="info-item">
+                        <h6 class="fw-bold"><i class="fas fa-question-circle me-2 text-info"></i>Cần Hỗ Trợ?</h6>
+                        <p class="mb-0 small">Liên hệ phòng Nhân sự tại <a href="mailto:hr@company.com">hr@company.com</a> hoặc gọi số nội bộ <strong>1234</strong>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xác Nhận -->
+<div class="modal fade" id="confirmLeaveModal" tabindex="-1" aria-labelledby="confirmLeaveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="confirmLeaveModalLabel">Xác Nhận Yêu Cầu Nghỉ Phép</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="confirm-leave-details">
+                    <p class="mb-3">Vui lòng xác nhận thông tin yêu cầu nghỉ phép của bạn:</p>
+                    
+                    <div class="detail-item mb-2">
+                        <span class="fw-bold">Loại nghỉ phép:</span>
+                        <span id="confirmLeaveType" class="leave-type-badge"></span>
+                    </div>
+                    
+                    <div class="detail-item mb-2">
+                        <span class="fw-bold">Thời gian:</span>
+                        <div id="confirmLeaveDates" class="ms-3 mt-1"></div>
+                    </div>
+                    
+                    <div class="detail-item mb-2">
+                        <span class="fw-bold">Số ngày nghỉ:</span>
+                        <span id="confirmLeaveDays" class="badge bg-primary ms-2"></span>
+                    </div>
+                    
+                    <div class="detail-item mb-2">
+                        <span class="fw-bold">Lý do:</span>
+                        <p id="confirmLeaveReason" class="ms-3 mt-1 mb-0 fst-italic"></p>
+                    </div>
+                    
+                    <div class="detail-item mb-2">
+                        <span class="fw-bold">Tài liệu đính kèm:</span>
+                        <span id="confirmLeaveAttachment" class="ms-2"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Chỉnh Sửa
+                </button>
+                <button type="button" class="btn btn-primary" id="submitLeaveRequest">
+                    <i class="fas fa-check me-2"></i>Xác Nhận Gửi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cài đặt Flatpickr cho các trường ngày tháng
+        const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+        const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+        
+        // Cấu hình đối tượng Flatpickr cho ngày bắt đầu
+        const startDatePicker = flatpickr(startDateInput, {
+            locale: "vn",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disableMobile: true,
+            allowInput: true,
+            weekNumbers: true,
+            altInput: true,
+            altFormat: "d/m/Y",
+            onClose: function(selectedDates, dateStr, instance) {
+                // Cập nhật ngày tối thiểu cho ngày kết thúc
+                if (selectedDates[0]) {
+                    endDatePicker.set('minDate', selectedDates[0]);
+                    
+                    // Nếu ngày kết thúc đã chọn, và trước ngày bắt đầu, cập nhật
+                    if (endDatePicker.selectedDates[0] && endDatePicker.selectedDates[0] < selectedDates[0]) {
+                        endDatePicker.setDate(selectedDates[0]);
+                    }
+                    
+                    // Cập nhật số ngày
+                    updateLeaveDays();
+                }
+            }
+        });
+        
+        // Cấu hình đối tượng Flatpickr cho ngày kết thúc
+        const endDatePicker = flatpickr(endDateInput, {
+            locale: "vn",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disableMobile: true,
+            allowInput: true,
+            weekNumbers: true,
+            altInput: true,
+            altFormat: "d/m/Y",
+            onClose: function(selectedDates, dateStr, instance) {
+                // Cập nhật số ngày nghỉ khi thay đổi
+                if (selectedDates[0]) {
+                    updateLeaveDays();
+                }
+            }
+        });
+        
+        // Xử lý tệp tin đính kèm
+        const fileInput = document.getElementById('{{ form.attached_file.id_for_label }}');
+        const fileLabel = document.getElementById('file-name');
+        const browseBtn = document.getElementById('file-browse-btn');
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                fileLabel.textContent = this.files[0].name;
+                fileLabel.classList.remove('text-muted');
+            } else {
+                fileLabel.textContent = 'Chọn tệp tin...';
+                fileLabel.classList.add('text-muted');
+            }
+        });
+        
+        browseBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Hàm tính số ngày làm việc giữa hai ngày
+        function calculateWorkingDays(startDate, endDate) {
+            // Chuyển đổi chuỗi ngày thành đối tượng Date
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            // Kiểm tra ngày hợp lệ
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                return null;
+            }
+            
+            // Kiểm tra nếu ngày kết thúc trước ngày bắt đầu
+            if (end < start) {
+                return null;
+            }
+            
+            let workingDays = 0;
+            let weekendDays = 0;
+            const currentDate = new Date(start);
+            const dates = [];
+            
+            // Duyệt qua từng ngày giữa ngày bắt đầu và kết thúc
+            while (currentDate <= end) {
+                // 0 = Chủ Nhật, 6 = Thứ Bảy
+                const dayOfWeek = currentDate.getDay();
+                const dateString = currentDate.toISOString().split('T')[0];
+                
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    workingDays++;
+                    dates.push({
+                        date: dateString,
+                        isWeekend: false,
+                        dayOfWeek: getDayName(dayOfWeek)
+                    });
+                } else {
+                    weekendDays++;
+                    dates.push({
+                        date: dateString,
+                        isWeekend: true,
+                        dayOfWeek: getDayName(dayOfWeek)
+                    });
+                }
+                
+                // Chuyển sang ngày tiếp theo
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            return {
+                workingDays: workingDays,
+                weekendDays: weekendDays,
+                totalDays: workingDays + weekendDays,
+                dates: dates
+            };
+        }
+        
+        // Hàm lấy tên ngày trong tuần
+        function getDayName(dayIndex) {
+            const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+            return days[dayIndex];
+        }
+        
+        // Hàm cập nhật hiển thị số ngày nghỉ
+        function updateLeaveDays() {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const leaveDaysCount = document.getElementById('leaveDaysCount');
+            const leaveDaysDetail = document.getElementById('leaveDaysDetail');
+            
+            if (!startDate || !endDate) {
+                leaveDaysCount.textContent = 'Chưa xác định';
+                leaveDaysDetail.innerHTML = '<i>Vui lòng chọn ngày bắt đầu và kết thúc</i>';
+                return;
+            }
+            
+            const result = calculateWorkingDays(startDate, endDate);
+            
+            if (!result) {
+                leaveDaysCount.textContent = 'Lỗi tính toán';
+                leaveDaysDetail.innerHTML = '<span class="text-danger">Ngày không hợp lệ. Vui lòng kiểm tra lại.</span>';
+                return;
+            }
+            
+            // Cập nhật số ngày
+            leaveDaysCount.textContent = result.workingDays + ' ngày làm việc';
+            
+            // Tạo HTML hiển thị chi tiết
+            let detailHtml = `<div class="mb-1">Tổng cộng: ${result.totalDays} ngày (${result.workingDays} ngày làm việc + ${result.weekendDays} ngày cuối tuần)</div>`;
+            
+            // Hiển thị lịch trình
+            detailHtml += '<div class="date-pills mt-2">';
+            result.dates.forEach(day => {
+                const pillClass = day.isWeekend ? 'date-pill-weekend' : 'date-pill-workday';
+                const dateParts = day.date.split('-');
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}`;
+                
+                detailHtml += `<span class="date-pill ${pillClass}" title="${day.date}">
+                    ${day.dayOfWeek} ${formattedDate}
+                </span>`;
+            });
+            detailHtml += '</div>';
+            
+            leaveDaysDetail.innerHTML = detailHtml;
+        }
+        
+        // Xử lý form submit - hiển thị modal xác nhận
+        const leaveRequestForm = document.getElementById('leaveRequestForm');
+        
+        leaveRequestForm.addEventListener('submit', function(e) {
+            // Nếu form không có lỗi và đã được điền đầy đủ thông tin
+            if (this.checkValidity()) {
+                e.preventDefault(); // Ngăn chặn form submit
+                
+                // Lấy giá trị từ form
+                const leaveType = document.getElementById('{{ form.leave_type.id_for_label }}');
+                const leaveTypeText = leaveType.options[leaveType.selectedIndex].text;
+                const reason = document.getElementById('{{ form.reason.id_for_label }}').value;
+                const startDate = startDatePicker.selectedDates[0];
+                const endDate = endDatePicker.selectedDates[0];
+                const fileInput = document.getElementById('{{ form.attached_file.id_for_label }}');
+                
+                // Định dạng ngày
+                const formatDate = date => {
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                };
+                
+                // Cập nhật nội dung modal
+                document.getElementById('confirmLeaveType').textContent = leaveTypeText;
+                document.getElementById('confirmLeaveType').className = 'leave-type-badge leave-type-' + leaveTypeText.toLowerCase().replace(/\s+/g, '');
+                
+                document.getElementById('confirmLeaveDates').textContent = `Từ ${formatDate(startDate)} đến ${formatDate(endDate)}`;
+                
+                const result = calculateWorkingDays(startDate, endDate);
+                document.getElementById('confirmLeaveDays').textContent = result.workingDays + ' ngày làm việc';
+                
+                document.getElementById('confirmLeaveReason').textContent = reason || '(Không có lý do được cung cấp)';
+                
+                const fileInfo = fileInput.files.length > 0 ? 
+                    fileInput.files[0].name : 
+                    'Không có tài liệu đính kèm';
+                document.getElementById('confirmLeaveAttachment').textContent = fileInfo;
+                
+                // Hiển thị modal xác nhận
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmLeaveModal'));
+                confirmModal.show();
+                
+                // Xử lý nút xác nhận trong modal
+                document.getElementById('submitLeaveRequest').addEventListener('click', function() {
+                    // Đóng modal và submit form
+                    confirmModal.hide();
+                    
+                    // Hiển thị thông báo đang xử lý
+                    Swal.fire({
+                        title: 'Đang xử lý...',
+                        text: 'Vui lòng đợi trong giây lát',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    // Submit form
+                    setTimeout(() => {
+                        leaveRequestForm.submit();
+                    }, 1000);
+                });
+            }
+        });
+        
+        // Cập nhật ngày ngay khi trang tải xong
+        updateLeaveDays();
+    });
+</script>
+
+<style>
+    /* Custom styles for this page */
+    .leave-days-summary {
+        background-color: #f8f9fc;
+        border-left: 4px solid #4e73df;
+    }
+    
+    .custom-file-container {
+        position: relative;
+        flex: 1;
+    }
+    
+    .custom-file-container input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    
+    .file-name {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        flex: 1;
+    }
+    
+    .leave-balance-item {
+        padding-bottom: 0.75rem;
+    }
+    
+    .date-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .date-pill {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .date-pill-workday {
+        background-color: rgba(78, 115, 223, 0.1);
+        color: #4e73df;
+        border: 1px solid rgba(78, 115, 223, 0.2);
+    }
+    
+    .date-pill-weekend {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+        border: 1px solid rgba(231, 74, 59, 0.2);
+    }
+    
+    /* Leave type badges in confirmation modal */
+    .leave-type-badge {
+        border-radius: 50rem;
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.35em 0.75em;
+        text-transform: uppercase;
+    }
+    
+    .leave-type-phépnăm, .leave-type-annual {
+        background-color: rgba(78, 115, 223, 0.1);
+        color: #4e73df;
+    }
+    
+    .leave-type-nghỉốm, .leave-type-sick {
+        background-color: rgba(231, 74, 59, 0.1);
+        color: #e74a3b;
+    }
+    
+    .leave-type-khônglương, .leave-type-unpaid {
+        background-color: rgba(133, 135, 150, 0.1);
+        color: #858796;
+    }
+    
+    .info-item h6 {
+        color: #5a5c69;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+        .date-pills {
+            gap: 3px;
+        }
+        
+        .date-pill {
+            font-size: 0.65rem;
+            padding: 1px 4px;
+        }
+    }
+</style>
+{% endblock %}

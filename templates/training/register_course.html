@@ -1,0 +1,45 @@
+<!-- templates/training/register_course.html -->
+{% extends "training/base_training.html" %}
+{% load crispy_forms_tags %}
+
+{% block card_title %}
+    <i class="fas fa-check-circle"></i> Register for "{{ course.course_name }}"
+{% endblock %}
+
+{% block training_content %}
+<div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle"></i> You are about to register for the following course:
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">{{ course.course_name }}</h5>
+        <p class="card-text">{{ course.description|default:"No description provided"|linebreaks }}</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Start Date:</strong> {{ course.start_date|default:"Not set" }}</p>
+                <p><strong>End Date:</strong> {{ course.end_date|default:"Not set" }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Location:</strong> {{ course.location|default:"Not specified" }}</p>
+                <p><strong>Organizer:</strong> {{ course.organizer|default:"Not specified" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check"></i> Confirm Registration
+        </button>
+        <a href="{% url 'course_detail' pk=course.course_id %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

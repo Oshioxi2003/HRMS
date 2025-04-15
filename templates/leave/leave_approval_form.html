@@ -1,0 +1,197 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}Leave Request Approval{% endblock %}
+
+{% block content %}
+<div class="container leave-container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card leave-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-check"></i> Leave Request Approval</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Request Information</h6>
+                            <p><strong>Request ID:</strong> #{{ leave_request.request_id }}</p>
+                            <p><strong>Employee:</strong> {{ leave_request.employee.full_name }}</p>
+                            <p><strong>Department:</strong> {{ leave_request.employee.department.department_name|default:"N/A" }}</p>
+                            <p>
+                                <strong>Leave Type:</strong>
+                                <span class="leave-type-badge leave-type-{{ leave_request.leave_type|lower|cut:' ' }}">
+                                    {{ leave_request.leave_type }}
+                                </span>
+                            </p>
+                            <p><strong>Leave Days:</strong> <span class="leave-days-badge">{{ leave_request.leave_days }} days</span></p>
+                            <p><strong>Submitted:</strong> {{ leave_request.created_date|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Leave Period</h6>
+                            <p><strong>Start Date:</strong> {{ leave_request.start_date|date:"l, F d, Y" }}</p>
+                            <p><strong>End Date:</strong> {{ leave_request.end_date|date:"l, F d, Y" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if leave_request.reason %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Reason for Leave</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ leave_request.reason|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if leave_request.attached_file %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Attachment</h6>
+                        <a href="{{ leave_request.attached_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="fas fa-file"></i> View Attachment
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Decision *</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.approval_notes.id_for_label }}" class="form-label">Notes</label>
+                            {{ form.approval_notes }}
+                            {% if form.approval_notes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.approval_notes.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Please provide any comments or reasons for your decision.</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            {% if request.user.role == 'HR' %}
+                            <a href="{% url 'all_leave_requests' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to All Leaves
+                            </a>
+                            {% else %}
+                            <a href="{% url 'pending_leave_requests' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Pending Leaves
+                            </a>
+                            {% endif %}
+                            
+                            <div>
+                                <button type="submit" class="btn btn-success" id="approveBtn">
+                                    <i class="fas fa-check"></i> Submit Decision
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Employee Leave History -->
+            <div class="card leave-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Leave History</h5>
+                </div>
+                <div class="card-body">
+                    {% if leave_history %}
+                    <div class="timeline">
+                        {% for leave in leave_history %}
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ leave.start_date|date:"M d, Y" }} - {{ leave.end_date|date:"M d, Y" }}</div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="leave-type-badge leave-type-{{ leave.leave_type|lower|cut:' ' }}">
+                                        {{ leave.leave_type }}
+                                    </span>
+                                    <span class="leave-days-badge">{{ leave.leave_days }} days</span>
+                                </div>
+                                {% if leave.reason %}
+                                <div class="small text-muted">{{ leave.reason|truncatechars:100 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">No previous leave history found.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Leave Balance -->
+            {% if leave_balance %}
+            <div class="card leave-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Leave Balance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="balance-card mb-3">
+                        <div class="balance-progress" style="width: {{ leave_balance.used_days|div:leave_balance.total_days|mul:100 }}%"></div>
+                        <div class="balance-content">
+                            <div class="balance-title">{{ leave_balance.leave_type }}</div>
+                            <div class="balance-days">{{ leave_balance.remaining_days }} / {{ leave_balance.total_days }}</div>
+                            <div class="balance-details">
+                                <span>Used: {{ leave_balance.used_days }} days</span>
+                                {% if leave_balance.carry_over > 0 %}
+                                <span class="ms-2">Carry-over: {{ leave_balance.carry_over }} days</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if leave_balance.remaining_days < leave_request.leave_days %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Warning: Employee has insufficient leave balance for this request.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusSelect = document.querySelector('#{{ form.status.id_for_label }}');
+        const approveBtn = document.getElementById('approveBtn');
+        
+        // Change button color based on selected status
+        statusSelect.addEventListener('change', function() {
+            if (this.value === 'Approved') {
+                approveBtn.classList.remove('btn-danger');
+                approveBtn.classList.add('btn-success');
+                approveBtn.innerHTML = '<i class="fas fa-check"></i> Approve Request';
+            } else if (this.value === 'Rejected') {
+                approveBtn.classList.remove('btn-success');
+                approveBtn.classList.add('btn-danger');
+                approveBtn.innerHTML = '<i class="fas fa-times"></i> Reject Request';
+            }
+        });
+        
+        // Require notes for rejection
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (statusSelect.value === 'Rejected') {
+                const notes = document.querySelector('#{{ form.approval_notes.id_for_label }}').value.trim();
+                if (!notes) {
+                    e.preventDefault();
+                    alert('Please provide a reason for rejecting this leave request.');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

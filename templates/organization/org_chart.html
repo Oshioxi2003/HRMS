@@ -1,0 +1,195 @@
+{% extends "organization/base_organization.html" %}
+{% load static %}
+
+{% block organization_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/css/jquery.orgchart.min.css">
+<style>
+    .orgchart {
+        background: #f8f9fa;
+    }
+    
+    .orgchart .node {
+        width: 180px;
+    }
+    
+    .orgchart .node .title {
+        background-color: #3f51b5;
+    }
+    
+    .orgchart .node .content {
+        border: 1px solid #3f51b5;
+    }
+    
+    .orgchart .department .title {
+        background-color: #f50057;
+    }
+    
+    .orgchart .department .content {
+        border: 1px solid #f50057;
+    }
+    
+    .orgchart .position .title {
+        background-color: #ff9800;
+    }
+    
+    .orgchart .position .content {
+        border: 1px solid #ff9800;
+    }
+    
+    .profile-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin: 5px auto;
+        display: block;
+    }
+    
+    #chart-container {
+        height: 700px;
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow: auto;
+        background-color: #f8f9fa;
+    }
+    
+    .zoom-buttons {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+    
+    .department-list {
+        margin-bottom: 20px;
+    }
+    
+    .department-list .badge {
+        font-size: 0.9rem;
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block organization_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Organization Chart</h1>
+    
+    <div class="btn-group">
+        <button class="btn btn-outline-primary" id="expand-all">
+            <i class="fas fa-expand-arrows-alt"></i> Expand All
+        </button>
+        <button class="btn btn-outline-secondary" id="collapse-all">
+            <i class="fas fa-compress-arrows-alt"></i> Collapse All
+        </button>
+    </div>
+</div>
+
+<!-- Department List -->
+<div class="department-list mb-4">
+    <h5>Departments</h5>
+    <div class="d-flex flex-wrap">
+        {% for dept in departments %}
+        <div class="p-2">
+            <a href="{% url 'org_department_detail' department_id=dept.department_id %}" class="badge bg-primary text-decoration-none">
+                {{ dept.department_name }} 
+                <span class="badge bg-secondary">{{ dept.employee_count }}</span>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Organization Chart -->
+<div id="chart-container"></div>
+
+<!-- Zoom Controls -->
+<div class="zoom-buttons">
+    <button id="zoom-in" class="btn btn-primary btn-sm"><i class="fas fa-search-plus"></i></button>
+    <button id="zoom-out" class="btn btn-primary btn-sm"><i class="fas fa-search-minus"></i></button>
+    <button id="reset-zoom" class="btn btn-secondary btn-sm"><i class="fas fa-sync"></i></button>
+</div>
+{% endblock %}
+
+{% block organization_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/orgchart/3.1.1/js/jquery.orgchart.min.js"></script>
+<script>
+$(function() {
+    // Organization data
+    const orgData = {{ org_data|safe }};
+    
+    // Create org chart
+    const $chartContainer = $('#chart-container');
+    let zoomLevel = 1;
+    
+    // Initialize chart with first org item or entire data if it's multiple roots
+    const chartData = orgData.length === 1 ? orgData[0] : { 
+        id: 'org-root',
+        name: 'Organization',
+        title: 'Company',
+        children: orgData
+    };
+    
+    const oc = $('#chart-container').orgchart({
+        data: chartData,
+        direction: 'l2r',
+        nodeContent: 'title',
+        nodeID: 'id',
+        createNode: function($node, data) {
+            // Add profile image if available
+            if (data.img) {
+                const $nodeContent = $node.find('.content');
+                $nodeContent.before('<img class="profile-image" src="' + data.img + '" alt="' + data.name + '">');
+            }
+            
+            // Add custom class if specified
+            if (data.className) {
+                $node.addClass(data.className);
+            }
+            
+            // Add click event to navigate to employee or department detail
+            $node.on('click', function() {
+                const id = data.id;
+                if (id.startsWith('emp-')) {
+                    const empId = id.replace('emp-', '');
+                    window.location.href = '/employee/detail/' + empId + '/';
+                } else if (id.startsWith('dept-')) {
+                    const deptId = id.replace('dept-', '');
+                    window.location.href = '/organization/department/' + deptId + '/';
+                }
+            });
+        },
+        'exportButton': true,
+        'exportFilename': 'Organization Chart'
+    });
+    
+    // Zoom functionality
+    $('#zoom-in').on('click', function() {
+        zoomLevel += 0.1;
+        $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+    });
+    
+    $('#zoom-out').on('click', function() {
+        if (zoomLevel > 0.2) {
+            zoomLevel -= 0.1;
+            $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+        }
+    });
+    
+    $('#reset-zoom').on('click', function() {
+        zoomLevel = 1;
+        $chartContainer.find('.orgchart').css('transform', 'scale(' + zoomLevel + ')');
+    });
+    
+    // Expand/collapse all
+    $('#expand-all').on('click', function() {
+        oc.expandAllNodes();
+    });
+    
+    $('#collapse-all').on('click', function() {
+        oc.collapseAllNodes();
+    });
+});
+</script>
+{% endblock %}

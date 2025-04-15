@@ -1,0 +1,294 @@
+<!-- templates/training/department_training.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block card_title %}
+    <i class="fas fa-building"></i> Training Report for {{ department.department_name }}
+{% endblock %}
+
+{% block training_content %}
+<div class="row mb-4">
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-chart-pie"></i> Department Training Overview
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentTrainingChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <h4>{{ stats.total_employees }}</h4>
+                        <small>Total Employees</small>
+                    </div>
+                    <div class="col-3">
+                        <h4>{{ stats.trained_employees }}</h4>
+                        <small>Trained Employees</small>
+                    </div>
+                    <div class="col-3">
+                        <h4>{{ stats.total_participations }}</h4>
+                        <small>Total Participations</small>
+                    </div>
+                    <div class="col-3">
+                        <h4>{{ stats.training_coverage|floatformat:1 }}%</h4>
+                        <small>Coverage</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-chart-bar"></i> Training Status
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="trainingStatusChart"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h4>{{ stats.completed }}</h4>
+                        <small>Completed</small>
+                    </div>
+                    <div class="col-4">
+                        <h4>{{ stats.participating }}</h4>
+                        <small>In Progress</small>
+                    </div>
+                    <div class="col-4">
+                        <h4>{{ stats.avg_score|floatformat:1 }}</h4>
+                        <small>Avg. Score</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if popular_courses %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Most Popular Courses in This Department</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Course Name</th>
+                        <th>Participants</th>
+                        <th>Status</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in popular_courses %}
+                    <tr>
+                        <td>{{ course.course_name }}</td>
+                        <td><span class="badge bg-primary">{{ course.participant_count }}</span></td>
+                        <td>
+                            <span class="badge {% if course.status == 'Preparing' %}bg-warning{% elif course.status == 'In Progress' %}bg-primary{% elif course.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ course.status }}
+                            </span>
+                        </td>
+                        <td>{{ course.start_date|default:"-" }}</td>
+                        <td>{{ course.end_date|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'course_detail' pk=course.course_id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Employees Training Status</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Position</th>
+                        <th>Total Courses</th>
+                        <th>Completed</th>
+                        <th>In Progress</th>
+                        <th>Average Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.full_name }}</td>
+                        <td>{{ employee.position.position_name|default:"-" }}</td>
+                        <td>
+                            {% with course_count=employee.trainingparticipation_set.count %}
+                            {{ course_count }}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with completed_count=employee.trainingparticipation_set.filter.status="Completed"|length %}
+                            {{ completed_count }}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with in_progress_count=employee.trainingparticipation_set.filter.status="Participating"|length %}
+                            {{ in_progress_count }}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with avg_score=employee.trainingparticipation_set.average.score %}
+                            {{ avg_score|default:"-"|floatformat:1 }}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <a href="{% url 'employee_training' employee_id=employee.employee_id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-user-graduate"></i> View Training
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">No employees found in this department</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart colors
+    const colors = {
+        blue: 'rgba(54, 162, 235, 0.8)',
+        blueBorder: 'rgba(54, 162, 235, 1)',
+        green: 'rgba(75, 192, 192, 0.8)',
+        greenBorder: 'rgba(75, 192, 192, 1)',
+        red: 'rgba(255, 99, 132, 0.8)',
+        redBorder: 'rgba(255, 99, 132, 1)',
+        yellow: 'rgba(255, 205, 86, 0.8)',
+        yellowBorder: 'rgba(255, 205, 86, 1)',
+        purple: 'rgba(153, 102, 255, 0.8)',
+        purpleBorder: 'rgba(153, 102, 255, 1)',
+    };
+    
+    // Department Training Chart (Doughnut)
+    const trainingCoverageCtx = document.getElementById('departmentTrainingChart').getContext('2d');
+    new Chart(trainingCoverageCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Trained', 'Not Trained'],
+            datasets: [{
+                data: [{{ stats.trained_employees }}, {{ stats.total_employees }} - {{ stats.trained_employees }}],
+                backgroundColor: [
+                    colors.green,
+                    colors.red
+                ],
+                borderColor: [
+                    colors.greenBorder,
+                    colors.redBorder
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                title: {
+                    display: true,
+                    text: 'Training Coverage',
+                    font: {
+                        size: 16
+                    }
+                }
+            },
+            cutout: '60%'
+        }
+    });
+    
+    // Training Status Chart (Bar)
+    const trainingStatusCtx = document.getElementById('trainingStatusChart').getContext('2d');
+    new Chart(trainingStatusCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Registered', 'Participating', 'Completed', 'Cancelled'],
+            datasets: [{
+                label: 'Number of Participants',
+                data: [{{ stats.registered }}, {{ stats.participating }}, {{ stats.completed }}, {{ stats.cancelled }}],
+                backgroundColor: [
+                    colors.yellow,
+                    colors.blue,
+                    colors.green,
+                    colors.red
+                ],
+                borderColor: [
+                    colors.yellowBorder,
+                    colors.blueBorder,
+                    colors.greenBorder,
+                    colors.redBorder
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Participation Status',
+                    font: {
+                        size: 16
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

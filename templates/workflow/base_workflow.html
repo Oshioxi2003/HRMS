@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Workflow Management</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'my_workflows' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'my_workflows' %}active{% endif %}">
+                            <i class="fas fa-tasks me-2"></i> My Workflows
+                        </a>
+                        <a href="{% url 'my_approval_requests' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'my_approval_requests' %}active{% endif %}">
+                            <i class="fas fa-check-circle me-2"></i> My Approvals
+                        </a>
+                        
+                        {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                            <div class="list-group-item bg-light fw-bold">Administration</div>
+                            <a href="{% url 'workflow_definitions' %}" class="list-group-item list-group-item-action {% if 'workflow_definition' in request.resolver_match.url_name %}active{% endif %}">
+                                <i class="fas fa-sitemap me-2"></i> Workflow Definitions
+                            </a>
+                            <a href="{% url 'workflow_report' %}" class="list-group-item list-group-item-action {% if request.resolver_match.url_name == 'workflow_report' %}active{% endif %}">
+                                <i class="fas fa-chart-bar me-2"></i> Reports
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10">
+            {% block workflow_content %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

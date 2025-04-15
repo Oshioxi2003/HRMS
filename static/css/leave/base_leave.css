@@ -1,0 +1,180 @@
+.leave-container {
+    padding: 20px 0;
+}
+
+.leave-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.leave-status {
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-approved {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-cancelled {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.leave-days-badge {
+    font-size: 0.85rem;
+    background-color: #e9ecef;
+    color: #495057;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.leave-type-badge {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.leave-type-annual {
+    background-color: #cfe2ff;
+    color: #084298;
+}
+
+.leave-type-sick {
+    background-color: #d3f8e1;
+    color: #0f5132;
+}
+
+.leave-type-maternity {
+    background-color: #f5e0c9;
+    color: #664d03;
+}
+
+.leave-type-personal {
+    background-color: #dfd4fb;
+    color: #432874;
+}
+
+.leave-type-other {
+    background-color: #d3d3d3;
+    color: #333;
+}
+
+.stat-card {
+    padding: 15px;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 10px 0;
+    color: #3f51b5;
+}
+
+.stat-card .stat-title {
+    color: #6c757d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.balance-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.balance-card .balance-progress {
+    height: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #3f51b5;
+}
+
+.balance-card .balance-content {
+    padding: 20px 15px;
+}
+
+.balance-card .balance-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.balance-card .balance-days {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 5px 0;
+    color: #3f51b5;
+}
+
+.balance-card .balance-details {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #3f51b5;
+}
+
+.timeline-date {
+    color: #6c757d;
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.timeline-content {
+    background-color: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Request New Asset" %} | HRMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="mb-0">{% trans "Request New Asset" %}</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'my_assets' %}">{% trans "My Assets" %}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{% trans "Request Asset" %}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{% trans "Asset Request Form" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6 required-field">
+                                {{ form.asset_name|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.category|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6 required-field">
+                                {{ form.needed_from|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.needed_until|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-12 required-field">
+                                {{ form.description|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-12 required-field">
+                                {{ form.reason|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-4">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-info-circle fa-2x me-2"></i>
+                                </div>
+                                <div>
+                                    <h5 class="alert-heading">{% trans "Request Process" %}</h5>
+                                    <p class="mb-0">{% trans "Your request will be reviewed by the HR department. You will be notified once it has been approved or rejected." %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end mt-4">
+                            <a href="{% url 'my_assets' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-1"></i> {% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-invoice me-1"></i> {% trans "Submit Request" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr("#id_needed_from", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            allowInput: true
+        });
+        
+        flatpickr("#id_needed_until", {
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            allowInput: true
+        });
+        
+        // Form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+</script>
+{% endblock %}

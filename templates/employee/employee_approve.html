@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Approve Employee" %} - {{ employee.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0 font-weight-bold">{% trans "Employee Approval" %}</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'employee_list' %}">{% trans "Employees" %}</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'employee_detail' pk=employee.pk %}">{{ employee.full_name }}</a></li>
+                        <li class="breadcrumb-item active">{% trans "Approval" %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Review Employee Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            {% if employee.profile_image %}
+                                <img src="{{ employee.profile_image.url }}" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <div class="avatar-wrapper">
+                                    <div class="avatar-placeholder">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4>{{ employee.full_name }}</h4>
+                            <p><strong>{% trans "Email" %}:</strong> {{ employee.email }}</p>
+                            <p><strong>{% trans "Phone" %}:</strong> {{ employee.phone }}</p>
+                            <p><strong>{% trans "ID Card" %}:</strong> {{ employee.id_card }}</p>
+                            <p><strong>{% trans "Department" %}:</strong> {{ employee.department.department_name|default:"Not assigned" }}</p>
+                            <p><strong>{% trans "Position" %}:</strong> {{ employee.position.position_name|default:"Not assigned" }}</p>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mt-4 mb-3">{% trans "Uploaded Documents" %}</h5>
+                    <div class="row">
+                        {% for document in employee.documents.all %}
+                            <div class="col-md-3 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ document.get_document_type_display }}</h6>
+                                        <p class="card-text small">
+                                            <strong>{% trans "Filename" %}:</strong> {{ document.file_name }}<br>
+                                            <strong>{% trans "Type" %}:</strong> {{ document.file_type }}<br>
+                                            <strong>{% trans "Size" %}:</strong> {{ document.file_size }} KB
+                                        </p>
+                                        <a href="{{ document.file.url }}" class="btn btn-sm btn-primary" target="_blank">
+                                            <i class="fas fa-eye me-1"></i>{% trans "View" %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    {% trans "No documents have been uploaded." %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="notes">{% trans "Approval Notes" %}</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="3" placeholder="{% trans 'Add notes about this employee (optional)' %}"></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'employee_detail' pk=employee.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>{% trans "Back to Details" %}
+                            </a>
+                            <div>
+                                <button type="submit" name="approval_action" value="reject" class="btn btn-danger me-2">
+                                    <i class="fas fa-times me-1"></i>{% trans "Reject" %}
+                                </button>
+                                <button type="submit" name="approval_action" value="approve" class="btn btn-success">
+                                    <i class="fas fa-check me-1"></i>{% trans "Approve" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

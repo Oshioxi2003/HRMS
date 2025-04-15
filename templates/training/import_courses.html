@@ -1,0 +1,59 @@
+<!-- templates/training/import_courses.html -->
+{% extends "training/base_training.html" %}
+{% load crispy_forms_tags %}
+
+{% block card_title %}
+    <i class="fas fa-file-import"></i> Import Training Courses
+{% endblock %}
+
+{% block training_content %}
+<div class="alert alert-info mb-4">
+    <i class="fas fa-info-circle"></i> Import training courses from a CSV file. The file should have the following columns:
+    <ul class="mb-0 mt-2">
+        <li>Course Name (required)</li>
+        <li>Description</li>
+        <li>Start Date (format: YYYY-MM-DD)</li>
+        <li>End Date (format: YYYY-MM-DD)</li>
+        <li>Location</li>
+        <li>Cost</li>
+        <li>Organizer</li>
+        <li>Supervisor</li>
+        <li>Status (must be one of: Preparing, In Progress, Completed, Cancelled)</li>
+    </ul>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload and Import
+                </button>
+                <a href="{% url 'training_admin' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Sample CSV Format</h5>
+    </div>
+    <div class="card-body">
+        <pre class="bg-light p-3 border rounded">Course Name,Description,Start Date,End Date,Location,Cost,Organizer,Supervisor,Status
+Leadership Training,Leadership skills development course,2023-10-01,2023-10-05,Main Office,1500,HR Department,John Smith,Preparing
+Customer Service,Customer service excellence,2023-11-15,2023-11-17,Branch Office,800,External Vendor,Jane Doe,Preparing</pre>
+        
+        <div class="mt-3">
+            <a href="{% url 'export_training' %}?type=courses&format=csv" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-download"></i> Download Current Courses as CSV Template
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,178 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}All Leave Requests{% endblock %}
+
+{% block content %}
+<div class="container-fluid leave-container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h1 class="h3 mb-0">All Leave Requests</h1>
+        </div>
+        <div class="col-md-6 text-md-end">
+            <a href="{% url 'leave_report' %}" class="btn btn-outline-primary me-2">
+                <i class="fas fa-chart-bar"></i> Leave Reports
+            </a>
+            <a href="{% url 'export_leave_requests' %}" class="btn btn-success">
+                <i class="fas fa-file-excel"></i> Export to CSV
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filter Card -->
+    <div class="card leave-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="query" class="form-label">Search Employee:</label>
+                    <input type="text" id="query" name="q" class="form-control" value="{{ query }}" placeholder="Name...">
+                </div>
+                <div class="col-md-2">
+                    <label for="statusFilter" class="form-label">Status:</label>
+                    <select id="statusFilter" name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Approved" {% if status_filter == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Rejected" {% if status_filter == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="departmentFilter" class="form-label">Department:</label>
+                    <select id="departmentFilter" name="department" class="form-select">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                            {{ dept.department_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dateFrom" class="form-label">From Date:</label>
+                    {{ date_range_form.start_date }}
+                </div>
+                <div class="col-md-2">
+                    <label for="dateTo" class="form-label">To Date:</label>
+                    {{ date_range_form.end_date }}
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Leave Requests List -->
+    <div class="card leave-card">
+        <div class="card-body">
+            {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Leave Type</th>
+                            <th>Period</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in page_obj %}
+                        <tr>
+                            <td>{{ request.request_id }}</td>
+                            <td>{{ request.employee.full_name }}</td>
+                            <td>{{ request.employee.department.department_name|default:"--" }}</td>
+                            <td>
+                                <span class="leave-type-badge leave-type-{{ request.leave_type|lower|cut:' ' }}">
+                                    {{ request.leave_type }}
+                                </span>
+                            </td>
+                            <td>
+                                <div>{{ request.start_date|date:"M d, Y" }}</div>
+                                <div>to</div>
+                                <div>{{ request.end_date|date:"M d, Y" }}</div>
+                            </td>
+                            <td><span class="leave-days-badge">{{ request.leave_days }} days</span></td>
+                            <td>
+                                <span class="leave-status status-{{ request.status|lower }}">
+                                    {{ request.status }}
+                                </span>
+                            </td>
+                            <td>{{ request.created_date|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'leave_request_detail' pk=request.request_id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                {% if request.status == 'Pending' %}
+                                <a href="{% url 'leave_approval' pk=request.request_id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                
+                                <a href="{% url 'employee_leave_report' employee_id=request.employee.employee_id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-history"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="d-flex justify-content-center mt-4">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">Last</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5>No Leave Requests Found</h5>
+                <p class="text-muted">No leave requests match your search criteria.</p>
+                <a href="{% url 'all_leave_requests' %}" class="btn btn-outline-primary mt-3">
+                    <i class="fas fa-sync"></i> Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

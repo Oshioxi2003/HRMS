@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">HR Dashboard</h4>
+                <p class="text-muted">Overview of the organization's HR metrics</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Statistics Cards -->
+    <div class="row">
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="stat-title">Employees</h5>
+                        <div class="number">{{ total_employees }}</div>
+                        <div class="text-success">
+                            <i class="fas fa-user-plus"></i> {{ new_employees_this_month }} new this month
+                        </div>
+                    </div>
+                    <div class="icon text-primary">
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="stat-title">Leave Requests</h5>
+                        <div class="number">{{ pending_leaves }}</div>
+                        <div class="text-warning">
+                            <i class="fas fa-clock"></i> Pending approval
+                        </div>
+                    </div>
+                    <div class="icon text-warning">
+                        <i class="fas fa-calendar-alt fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="stat-title">Today's Attendance</h5>
+                        <div class="number">{{ attendance_summary.present }}</div>
+                        <div class="text-muted">
+                            <i class="fas fa-user-clock"></i> Present of {{ total_employees }}
+                        </div>
+                    </div>
+                    <div class="icon text-success">
+                        <i class="fas fa-clipboard-check fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="stat-title">Expiring Contracts</h5>
+                        <div class="number">{{ expiring_contracts|length }}</div>
+                        <div class="text-danger">
+                            <i class="fas fa-exclamation-circle"></i> Next 30 days
+                        </div>
+                    </div>
+                    <div class="icon text-danger">
+                        <i class="fas fa-file-contract fa-3x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Employee Distribution by Department</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Employee Changes (Hires vs Separations)</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="employeeChangesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Attendance Trends (This Month)</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Leave by Type (This Year)</h5>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="leaveChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Contracts Table -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Contracts Expiring in the Next 30 Days</h5>
+                        <a href="{% url 'contract_list' %}" class="btn btn-sm btn-primary">View All Contracts</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if expiring_contracts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Contract Type</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Days Left</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contract in expiring_contracts %}
+                                    <tr>
+                                        <td>{{ contract.employee.full_name }}</td>
+                                        <td>{{ contract.employee.department.department_name|default:"--" }}</td>
+                                        <td>{{ contract.contract_type }}</td>
+                                        <td>{{ contract.start_date|date:"M d, Y" }}</td>
+                                        <td>{{ contract.end_date|date:"M d, Y" }}</td>
+                                        <td>{{ contract.end_date|timeuntil }}</td>
+                                        <td>
+                                            <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No contracts expiring in the next 30 days.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Leave Requests Table -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Recent Leave Requests</h5>
+                        <a href="{% url 'leave_admin' %}" class="btn btn-sm btn-primary">View All Leave</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if pending_leave_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Department</th>
+                                        <th>Leave Type</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Days</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for leave in pending_leave_requests %}
+                                    <tr>
+                                        <td>{{ leave.employee.full_name }}</td>
+                                        <td>{{ leave.employee.department.department_name|default:"--" }}</td>
+                                        <td>{{ leave.leave_type }}</td>
+                                        <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                                        <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                                        <td>{{ leave.leave_days }}</td>
+                                        <td>
+                                            <span class="badge rounded-pill bg-warning">{{ leave.status }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'leave_approval' pk=leave.request_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-check"></i> Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No pending leave requests.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+// Chart colors
+const colorPalette = {
+    blue: 'rgba(63, 81, 181, 0.8)',
+    blueLight: 'rgba(63, 81, 181, 0.2)',
+    green: 'rgba(76, 175, 80, 0.8)',
+    greenLight: 'rgba(76, 175, 80, 0.2)',
+    red: 'rgba(244, 67, 54, 0.8)',
+    redLight: 'rgba(244, 67, 54, 0.2)',
+    yellow: 'rgba(255, 152, 0, 0.8)',
+    yellowLight: 'rgba(255, 152, 0, 0.2)',
+    purple: 'rgba(156, 39, 176, 0.8)',
+    purpleLight: 'rgba(156, 39, 176, 0.2)',
+};
+
+// Department distribution chart
+const deptCtx = document.getElementById('departmentChart').getContext('2d');
+const departmentChart = new Chart(deptCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ dept_names_json|safe }},
+        datasets: [{
+            data: {{ dept_counts_json|safe }},
+            backgroundColor: [
+                colorPalette.blue,
+                colorPalette.green,
+                colorPalette.red,
+                colorPalette.yellow,
+                colorPalette.purple,
+                '#00bcd4',
+                '#ff5722',
+                '#9e9e9e'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+            }
+        }
+    }
+});
+
+// Employee changes chart
+const employeeChangesCtx = document.getElementById('employeeChangesChart').getContext('2d');
+const employeeChangesChart = new Chart(employeeChangesCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ employee_change_labels_json|safe }},
+        datasets: [
+            {
+                label: 'Hires',
+                data: {{ hires_json|safe }},
+                backgroundColor: colorPalette.green,
+            },
+            {
+                label: 'Separations',
+                data: {{ separations_json|safe }},
+                backgroundColor: colorPalette.red,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Attendance trends chart
+const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+const attendanceChart = new Chart(attendanceCtx, {
+    type: 'line',
+    data: {
+        labels: {{ attendance_dates_json|safe }},
+        datasets: [
+            {
+                label: 'Present',
+                data: {{ present_counts_json|safe }},
+                borderColor: colorPalette.green,
+                backgroundColor: colorPalette.greenLight,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'Absent',
+                data: {{ absent_counts_json|safe }},
+                borderColor: colorPalette.red,
+                backgroundColor: colorPalette.redLight,
+                fill: true,
+                tension: 0.4
+            },
+            {
+                label: 'On Leave',
+                data: {{ leave_counts_json|safe }},
+                borderColor: colorPalette.yellow,
+                backgroundColor: colorPalette.yellowLight,
+                fill: true,
+                tension: 0.4
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }
+    }
+});
+
+// Leave by type chart
+const leaveCtx = document.getElementById('leaveChart').getContext('2d');
+const leaveChart = new Chart(leaveCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ leave_types_json|safe }},
+        datasets: [
+            {
+                label: 'Number of Requests',
+                data: {{ leave_counts_by_type_json|safe }},
+                backgroundColor: colorPalette.blue,
+                order: 2
+            },
+            {
+                label: 'Total Days',
+                data: {{ leave_days_by_type_json|safe }},
+                backgroundColor: colorPalette.red,
+                type: 'line',
+                order: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

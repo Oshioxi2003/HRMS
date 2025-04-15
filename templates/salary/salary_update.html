@@ -1,0 +1,112 @@
+<!-- templates/salary/salary_update.html -->
+{% extends "salary/base_salary.html" %}
+{% load crispy_forms_tags %}
+
+{% block salary_title %}Update Salary{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Update Salary - {{ salary.employee.full_name }}</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> You are editing the salary record for <strong>{{ salary.employee.full_name }}</strong> 
+            for the period <strong>{{ salary.month|get_month_name }} {{ salary.year }}</strong>.
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Basic Information -->
+                <div class="col-md-6">
+                    {{ form.employee|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.month|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.year|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Work Data -->
+                <div class="col-md-4">
+                    {{ form.work_days|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.leave_days|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.overtime_hours|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Earnings -->
+                <div class="col-md-3">
+                    {{ form.base_salary|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.allowance|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.seniority_allowance|as_crispy_field }}
+                </div>
+                <div class="col-md-3">
+                    {{ form.bonus|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Deductions -->
+                <div class="col-md-4">
+                    {{ form.income_tax|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.social_insurance|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.health_insurance|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- More Deductions -->
+                <div class="col-md-4">
+                    {{ form.unemployment_insurance|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.deductions|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.advance|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Payment Status -->
+                <div class="col-md-4">
+                    {{ form.is_paid|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.payment_date|as_crispy_field }}
+                </div>
+            </div>
+            
+            {{ form.notes|as_crispy_field }}
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'salary_detail' pk=salary.salary_id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Details
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Salary
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

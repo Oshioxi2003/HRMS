@@ -1,0 +1,698 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-summary {
+        text-align: center;
+        padding: 15px;
+        border-radius: 5px;
+        background-color: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .stat-summary h4 {
+        color: #3f51b5;
+        margin-bottom: 10px;
+    }
+    
+    .stat-summary p {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+    
+    .stat-summary .subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% trans "Bảng Điều Khiển Phân Tích Nhân Sự" %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Thống kê Chính -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-summary">
+                <h4>{% trans "Tổng Nhân Viên" %}</h4>
+                <p>{{ total_employees }}</p>
+                <div class="subtitle">{% trans "Nhân Viên Đang Làm Việc" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-summary">
+                <h4>{% trans "Nhân Viên Mới" %}</h4>
+                <p>{{ new_employees_this_month }}</p>
+                <div class="subtitle">{% trans "Tháng Này" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-summary">
+                <h4>{% trans "Phòng Ban" %}</h4>
+                <p>{{ dept_employee_counts|length }}</p>
+                <div class="subtitle">{% trans "Phòng Ban Đang Hoạt Động" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-summary">
+                <h4>{% trans "Hợp Đồng Sắp Hết Hạn" %}</h4>
+                <p>{{ expiring_contracts|length }}</p>
+                <div class="subtitle">{% trans "30 Ngày Tới" %}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Phân Bổ Nhân Viên Theo Phòng Ban -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Phân Bổ Nhân Viên Theo Phòng Ban" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="departmentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Phân Bổ Giới Tính -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Phân Bổ Giới Tính" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Biến Động Nhân Sự -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Biến Động Nhân Sự (Tuyển Dụng và Nghỉ Việc)" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="employeeChangesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Xu Hướng Chuyên Cần -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Xu Hướng Chuyên Cần (Tháng Này)" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Thống Kê Nghỉ Phép và Phân Bổ Lương -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Nghỉ Phép Theo Loại (Năm Nay)" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="leaveChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Lương Trung Bình Theo Phòng Ban" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="salaryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hiệu Suất và Hoàn Thành Công Việc -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Hiệu Suất Theo Phòng Ban" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Phân Bổ Trạng Thái Công Việc" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="taskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Xu Hướng Chi Phí và Phân Bổ Tài Sản -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Xu Hướng Chi Phí (6 Tháng Gần Đây)" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Phân Bổ Tài Sản" %}
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="assetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bảng Hợp Đồng Sắp Hết Hạn -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    {% trans "Hợp Đồng Sắp Hết Hạn Trong 30 Ngày Tới" %}
+                </div>
+                <div class="card-body">
+                    {% if expiring_contracts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Nhân Viên" %}</th>
+                                    <th>{% trans "Phòng Ban" %}</th>
+                                    <th>{% trans "Loại Hợp Đồng" %}</th>
+                                    <th>{% trans "Ngày Bắt Đầu" %}</th>
+                                    <th>{% trans "Ngày Kết Thúc" %}</th>
+                                    <th>{% trans "Số Ngày Còn Lại" %}</th>
+                                    <th>{% trans "Hành Động" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contract in expiring_contracts %}
+                                <tr>
+                                    <td>{{ contract.employee.full_name }}</td>
+                                    <td>{{ contract.employee.department.department_name|default:"--" }}</td>
+                                    <td>{{ contract.contract_type }}</td>
+                                    <td>{{ contract.start_date }}</td>
+                                    <td>{{ contract.end_date }}</td>
+                                    <td>{{ contract.end_date|timeuntil }}</td>
+                                    <td>
+                                        <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> Xem
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center">{% trans "Không có hợp đồng nào sắp hết hạn trong 30 ngày tới." %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<script>
+// Màu sắc biểu đồ
+const colorPalette = {
+    blue: 'rgba(63, 81, 181, 0.8)',
+    blueLight: 'rgba(63, 81, 181, 0.2)',
+    green: 'rgba(76, 175, 80, 0.8)',
+    greenLight: 'rgba(76, 175, 80, 0.2)',
+    red: 'rgba(244, 67, 54, 0.8)',
+    redLight: 'rgba(244, 67, 54, 0.2)',
+    yellow: 'rgba(255, 152, 0, 0.8)',
+    yellowLight: 'rgba(255, 152, 0, 0.2)',
+    purple: 'rgba(156, 39, 176, 0.8)',
+    purpleLight: 'rgba(156, 39, 176, 0.2)',
+    cyan: 'rgba(0, 188, 212, 0.8)',
+    cyanLight: 'rgba(0, 188, 212, 0.2)',
+    pink: 'rgba(233, 30, 99, 0.8)',
+    pinkLight: 'rgba(233, 30, 99, 0.2)',
+    indigo: 'rgba(33, 150, 243, 0.8)',
+    indigoLight: 'rgba(33, 150, 243, 0.2)',
+};
+
+// Lấy dữ liệu biểu đồ từ context
+const deptNames = {{ dept_names_json|safe }};
+const deptCounts = {{ dept_counts_json|safe }};
+
+const genderLabels = {{ gender_labels_json|safe }};
+const genderData = {{ gender_data_json|safe }};
+
+const attendanceDates = {{ attendance_dates_json|safe }};
+const presentCounts = {{ present_counts_json|safe }};
+const absentCounts = {{ absent_counts_json|safe }};
+const leaveCounts = {{ leave_counts_json|safe }};
+
+const leaveTypes = {{ leave_types_json|safe }};
+const leaveCountsByType = {{ leave_counts_by_type_json|safe }};
+const leaveDaysByType = {{ leave_days_by_type_json|safe }};
+
+const employeeChangeLabels = {{ employee_change_labels_json|safe }};
+const hiresData = {{ hires_json|safe }};
+const separationsData = {{ separations_json|safe }};
+
+const perfDeptNames = {{ perf_dept_names_json|safe }};
+const perfDeptScores = {{ perf_dept_scores_json|safe }};
+
+const salaryDeptNames = {{ salary_dept_names_json|safe }};
+const salaryDeptTotals = {{ salary_dept_totals_json|safe }};
+const salaryDeptAvgs = {{ salary_dept_avgs_json|safe }};
+
+const expenseLabels = {{ expense_labels_json|safe }};
+const expenseAmounts = {{ expense_amounts_json|safe }};
+
+const assetCategories = {{ asset_categories_json|safe }};
+const assetCounts = {{ asset_counts_json|safe }};
+
+const taskStatuses = {{ task_statuses_json|safe }};
+const taskCounts = {{ task_counts_json|safe }};
+
+// Tạo màu ngẫu nhiên cho biểu đồ cần nhiều màu
+function generateColors(count) {
+    const colors = [];
+    const colorKeys = Object.keys(colorPalette);
+    for (let i = 0; i < count; i++) {
+        colors.push(colorPalette[colorKeys[i % colorKeys.length]]);
+    }
+    return colors;
+}
+
+// Tạo biểu đồ
+document.addEventListener('DOMContentLoaded', function() {
+    // Biểu Đồ Phòng Ban
+    new Chart(document.getElementById('departmentChart'), {
+        type: 'bar',
+        data: {
+            labels: deptNames,
+            datasets: [{
+                label: 'Nhân Viên',
+                data: deptCounts,
+                backgroundColor: generateColors(deptNames.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Số Lượng Nhân Viên Theo Phòng Ban'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Giới Tính
+    new Chart(document.getElementById('genderChart'), {
+        type: 'pie',
+        data: {
+            labels: genderLabels,
+            datasets: [{
+                data: genderData,
+                backgroundColor: [colorPalette.blue, colorPalette.pink, colorPalette.purple],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân Bổ Giới Tính Nhân Viên'
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Chuyên Cần
+    new Chart(document.getElementById('attendanceChart'), {
+        type: 'line',
+        data: {
+            labels: attendanceDates,
+            datasets: [
+                {
+                    label: 'Có Mặt',
+                    data: presentCounts,
+                    borderColor: colorPalette.green,
+                    backgroundColor: colorPalette.greenLight,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Vắng Mặt',
+                    data: absentCounts,
+                    borderColor: colorPalette.red,
+                    backgroundColor: colorPalette.redLight,
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'Nghỉ Phép',
+                    data: leaveCounts,
+                    borderColor: colorPalette.yellow,
+                    backgroundColor: colorPalette.yellowLight,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Xu Hướng Chuyên Cần Hàng Ngày'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Nghỉ Phép
+    new Chart(document.getElementById('leaveChart'), {
+        type: 'bar',
+        data: {
+            labels: leaveTypes,
+            datasets: [
+                {
+                    label: 'Số Lượng Yêu Cầu',
+                    data: leaveCountsByType,
+                    backgroundColor: colorPalette.blue,
+                    order: 2
+                },
+                {
+                    label: 'Tổng Số Ngày',
+                    data: leaveDaysByType,
+                    backgroundColor: colorPalette.red,
+                    type: 'line',
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Nghỉ Phép Theo Loại'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Biến Động Nhân Sự
+    new Chart(document.getElementById('employeeChangesChart'), {
+        type: 'bar',
+        data: {
+            labels: employeeChangeLabels,
+            datasets: [
+                {
+                    label: 'Tuyển Dụng',
+                    data: hiresData,
+                    backgroundColor: colorPalette.green,
+                },
+                {
+                    label: 'Nghỉ Việc',
+                    data: separationsData,
+                    backgroundColor: colorPalette.red,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Biến Động Nhân Sự Hàng Tháng'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Hiệu Suất
+    new Chart(document.getElementById('performanceChart'), {
+        type: 'radar',
+        data: {
+            labels: perfDeptNames,
+            datasets: [{
+                label: 'Tỷ Lệ Hoàn Thành Trung Bình (%)',
+                data: perfDeptScores,
+                backgroundColor: 'rgba(63, 81, 181, 0.3)',
+                borderColor: colorPalette.blue,
+                pointBackgroundColor: colorPalette.blue,
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: colorPalette.blue
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Hiệu Suất Theo Phòng Ban'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Lương
+    new Chart(document.getElementById('salaryChart'), {
+        type: 'bar',
+        data: {
+            labels: salaryDeptNames,
+            datasets: [{
+                label: 'Lương Trung Bình',
+                data: salaryDeptAvgs,
+                backgroundColor: colorPalette.green,
+                yAxisID: 'y'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân Bổ Lương Theo Phòng Ban'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Lương Trung Bình'
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Chi Phí
+    new Chart(document.getElementById('expenseChart'), {
+        type: 'line',
+        data: {
+            labels: expenseLabels,
+            datasets: [{
+                label: 'Chi Phí Hàng Tháng',
+                data: expenseAmounts,
+                borderColor: colorPalette.red,
+                backgroundColor: colorPalette.redLight,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Xu Hướng Chi Phí'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Tổng Chi Phí'
+                    }
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Tài Sản
+    new Chart(document.getElementById('assetChart'), {
+        type: 'doughnut',
+        data: {
+            labels: assetCategories,
+            datasets: [{
+                data: assetCounts,
+                backgroundColor: generateColors(assetCategories.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân Bổ Tài Sản Theo Danh Mục'
+                }
+            }
+        }
+    });
+
+    // Biểu Đồ Công Việc
+    new Chart(document.getElementById('taskChart'), {
+        type: 'polarArea',
+        data: {
+            labels: taskStatuses,
+            datasets: [{
+                data: taskCounts,
+                backgroundColor: [
+                    colorPalette.yellow, // Chưa Bắt Đầu
+                    colorPalette.blue,   // Đang Thực Hiện
+                    colorPalette.purple, // Tạm Dừng
+                    colorPalette.green,  // Hoàn Thành
+                    colorPalette.red     // Hủy Bỏ
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Phân Bổ Công Việc Theo Trạng Thái'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

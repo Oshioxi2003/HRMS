@@ -1,0 +1,130 @@
+<!-- templates/training/add_participants.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block card_title %}
+    <i class="fas fa-user-plus"></i> Add Participants to "{{ course.course_name }}"
+{% endblock %}
+
+{% block training_content %}
+<div class="mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-5">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search employees..." name="q" value="{{ search_query }}">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <select name="department" class="form-select" onchange="this.form.submit()">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                    {{ dept.department_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'course_participants' course_id=course.course_id %}" class="btn btn-secondary w-100">
+                <i class="fas fa-users"></i> View Current
+            </a>
+        </div>
+    </form>
+</div>
+
+{% if available_employees %}
+<form method="post">
+    {% csrf_token %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th width="5%">
+                        <input type="checkbox" id="select-all" class="form-check-input">
+                    </th>
+                    <th>Employee</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in available_employees %}
+                <tr>
+                    <td>
+                        <input type="checkbox" name="employees" value="{{ employee.employee_id }}" class="form-check-input employee-checkbox">
+                    </td>
+                    <td>{{ employee.full_name }}</td>
+                    <td>{{ employee.email }}</td>
+                    <td>{{ employee.department.department_name|default:"--" }}</td>
+                    <td>{{ employee.position.position_name|default:"--" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary" id="add-selected-btn" disabled>
+            <i class="fas fa-plus-circle"></i> Add Selected Employees
+        </button>
+        <a href="{% url 'course_participants' course_id=course.course_id %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const employeeCheckboxes = document.querySelectorAll('.employee-checkbox');
+        const addSelectedBtn = document.getElementById('add-selected-btn');
+        
+        // Select/deselect all functionality
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            employeeCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateButtonState();
+        });
+        
+        // Individual checkbox change handlers
+        employeeCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                updateButtonState();
+                updateSelectAllState();
+            });
+        });
+        
+        function updateButtonState() {
+            // Enable button if at least one checkbox is checked
+            const anyChecked = [...employeeCheckboxes].some(checkbox => checkbox.checked);
+            addSelectedBtn.disabled = !anyChecked;
+        }
+        
+        function updateSelectAllState() {
+            // Update select all checkbox state
+            const allChecked = [...employeeCheckboxes].every(checkbox => checkbox.checked);
+            const someChecked = [...employeeCheckboxes].some(checkbox => checkbox.checked);
+            
+            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+        }
+    });
+</script>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No available employees found to add to this course.
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'course_detail' pk=course.course_id %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Course
+    </a>
+</div>
+{% endblock %}

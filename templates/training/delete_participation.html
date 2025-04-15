@@ -1,0 +1,46 @@
+<!-- templates/training/delete_participation.html -->
+{% extends "training/base_training.html" %}
+
+{% block card_title %}
+    <i class="fas fa-trash"></i> Remove Participant
+{% endblock %}
+
+{% block training_content %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle"></i> 
+    Are you sure you want to remove <strong>{{ participation.employee.full_name }}</strong> from the course <strong>"{{ participation.course.course_name }}"</strong>?
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="card-subtitle mb-2 text-muted">Employee Information</h6>
+                <p><strong>Name:</strong> {{ participation.employee.full_name }}</p>
+                <p><strong>Email:</strong> {{ participation.employee.email|default:"Not provided" }}</p>
+                <p><strong>Department:</strong> {{ participation.employee.department.department_name|default:"Not assigned" }}</p>
+            </div>
+            <div class="col-md-6">
+                <h6 class="card-subtitle mb-2 text-muted">Participation Information</h6>
+                <p><strong>Status:</strong> {{ participation.status }}</p>
+                <p><strong>Registration Date:</strong> {{ participation.registration_date }}</p>
+                {% if participation.status == 'Completed' %}
+                <p><strong>Score:</strong> {{ participation.score|default:"Not graded" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mt-4">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Remove Participant
+        </button>
+        <a href="{% url 'course_participants' course_id=participation.course.course_id %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

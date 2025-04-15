@@ -1,0 +1,125 @@
+/* static/css/salary.css */
+/* Dashboard Styles */
+.border-left-primary {
+    border-left: 0.25rem solid #3f51b5 !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #4caf50 !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #2196f3 !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #ff9800 !important;
+}
+
+.text-xs {
+    font-size: 0.7rem;
+}
+
+.text-gray-800 {
+    color: #343a40 !important;
+}
+
+.text-gray-300 {
+    color: #adb5bd !important;
+}
+
+.chart-area {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Table styles */
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+/* Form styles */
+label {
+    font-weight: 500;
+    color: #495057;
+}
+
+/* Button styles */
+.btn-block {
+    display: block;
+    width: 100%;
+}
+
+/* Card styles */
+.card {
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    border-radius: calc(0.35rem - 1px) calc(0.35rem - 1px) 0 0;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+/* Additional utility classes */
+.text-primary {
+    color: #3f51b5 !important;
+}
+
+.font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.m-0 {
+    margin: 0 !important;
+}
+
+.py-2 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+.py-3 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Sidebar styles */
+.sidebar .nav-link {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+.sidebar .nav-link i {
+    margin-right: 0.5rem;
+    color: #6c757d;
+}
+
+.sidebar .nav-link.active i {
+    color: #3f51b5;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.sidebar .nav-link.active {
+    color: #3f51b5;
+    font-weight: 600;
+}

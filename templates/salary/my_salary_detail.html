@@ -1,0 +1,219 @@
+<!-- templates/salary/my_salary_detail.html -->
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Salary Details - {{ month_name }} {{ salary.year }}</h4>
+                <a href="{% url 'my_salary_payslip' salary_id=salary.salary_id %}" class="btn btn-primary">
+                    <i class="fas fa-file-pdf"></i> Download Payslip
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Employee Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="40%">Employee Name</th>
+                                            <td>{{ salary.employee.full_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Employee ID</th>
+                                            <td>{{ salary.employee.employee_id }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Department</th>
+                                            <td>{{ salary.employee.department.department_name|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Position</th>
+                                            <td>{{ salary.employee.position.position_name|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Salary Period</th>
+                                            <td>{{ month_name }} {{ salary.year }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Work Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="40%">Work Days</th>
+                                            <td>{{ salary.work_days }} days</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Leave Days</th>
+                                            <td>{{ salary.leave_days }} days</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Overtime Hours</th>
+                                            <td>{{ salary.overtime_hours }} hours</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Earnings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="60%">Base Salary</th>
+                                            <td class="text-end">{{ salary.base_salary|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Allowance</th>
+                                            <td class="text-end">{{ salary.allowance|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Seniority Allowance</th>
+                                            <td class="text-end">{{ salary.seniority_allowance|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Bonus</th>
+                                            <td class="text-end">{{ salary.bonus|intcomma }}</td>
+                                        </tr>
+                                        <tr class="table-primary">
+                                            <th>Total Earnings</th>
+                                            <td class="text-end fw-bold">
+                                                {{ salary.base_salary|add:salary.allowance|add:salary.seniority_allowance|add:salary.bonus|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Deductions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <th width="60%">Income Tax</th>
+                                            <td class="text-end">{{ salary.income_tax|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Social Insurance</th>
+                                            <td class="text-end">{{ salary.social_insurance|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Health Insurance</th>
+                                            <td class="text-end">{{ salary.health_insurance|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Unemployment Insurance</th>
+                                            <td class="text-end">{{ salary.unemployment_insurance|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Other Deductions</th>
+                                            <td class="text-end">{{ salary.deductions|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Salary Advance</th>
+                                            <td class="text-end">{{ salary.advance|intcomma }}</td>
+                                        </tr>
+                                        <tr class="table-danger">
+                                            <th>Total Deductions</th>
+                                            <td class="text-end fw-bold">
+                                                {{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance|intcomma }}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 offset-md-2">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Salary Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <tr class="table-primary">
+                                            <th width="60%">Total Earnings</th>
+                                            <td class="text-end">
+                                                {{ salary.base_salary|add:salary.allowance|add:salary.seniority_allowance|add:salary.bonus|intcomma }}
+                                            </td>
+                                        </tr>
+                                        <tr class="table-danger">
+                                            <th>Total Deductions</th>
+                                            <td class="text-end">
+                                                {{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance|intcomma }}
+                                            </td>
+                                        </tr>
+                                        <tr class="table-success">
+                                            <th><h5 class="mb-0">Net Salary</h5></th>
+                                            <td class="text-end"><h5 class="mb-0">{{ salary.net_salary|intcomma }}</h5></td>
+                                        </tr>
+                                    </table>
+                                    
+                                    <div class="mt-3">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="60%">Payment Status</th>
+                                                <td>
+                                                    {% if salary.is_paid %}
+                                                    <span class="badge bg-success">Paid</span>
+                                                    {% if salary.payment_date %}
+                                                    on {{ salary.payment_date|date:"Y-m-d" }}
+                                                    {% endif %}
+                                                    {% else %}
+                                                    <span class="badge bg-warning">Unpaid</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% if salary.notes %}
+                                            <tr>
+                                                <th>Notes</th>
+                                                <td>{{ salary.notes }}</td>
+                                            </tr>
+                                            {% endif %}
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'my_salary' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to My Salary
+                        </a>
+                        <a href="{% url 'my_salary_payslip' salary_id=salary.salary_id %}" class="btn btn-primary">
+                            <i class="fas fa-file-pdf"></i> Download Payslip
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

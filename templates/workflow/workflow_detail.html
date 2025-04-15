@@ -1,0 +1,239 @@
+<!-- templates/workflow/workflow_detail.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Workflow Details</h5>
+        <span class="badge {% if workflow.status == 'completed' %}bg-success{% elif workflow.status == 'cancelled' %}bg-danger{% elif workflow.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %}">
+            {{ workflow.get_status_display }}
+        </span>
+    </div>
+    <div class="card-body">
+        <!-- Workflow Summary -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 150px">Workflow:</th>
+                        <td>{{ workflow.workflow.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Entity Type:</th>
+                        <td>{{ workflow.workflow.get_entity_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Initiated By:</th>
+                        <td>{{ workflow.initiator.get_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Started Date:</th>
+                        <td>{{ workflow.started_date }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 150px">Status:</th>
+                        <td>{{ workflow.get_status_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Step:</th>
+                        <td>{% if workflow.current_step %}{{ workflow.current_step.step_name }}{% else %}-{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Completed Date:</th>
+                        <td>{{ workflow.completed_date|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Steps:</th>
+                        <td>{{ step_instances.count }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Entity Details -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Entity Details</h6>
+            </div>
+            <div class="card-body">
+                {% if entity %}
+                    <!-- Display entity specific details - this would normally be customized based on entity type -->
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 150px">ID:</th>
+                            <td>{{ entity.pk }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type:</th>
+                            <td>{{ workflow.workflow.get_entity_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name/Title:</th>
+                            <td>{{ entity }}</td>
+                        </tr>
+                        <!-- Add more entity specific fields here -->
+                    </table>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Entity details not available.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Workflow Steps Progress -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Workflow Progress</h6>
+            </div>
+            <div class="card-body">
+                <div class="workflow-steps">
+                    <div class="timeline">
+                        {% for step_instance in step_instances %}
+                            <div class="timeline-item {% if step_instance.status == 'approved' %}approved{% elif step_instance.status == 'rejected' %}rejected{% elif step_instance.status == 'in_progress' %}active{% elif step_instance.status == 'skipped' %}skipped{% endif %}">
+                                <div class="timeline-marker">
+                                    {% if step_instance.status == 'approved' %}
+                                        <i class="fas fa-check"></i>
+                                    {% elif step_instance.status == 'rejected' %}
+                                        <i class="fas fa-times"></i>
+                                    {% elif step_instance.status == 'in_progress' %}
+                                        <i class="fas fa-clock"></i>
+                                    {% elif step_instance.status == 'skipped' %}
+                                        <i class="fas fa-forward"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">{{ step_instance.workflow_step.step_name }}</h6>
+                                    <div>
+                                        <small>Type: {{ step_instance.workflow_step.get_step_type_display }}</small><br>
+                                        {% if step_instance.workflow_step.step_type == 'approval' %}
+                                            <small>Approver: 
+                                                {% if step_instance.assigned_to %}
+                                                    {{ step_instance.assigned_to.get_full_name }}
+                                                {% else %}
+                                                    {% if step_instance.workflow_step.approver_type == 'specific_user' %}
+                                                        {{ step_instance.workflow_step.specific_approver.get_full_name }}
+                                                    {% else %}
+                                                        {{ step_instance.workflow_step.get_approver_type_display }}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </small><br>
+                                        {% endif %}
+                                        <small>Status: {{ step_instance.get_status_display }}</small><br>
+                                        {% if step_instance.started_date %}
+                                            <small>Started: {{ step_instance.started_date }}</small><br>
+                                        {% endif %}
+                                        {% if step_instance.completed_date %}
+                                            <small>Completed: {{ step_instance.completed_date }}</small><br>
+                                        {% endif %}
+                                        {% if step_instance.comments %}
+                                            <small>Comments: {{ step_instance.comments }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Back button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'my_workflows' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to My Workflows
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 15px;
+        width: 2px;
+        background: #e9ecef;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 30px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        left: -30px;
+        background: #f8f9fa;
+        border-radius: 50%;
+        border: 2px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+    
+    .timeline-content {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+        border-left: 3px solid #dee2e6;
+    }
+    
+    /* Status specific styles */
+    .timeline-item.approved .timeline-marker {
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+    
+    .timeline-item.approved .timeline-content {
+        border-left-color: #28a745;
+    }
+    
+    .timeline-item.rejected .timeline-marker {
+        background-color: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+    
+    .timeline-item.rejected .timeline-content {
+        border-left-color: #dc3545;
+    }
+    
+    .timeline-item.active .timeline-marker {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .timeline-item.active .timeline-content {
+        border-left-color: #007bff;
+    }
+    
+    .timeline-item.skipped .timeline-marker {
+        background-color: #6c757d;
+        color: white;
+        border-color: #6c757d;
+    }
+    
+    .timeline-item.skipped .timeline-content {
+        border-left-color: #6c757d;
+    }
+</style>
+{% endblock %}

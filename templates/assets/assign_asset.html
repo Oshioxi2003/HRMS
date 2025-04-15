@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% trans "Assign Asset" %} | HRMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+<style>
+    .required-field label::after {
+        content: " *";
+        color: red;
+    }
+    .select2-container--bootstrap-5 .select2-selection {
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        height: auto !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <div>
+                    <h4 class="mb-0">{% trans "Assign Asset" %}</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'asset_list' %}">{% trans "Assets" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'asset_detail' asset_id=asset.asset_id %}">{{ asset.asset_tag }}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{% trans "Assign" %}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{% trans "Asset Details" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="asset-icon bg-light rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            {% if asset.category and asset.category.name %}
+                                {% if 'laptop' in asset.category.name|lower %}
+                                <i class="fas fa-laptop fa-2x text-primary"></i>
+                                {% elif 'desktop' in asset.category.name|lower %}
+                                <i class="fas fa-desktop fa-2x text-primary"></i>
+                                {% elif 'phone' in asset.category.name|lower %}
+                                <i class="fas fa-mobile-alt fa-2x text-primary"></i>
+                                {% elif 'furniture' in asset.category.name|lower %}
+                                <i class="fas fa-chair fa-2x text-primary"></i>
+                                {% elif 'vehicle' in asset.category.name|lower %}
+                                <i class="fas fa-car fa-2x text-primary"></i>
+                                {% else %}
+                                <i class="fas fa-box fa-2x text-primary"></i>
+                                {% endif %}
+                            {% else %}
+                            <i class="fas fa-box fa-2x text-primary"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="mt-3">{{ asset.asset_name }}</h5>
+                        <p class="text-muted mb-0">{{ asset.asset_tag }}</p>
+                        <span class="badge bg-success mt-2">{% trans "Available" %}</span>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <tbody>
+                                <tr>
+                                    <th width="40%">{% trans "Category" %}</th>
+                                    <td>{{ asset.category.name|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Condition" %}</th>
+                                    <td>{{ asset.condition }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Serial Number" %}</th>
+                                    <td>{{ asset.serial_number|default:"-" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">{% trans "Assignment Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-12 required-field">
+                                {{ form.employee|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6 required-field">
+                                {{ form.assignment_date|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {{ form.expected_return_date|as_crispy_field }}
+                            </div>
+                            
+                            <div class="col-md-12">
+                                {{ form.assignment_notes|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-info-circle fa-2x me-2"></i>
+                                </div>
+                                <div>
+                                    <h5 class="alert-heading">{% trans "Please Note" %}</h5>
+                                    <p class="mb-0">{% trans "Once assigned, the asset will be marked as 'Assigned' and will not be available for other assignments until it is returned." %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-end mt-4">
+                            <a href="{% url 'asset_detail' asset_id=asset.asset_id %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-1"></i> {% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-plus me-1"></i> {% trans "Assign Asset" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date pickers
+        flatpickr("#id_assignment_date", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            allowInput: true
+        });
+        
+        flatpickr("#id_expected_return_date", {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            minDate: "today"
+        });
+        
+        // Initialize employee select with search
+        $('#id_employee').select2({
+            theme: 'bootstrap-5',
+            placeholder: "{% trans 'Select an employee' %}",
+            width: '100%'
+        });
+        
+        // Form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+</script>
+{% endblock %}

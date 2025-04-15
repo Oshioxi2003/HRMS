@@ -1,0 +1,119 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}Leave Request Details{% endblock %}
+
+{% block content %}
+<div class="container leave-container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card leave-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Leave Request Details</h5>
+                    <span class="leave-status status-{{ leave_request.status|lower }}">
+                        {{ leave_request.status }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Request Information</h6>
+                            <p><strong>Request ID:</strong> #{{ leave_request.request_id }}</p>
+                            <p><strong>Employee:</strong> {{ leave_request.employee.full_name }}</p>
+                            <p><strong>Department:</strong> {{ leave_request.employee.department.department_name|default:"N/A" }}</p>
+                            <p>
+                                <strong>Leave Type:</strong>
+                                <span class="leave-type-badge leave-type-{{ leave_request.leave_type|lower|cut:' ' }}">
+                                    {{ leave_request.leave_type }}
+                                </span>
+                            </p>
+                            <p><strong>Leave Days:</strong> <span class="leave-days-badge">{{ leave_request.leave_days }} days</span></p>
+                            <p><strong>Submitted:</strong> {{ leave_request.created_date|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">Leave Period</h6>
+                            <p><strong>Start Date:</strong> {{ leave_request.start_date|date:"l, F d, Y" }}</p>
+                            <p><strong>End Date:</strong> {{ leave_request.end_date|date:"l, F d, Y" }}</p>
+                            
+                            {% if leave_request.status == 'Approved' %}
+                            <h6 class="text-muted mb-3 mt-4">Approval Information</h6>
+                            <p><strong>Approved By:</strong> {{ leave_request.approved_by.full_name }}</p>
+                            <p><strong>Approval Date:</strong> {{ leave_request.approval_date|date:"M d, Y" }}</p>
+                            {% endif %}
+                            
+                            {% if leave_request.status == 'Rejected' %}
+                            <h6 class="text-muted mb-3 mt-4">Rejection Information</h6>
+                            <p><strong>Rejected By:</strong> {{ leave_request.approved_by.full_name }}</p>
+                            <p><strong>Rejection Date:</strong> {{ leave_request.approval_date|date:"M d, Y" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if leave_request.reason %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Reason for Leave</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ leave_request.reason|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if leave_request.approval_notes %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Approval/Rejection Notes</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ leave_request.approval_notes|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if leave_request.attached_file %}
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Attachment</h6>
+                        <a href="{{ leave_request.attached_file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="fas fa-file"></i> View Attachment
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        {% if request.user.employee == leave_request.employee %}
+                        <a href="{% url 'my_leave_requests' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to My Leaves
+                        </a>
+                        {% elif request.user.role == 'HR' %}
+                        <a href="{% url 'all_leave_requests' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to All Leaves
+                        </a>
+                        {% elif request.user.role == 'Manager' %}
+                        <a href="{% url 'pending_leave_requests' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Pending Leaves
+                        </a>
+                        {% endif %}
+                        
+                        <div>
+                            {% if leave_request.can_edit and request.user.employee == leave_request.employee %}
+                            <a href="{% url 'leave_request_update' pk=leave_request.request_id %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {% endif %}
+                            
+                            {% if leave_request.can_cancel and request.user.employee == leave_request.employee %}
+                            <a href="{% url 'leave_request_cancel' pk=leave_request.request_id %}" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            {% endif %}
+                            
+                            {% if leave_request.status == 'Pending' and request.user.role == 'Manager' or request.user.role == 'HR' %}
+                            <a href="{% url 'leave_approval' pk=leave_request.request_id %}" class="btn btn-success">
+                                <i class="fas fa-check"></i> Approve/Reject
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

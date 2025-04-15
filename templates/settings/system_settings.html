@@ -1,0 +1,311 @@
+<!-- templates/settings/system_settings.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">System Settings</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">General Settings</h5>
+                            <p class="card-text">{{ setting_counts.general|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-cogs fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'general_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Appearance</h5>
+                            <p class="card-text">{{ setting_counts.appearance|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-palette fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'appearance_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Email</h5>
+                            <p class="card-text">{{ setting_counts.email|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-envelope fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'email_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Security</h5>
+                            <p class="card-text">{{ setting_counts.security|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-shield-alt fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'security_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-secondary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Attendance</h5>
+                            <p class="card-text">{{ setting_counts.attendance|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-clock fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'attendance_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Leave Management</h5>
+                            <p class="card-text">{{ setting_counts.leave|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'leave_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Performance</h5>
+                            <p class="card-text">{{ setting_counts.performance|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'performance_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Notifications</h5>
+                            <p class="card-text">{{ setting_counts.notification|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-bell fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'notification_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Integration</h5>
+                            <p class="card-text">{{ setting_counts.integration|default:"0" }} settings</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-link fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'integration_settings' %}" class="text-white stretched-link">View settings</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-dark text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">System Info</h5>
+                            <p class="card-text">View system details</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-server fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'system_info' %}" class="text-white stretched-link">View system info</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Audit Logs</h5>
+                            <p class="card-text">View user activity</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-history fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'audit_logs' %}" class="text-white stretched-link">View audit logs</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-secondary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title text-white">Create Setting</h5>
+                            <p class="card-text">Add new system setting</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-plus-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a href="{% url 'create_setting' %}" class="text-white stretched-link">Create new setting</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ log.user.username }}</td>
+                                    <td>
+                                        <span class="badge {% if log.action == 'create' %}bg-success{% elif log.action == 'update' %}bg-primary{% elif log.action == 'delete' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ log.action }}
+                                        </span>
+                                    </td>
+                                    <td>{{ log.entity_type }}</td>
+                                    <td>{{ log.description }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No recent activity</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <a href="{% url 'audit_logs' %}" class="btn btn-sm btn-primary">View All Logs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

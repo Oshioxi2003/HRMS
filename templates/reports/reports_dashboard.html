@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "HR Reports" %} - HRMS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% trans "HR Reports & Analytics" %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Categories -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-users fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Employee Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'employee_report' %}" class="btn btn-outline-primary btn-sm">{% trans "General Report" %}</a>
+                        <a href="{% url 'employee_turnover_report' %}" class="btn btn-outline-primary btn-sm mt-2">{% trans "Turnover Report" %}</a>
+                        <a href="{% url 'headcount_report' %}" class="btn btn-outline-primary btn-sm mt-2">{% trans "Headcount Report" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clock fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Attendance Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'attendance_summary_report' %}" class="btn btn-outline-success btn-sm">{% trans "Attendance Summary" %}</a>
+                        <a href="{% url 'leave_analysis_report' %}" class="btn btn-outline-success btn-sm mt-2">{% trans "Leave Analysis" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-dollar-sign fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Salary Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'salary_report' %}" class="btn btn-outline-warning btn-sm">{% trans "Salary Report" %}</a>
+                        <a href="{% url 'payroll_summary_report' %}" class="btn btn-outline-warning btn-sm mt-2">{% trans "Payroll Summary" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-line fa-3x text-info"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Performance Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'performance_analysis_report' %}" class="btn btn-outline-info btn-sm">{% trans "Performance Analysis" %}</a>
+                        <a href="{% url 'kpi_summary_report' %}" class="btn btn-outline-info btn-sm mt-2">{% trans "KPI Summary" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-laptop fa-3x text-danger"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Asset Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'asset_utilization_report' %}" class="btn btn-outline-danger btn-sm">{% trans "Asset Utilization" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-file-invoice-dollar fa-3x text-secondary"></i>
+                    </div>
+                    <h5 class="card-title">{% trans "Expense Reports" %}</h5>
+                    <div class="mt-3">
+                        <a href="{% url 'expense_analysis_report' %}" class="btn btn-outline-secondary btn-sm">{% trans "Expense Analysis" %}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Recent Saved Reports" %}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Title" %}</th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Created" %}</th>
+                                    <th>{% trans "Action" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in recent_reports %}
+                                <tr>
+                                    <td>{{ report.title }}</td>
+                                    <td>{{ report.get_report_type_display }}</td>
+                                    <td>{{ report.created_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <a href="{% url 'saved_report_detail' report_id=report.report_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i> {% trans "View" %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">{% trans "No saved reports found" %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="{% url 'saved_report_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list"></i> {% trans "View All Saved Reports" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

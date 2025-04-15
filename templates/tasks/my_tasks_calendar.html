@@ -1,0 +1,105 @@
+<!-- templates/tasks/my_tasks_calendar.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+<style>
+    #calendar {
+        height: 650px;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+    }
+    
+    .task-tooltip {
+        position: absolute;
+        z-index: 10000;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        max-width: 300px;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block task_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Task Calendar</h5>
+        <div>
+            <a href="{% url 'my_tasks' %}" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-list"></i> List View
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="calendar"></div>
+        <div id="task-tooltip" class="task-tooltip"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var tooltip = document.getElementById('task-tooltip');
+    
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: {{ calendar_events|safe }},
+        eventTimeFormat: {
+            hour: 'numeric',
+            minute: '2-digit',
+            meridiem: 'short'
+        },
+        eventClick: function(info) {
+            // Navigate to task detail
+            window.location.href = info.event.url;
+        },
+        eventMouseEnter: function(info) {
+            // Show tooltip
+            var event = info.event;
+            var props = event.extendedProps;
+            
+            var content = `
+                <h6>${event.title}</h6>
+                <p class="mb-1"><strong>Status:</strong> ${props.status}</p>
+                <p class="mb-1"><strong>Priority:</strong> ${props.priority}</p>
+                <p class="mb-1"><strong>Progress:</strong> ${props.progress}%</p>
+                <div class="progress mt-2" style="height: 5px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${props.progress}%;" 
+                        aria-valuenow="${props.progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            `;
+            
+            tooltip.innerHTML = content;
+            tooltip.style.display = 'block';
+            
+            // Position tooltip near the mouse
+            var x = info.jsEvent.pageX + 10;
+            var y = info.jsEvent.pageY + 10;
+            
+            tooltip.style.left = x + 'px';
+            tooltip.style.top = y + 'px';
+        },
+        eventMouseLeave: function() {
+            // Hide tooltip
+            tooltip.style.display = 'none';
+        }
+    });
+    
+    calendar.render();
+});
+</script>
+{% endblock %}

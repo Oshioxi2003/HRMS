@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pending Expense Claims{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="page-title">
+                    <i class="fas fa-clock me-2"></i> Pending Expense Claims
+                </h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h1 class="display-4 text-primary">{{ pending_claims|length }}</h1>
+                    <p class="mb-0">Pending Claims</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h1 class="display-4 text-success">{{ pending_claims.total_amount|default:"0.00"|floatformat:2 }}</h1>
+                    <p class="mb-0">Total Amount</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h1 class="display-4 text-info">{{ pending_claims.0.submission_date|timesince|default:"N/A" }}</h1>
+                    <p class="mb-0">Oldest Pending</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h1 class="display-4 text-secondary">{{ pending_claims.avg_amount|default:"0.00"|floatformat:2 }}</h1>
+                    <p class="mb-0">Average Amount</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pending Claims Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Claims Awaiting Approval</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_claims %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Claim ID</th>
+                                    <th>Employee</th>
+                                    <th>Department</th>
+                                    <th>Title</th>
+                                    <th>Submission Date</th>
+                                    <th>Amount</th>
+                                    <th>Waiting</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for claim in pending_claims %}
+                                <tr>
+                                    <td>{{ claim.claim_id }}</td>
+                                    <td>{{ claim.employee.full_name }}</td>
+                                    <td>{{ claim.employee.department.department_name|default:"Not Assigned" }}</td>
+                                    <td>{{ claim.claim_title }}</td>
+                                    <td>{{ claim.submission_date|date:"M d, Y" }}</td>
+                                    <td class="text-end">{{ claim.total_amount|floatformat:2 }}</td>
+                                    <td>{{ claim.submission_date|timesince }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'view_expense_claim' claim_id=claim.claim_id %}" class="btn btn-info">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <a href="{% url 'approve_expense' claim_id=claim.claim_id %}" class="btn btn-success">
+                                                <i class="fas fa-check"></i> Review
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <img src="{% static 'images/no-data.svg' %}" alt="No Claims" width="120" class="mb-3">
+                        <h5>No Pending Claims</h5>
+                        <p class="text-muted">There are no expense claims waiting for your approval.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

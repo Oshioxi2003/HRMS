@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Onboarding Details" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% trans "Onboarding Process for" %} {{ employee.full_name }}</h2>
+    
+    <div class="mb-3">
+        <h4>{% trans "Status:" %} {{ onboarding.get_status_display }}</h4>
+        <p>{% trans "Notes:" %} {{ onboarding.notes }}</p>
+        <p>{% trans "Start Date:" %} {{ onboarding.start_date }}</p>
+        <p>{% trans "Target Completion Date:" %} {{ onboarding.target_completion_date }}</p>
+        <p>{% trans "Actual Completion Date:" %} {{ onboarding.actual_completion_date }}</p>
+    </div>
+    
+    <h4>{% trans "Task Status" %}</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>{% trans "Task Name" %}</th>
+                <th>{% trans "Status" %}</th>
+                <th>{% trans "Comments" %}</th>
+                <th>{% trans "Actions" %}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task_status in task_statuses %}
+            <tr>
+                <td>{{ task_status.task.task_name }}</td>
+                <td>{{ task_status.get_status_display }}</td>
+                <td>{{ task_status.comments }}</td>
+                <td>
+                    {% if task_status.can_update %}
+                    <a href="{% url 'update_onboarding_task_status' task_status.id %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-pencil-alt"></i> {% trans "Update" %}
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h4>{% trans "Progress" %}: {{ progress_percentage }}%</h4>
+    
+    {% if can_update_hr %}
+    <a href="{% url 'create_employee_onboarding' employee.id %}" class="btn btn-secondary">{% trans "Edit Onboarding" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

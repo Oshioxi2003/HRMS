@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Attendance Summary Report" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .attendance-summary-card {
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        text-align: center;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .attendance-summary-card .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .attendance-summary-card .title {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .attendance-summary-card .value {
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+    
+    .attendance-summary-card .subtitle {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .attendance-rate-bar {
+        height: 5px;
+        border-radius: 5px;
+        margin-top: 5px;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% trans "Attendance Summary Report" %}</h4>
+                <a href="{% url 'hr_reports' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> {% trans "Back to Reports" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">{% trans "Report Parameters" %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'attendance_summary_report' %}">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">{{ form.department.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.department.help_text }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.report_type.id_for_label }}">{{ form.report_type.label }}</label>
+                            {{ form.report_type }}
+                            {% if form.report_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.report_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.export_format.id_for_label }}">{{ form.export_format.label }}</label>
+                            {{ form.export_format }}
+                            {% if form.export_format.errors %}
+                            <div class="invalid-feedback d-block">{{ form.export_format.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9 d-flex align-items-end">
+                        <div class="form-group d-flex">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i> {% trans "Generate Report" %}
+                            </button>
+                            <button type="submit" name="export" class="btn btn-success">
+                                <i class="fas fa-download me-1"></i> {% trans "Export" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if show_results %}
+    <!-- Report Results -->
+    <div class="mt-4">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">{% trans "Report Details" %}</h5>
+            <div>
+                <strong>{% trans "Period" %}:</strong> {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}
+                {% if department %}<strong class="ms-3">{% trans "Department" %}:</strong> {{ department.department_name }}{% endif %}
+                <strong class="ms-3">{% trans "Work Days" %}:</strong> {{ workdays }} days
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Attendance Summary Cards -->
+            <div class="col-md-3">
+                <div class="attendance-summary-card">
+                    <div class="icon text-primary">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="title">{% trans "Total Records" %}</div>
+                    <div class="value">{{ total_attendance }}</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="attendance-summary-card">
+                    <div class="icon text-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="title">{% trans "Present" %}</div>
+                    <div class="value">{{ present_count }}</div>
+                    <div class="subtitle">{% widthratio present_count total_attendance 100 %}% of total</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="attendance-summary-card">
+                    <div class="icon text-danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="title">{% trans "Absent" %}</div>
+                    <div class="value">{{ absent_count }}</div>
+                    <div class="subtitle">{% widthratio absent_count total_attendance 100 %}% of total</div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="attendance-summary-card">
+                    <div class="icon text-warning">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="title">{% trans "On Leave" %}</div>
+                    <div class="value">{{ leave_count }}</div>
+                    <div class="subtitle">{% widthratio leave_count total_attendance 100 %}% of total</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attendance Chart -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans "Daily Attendance Trend" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Report (if applicable) -->
+        {% if report_type == 'detailed' %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">{% trans "Employee Attendance Details" %}</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Employee" %}</th>
+                                <th>{% trans "Department" %}</th>
+                                <th>{% trans "Present Days" %}</th>
+                                <th>{% trans "Absent Days" %}</th>
+                                <th>{% trans "Leave Days" %}</th>
+                                <th>{% trans "Attendance Rate" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in employee_attendance %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.employee.profile_image %}
+                                        <img src="{{ item.employee.profile_image.url }}" class="rounded-circle me-2" width="32" height="32">
+                                        {% else %}
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                        {% endif %}
+                                        {{ item.employee.full_name }}
+                                    </div>
+                                </td>
+                                <td>{{ item.employee.department.department_name|default:"-" }}</td>
+                                <td>{{ item.present }}</td>
+                                <td>{{ item.absent }}</td>
+                                <td>{{ item.on_leave }}</td>
+                                <td>
+                                    <div>{{ item.attendance_rate }}%</div>
+                                    <div class="progress attendance-rate-bar">
+                                        <div class="progress-bar bg-{{ item.attendance_rate|floatformat:0|attendance_rate_color }}" role="progressbar" style="width: {{ item.attendance_rate }}%" aria-valuenow="{{ item.attendance_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize datepickers
+        $('.datepicker').flatpickr({
+            dateFormat: 'Y-m-d',
+            allowInput: true
+        });
+        
+        {% if show_results %}
+        // Attendance Chart
+        var ctx = document.getElementById('attendanceChart').getContext('2d');
+        var attendanceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [{% for data in attendance_by_date %}'{{ data.work_date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [
+                    {
+                        label: '{% trans "Present" %}',
+                        data: [{% for data in attendance_by_date %}{{ data.present }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: '{% trans "Absent" %}',
+                        data: [{% for data in attendance_by_date %}{{ data.absent }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: '{% trans "On Leave" %}',
+                        data: [{% for data in attendance_by_date %}{{ data.on_leave }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '{% trans "Employee Count" %}'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '{% trans "Date" %}'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+    
+    // Custom filter for attendance rate color
+    function attendance_rate_color(rate) {
+        rate = parseFloat(rate);
+        if (rate >= 90) return 'success';
+        if (rate >= 75) return 'info';
+        if (rate >= 60) return 'warning';
+        return 'danger';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "contract/base_contract.html" %}
+{% load static %}
+
+{% block contract_title %}Terminate Contract{% endblock %}
+
+{% block contract_actions %}
+<a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back to Contract
+</a>
+{% endblock %}
+
+{% block contract_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Terminate Contract
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <p><i class="fas fa-exclamation-circle"></i> <strong>Warning:</strong> You are about to terminate the contract for <strong>{{ contract.employee.full_name }}</strong>. This action cannot be undone.</p>
+                    <p class="mb-0">If this is the employee's only active contract, their status will be changed to "Resigned".</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="termination_reason" class="form-label">Termination Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="termination_reason" name="termination_reason" rows="4" required></textarea>
+                        <div class="form-text">Please provide a detailed reason for terminating this contract.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times-circle"></i> Terminate Contract
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Contract Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label text-muted">Contract ID</label>
+                    <p class="form-control-static">{{ contract.contract_id }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Employee</label>
+                    <p class="form-control-static">{{ contract.employee.full_name }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Contract Type</label>
+                    <p class="form-control-static">{{ contract.contract_type }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Start Date</label>
+                    <p class="form-control-static">{{ contract.start_date|date:"F d, Y" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">End Date</label>
+                    <p class="form-control-static">
+                        {% if contract.end_date %}
+                            {{ contract.end_date|date:"F d, Y" }}
+                        {% else %}
+                            <span class="text-muted">Indefinite</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label text-muted">Base Salary</label>
+                    <p class="form-control-static">{{ contract.base_salary|floatformat:2 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

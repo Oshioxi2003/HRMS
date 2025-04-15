@@ -1,0 +1,146 @@
+<!-- templates/tasks/create_task.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block task_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{% if is_edit %}Edit Task{% else %}Create New Task{% endif %}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="id_title" class="form-label">Task Title*</label>
+                    {{ form.title.errors }}
+                    {{ form.title|add_class:"form-control" }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="id_description" class="form-label">Description</label>
+                    {{ form.description.errors }}
+                    {{ form.description|add_class:"form-control" }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_assignee" class="form-label">Assignee*</label>
+                    {{ form.assignee.errors }}
+                    {{ form.assignee|add_class:"form-select select2" }}
+                </div>
+                <div class="col-md-6">
+                    <label for="id_category" class="form-label">Category</label>
+                    {{ form.category.errors }}
+                    {{ form.category|add_class:"form-select select2" }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_priority" class="form-label">Priority*</label>
+                    {{ form.priority.errors }}
+                    {{ form.priority|add_class:"form-select" }}
+                </div>
+                <div class="col-md-6">
+                    <label for="id_status" class="form-label">Status*</label>
+                    {{ form.status.errors }}
+                    {{ form.status|add_class:"form-select" }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_start_date" class="form-label">Start Date*</label>
+                    {{ form.start_date.errors }}
+                    {{ form.start_date|add_class:"form-control" }}
+                </div>
+                <div class="col-md-6">
+                    <label for="id_due_date" class="form-label">Due Date*</label>
+                    {{ form.due_date.errors }}
+                    {{ form.due_date|add_class:"form-control" }}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        {{ form.is_recurring|add_class:"form-check-input" }}
+                        <label class="form-check-label" for="id_is_recurring">Recurring Task</label>
+                    </div>
+                </div>
+                <div class="col-md-6" id="recurrence-pattern-div">
+                    <label for="id_recurrence_pattern" class="form-label">Recurrence Pattern</label>
+                    {{ form.recurrence_pattern.errors }}
+                    {{ form.recurrence_pattern|add_class:"form-control" }}
+                    <small class="text-muted">e.g., "daily", "weekly", "monthly"</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="id_attachments" class="form-label">Attachments</label>
+                    {{ form.attachments.errors }}
+                    {{ form.attachments|add_class:"form-control" }}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Task
+                </button>
+                
+                <div>
+                    {% if not is_edit %}
+                    <button type="submit" name="add_dependencies" class="btn btn-info">
+                        <i class="fas fa-link"></i> Save & Add Dependencies
+                    </button>
+                    {% endif %}
+                    
+                    <a href="javascript:history.back()" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap-5'
+        });
+        
+        // Show/hide recurrence pattern based on recurring checkbox
+        function toggleRecurrencePattern() {
+            if ($('#id_is_recurring').is(':checked')) {
+                $('#recurrence-pattern-div').show();
+            } else {
+                $('#recurrence-pattern-div').hide();
+                $('#id_recurrence_pattern').val('');
+            }
+        }
+        
+        // Initial state
+        toggleRecurrencePattern();
+        
+        // On change
+        $('#id_is_recurring').change(function() {
+            toggleRecurrencePattern();
+        });
+    });
+</script>
+{% endblock %}

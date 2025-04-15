@@ -1,0 +1,53 @@
+<!-- templates/workflow/workflow_step_delete.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Delete Workflow Step</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i> Are you sure you want to delete the step <strong>"{{ step.step_name }}"</strong> from workflow <strong>"{{ workflow.name }}"</strong>?
+        </div>
+        
+        <p>This action cannot be undone. Deleting this step will affect all future workflow instances.</p>
+        
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Step Details</h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 150px">Step Name:</th>
+                        <td>{{ step.step_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Order:</th>
+                        <td>{{ step.order }}</td>
+                    </tr>
+                    <tr>
+                        <th>Type:</th>
+                        <td>{{ step.get_step_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Required:</th>
+                        <td>{{ step.is_required|yesno:"Yes,No" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <form method="post" class="text-center">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-2"></i> Yes, Delete Step
+            </button>
+            <a href="{% url 'workflow_definition_detail' workflow_id=workflow.workflow_id %}" class="btn btn-secondary ms-2">
+                <i class="fas fa-times me-2"></i> Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

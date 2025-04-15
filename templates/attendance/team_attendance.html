@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Team Attendance" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .attendance-card {
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    
+    .attendance-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .attendance-card .card-header {
+        border-bottom: none;
+        background-color: transparent;
+    }
+    
+    .attendance-card .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+    }
+    
+    .attendance-status {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .status-present {
+        color: #28a745;
+    }
+    
+    .status-absent {
+        color: #dc3545;
+    }
+    
+    .status-leave {
+        color: #ffc107;
+    }
+    
+    .status-none {
+        color: #6c757d;
+    }
+    
+    .summary-card {
+        background-color: white;
+        border-radius: 5px;
+        padding: 15px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    .summary-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    .summary-card .title {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% trans "Team Attendance" %} - {{ department.department_name }}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Date Selector -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" id="dateFilterForm">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <label for="datePicker">{% trans "Select Date" %}</label>
+                                <input type="text" id="datePicker" name="date" class="form-control" value="{{ filter_date|date:'Y-m-d' }}" placeholder="YYYY-MM-DD">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="d-block">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter"></i> {% trans "Filter" %}
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="d-block">&nbsp;</label>
+                                <a href="?date={{ today|date:'Y-m-d' }}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-calendar-day"></i> {% trans "Today" %}
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Attendance Summary -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="summary-card">
+                <div class="value">{{ present_count }}</div>
+                <div class="title">{% trans "Present" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card">
+                <div class="value">{{ absent_count }}</div>
+                <div class="title">{% trans "Absent" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card">
+                <div class="value">{{ leave_count }}</div>
+                <div class="title">{% trans "On Leave" %}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-card">
+                <div class="value">{{ no_record_count }}</div>
+                <div class="title">{% trans "No Record" %}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Team Attendance List -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {% trans "Team Attendance for" %} {{ filter_date|date:"F j, Y" }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for item in attendance_data %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card attendance-card">
+                                    <div class="card-header">
+                                        <div class="d-flex align-items-center">
+                                            {% if item.employee.profile_image %}
+                                                <img src="{{ item.employee.profile_image.url }}" class="avatar me-3" alt="{{ item.employee.full_name }}">
+                                            {% else %}
+                                                <div class="avatar me-3 bg-light d-flex justify-content-center align-items-center">
+                                                    <i class="fas fa-user fa-lg text-secondary"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ item.employee.full_name }}</h6>
+                                                <small class="text-muted">{{ item.employee.position.position_name|default:"Employee" }}</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if item.attendance %}
+                                            <div class="row">
+                                                <div class="col-md-12 mb-2">
+                                                    <div class="attendance-status 
+                                                        {% if item.attendance.status == 'Present' %}status-present{% endif %}
+                                                        {% if item.attendance.status == 'Absent' %}status-absent{% endif %}
+                                                        {% if item.attendance.status == 'On Leave' %}status-leave{% endif %}">
+                                                        <i class="fas {% if item.attendance.status == 'Present' %}fa-check-circle{% elif item.attendance.status == 'Absent' %}fa-times-circle{% elif item.attendance.status == 'On Leave' %}fa-calendar-alt{% endif %}"></i>
+                                                        {{ item.attendance.status }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">{% trans "Check In" %}</small>
+                                                        <strong>{{ item.attendance.time_in|default:"--:--" }}</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">{% trans "Check Out" %}</small>
+                                                        <strong>{{ item.attendance.time_out|default:"--:--" }}</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">{% trans "Work Hours" %}</small>
+                                                        <strong>{{ item.attendance.actual_work_hours|default:"0.00" }}</strong>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-2">
+                                                        <small class="text-muted d-block">{% trans "Overtime" %}</small>
+                                                        <strong>{{ item.attendance.overtime_hours|default:"0.00" }}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                {% if item.attendance.notes %}
+                                                    <small class="text-muted d-block">{% trans "Notes" %}</small>
+                                                    <p class="small mb-0">{{ item.attendance.notes }}</p>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <div class="attendance-status status-none">
+                                                <i class="fas fa-question-circle"></i> {% trans "No Record" %}
+                                            </div>
+                                            <p class="text-muted small mt-2 mb-0">
+                                                {% trans "No attendance record found for this date." %}
+                                            </p>
+                                            
+                                            {% if perms.attendance.add_attendance or user.role == 'HR' or user.role == 'Admin' %}
+                                                <a href="{% url 'manage_attendance' %}?employee_id={{ item.employee.employee_id }}&work_date={{ filter_date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary mt-3">
+                                                    <i class="fas fa-plus"></i> {% trans "Add Record" %}
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                    {% if item.attendance and perms.attendance.change_attendance %}
+                                        <div class="card-footer bg-white">
+                                            <a href="{% url 'manage_attendance' attendance_id=item.attendance.attendance_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    {% trans "No employees found in this department." %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date picker
+        flatpickr("#datePicker", {
+            dateFormat: "Y-m-d",
+            maxDate: "today"
+        });
+    });
+</script>
+{% endblock %}

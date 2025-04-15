@@ -1,0 +1,48 @@
+{% load static %}
+{% load notification_tags %}
+
+<div class="dropdown-menu notification-dropdown-menu" aria-labelledby="notificationDropdown">
+    <div class="dropdown-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Notifications</h6>
+        <span class="badge bg-primary" id="notificationCounter">{{ unread_count }}</span>
+    </div>
+    
+    <div class="notification-list" id="notificationList">
+        {% if notifications %}
+            {% for notification in notifications %}
+                <a href="{{ notification.link|default:'#' }}" 
+                   class="dropdown-item notification-item {% if not notification.is_read %}unread{% endif %}"
+                   data-notification-id="{{ notification.notification_id }}">
+                    <div class="notification-icon {{ notification.notification_type|lower }}">
+                        <i class="fas {{ notification.notification_type|notification_icon }}"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">{{ notification.title }}</div>
+                        <div class="notification-message">{{ notification.message|truncatechars:60 }}</div>
+                        <div class="notification-time">{{ notification.created_date|timesince }} ago</div>
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <div class="dropdown-item text-center py-3">
+                <div class="empty-notifications">
+                    <i class="fas fa-bell-slash mb-2 text-muted"></i>
+                    <p class="mb-0 small">No new notifications</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="dropdown-divider"></div>
+    
+    <div class="dropdown-footer d-flex justify-content-between">
+        <a href="{% url 'notification_list' %}?read=unread" class="text-primary">
+            View all
+        </a>
+        {% if unread_count > 0 %}
+            <a href="#" class="text-primary mark-all-read-btn">
+                Mark all as read
+            </a>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,83 @@
+<!-- templates/training/participation_form.html -->
+{% extends "training/base_training.html" %}
+{% load crispy_forms_tags %}
+
+{% block card_title %}
+    <i class="fas fa-user-edit"></i> Update Participation Status
+{% endblock %}
+
+{% block training_content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                Course Information
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ course.course_name }}</h5>
+                <p class="card-text">{{ course.description|default:"No description"|truncatewords:30 }}</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Start Date:</strong> {{ course.start_date|default:"Not set" }}</li>
+                    <li class="list-group-item"><strong>End Date:</strong> {{ course.end_date|default:"Not set" }}</li>
+                    <li class="list-group-item"><strong>Status:</strong> {{ course.status }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                Employee Information
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ employee.full_name }}</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Email:</strong> {{ employee.email|default:"Not provided" }}</li>
+                    <li class="list-group-item">
+                        <strong>Department:</strong> 
+                        {{ employee.department.department_name|default:"Not assigned" }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Position:</strong> 
+                        {{ employee.position.position_name|default:"Not assigned" }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.status|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.actual_completion_date|as_crispy_field }}
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            {{ form.score|as_crispy_field }}
+        </div>
+        <div class="col-md-6">
+            {{ form.certificate|as_crispy_field }}
+        </div>
+    </div>
+    
+    {{ form.notes|as_crispy_field }}
+    
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Update Status
+        </button>
+        <a href="{% url 'course_participants' course_id=participation.course.course_id %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Cancel
+        </a>
+    </div>
+</form>
+{% endblock %}

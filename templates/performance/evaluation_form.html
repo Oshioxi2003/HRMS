@@ -1,0 +1,203 @@
+<!-- templates/performance/evaluation_form.html -->
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Performance Evaluation{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="mb-0">
+                    {% if is_update %}
+                    Edit Performance Evaluation
+                    {% else %}
+                    Evaluate {{ employee.full_name }}
+                    {% endif %}
+                </h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.month|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.year|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.kpi|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.target|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.result|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                {{ form.feedback|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                {% if is_update %}
+                                Update Evaluation
+                                {% else %}
+                                Submit Evaluation
+                                {% endif %}
+                            </button>
+                            {% if is_update %}
+                            <a href="{% url 'evaluation_detail' pk=evaluation.evaluation_id %}" class="btn btn-secondary ms-2">Cancel</a>
+                            {% else %}
+                            <a href="{% url 'employee_evaluations' employee_id=employee.employee_id %}" class="btn btn-secondary ms-2">Cancel</a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Employee Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if employee.profile_image %}
+                        <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="avatar avatar-lg rounded-circle">
+                        {% else %}
+                        <div class="avatar avatar-lg rounded-circle bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="mt-3">{{ employee.full_name }}</h5>
+                        <p class="text-muted mb-0">
+                            {% if employee.position %}
+                            {{ employee.position.position_name }}
+                            {% endif %}
+                            {% if employee.department %}
+                            | {{ employee.department.department_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    {% if recent_evaluations %}
+                    <h6>Recent Evaluations:</h6>
+                    <div class="list-group">
+                        {% for eval in recent_evaluations %}
+                        <a href="{% url 'evaluation_detail' pk=eval.evaluation_id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ eval.kpi.kpi_name }}</h6>
+                                <small>{{ eval.month }}/{{ eval.year }}</small>
+                            </div>
+                            <p class="mb-1">Target: {{ eval.target }} | Result: {{ eval.result }}</p>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar {% if eval.achievement_rate > 100 %}bg-success{% elif eval.achievement_rate >= 80 %}bg-info{% elif eval.achievement_rate >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                    role="progressbar" style="width: {{ eval.achievement_rate }}%;" 
+                                    aria-valuenow="{{ eval.achievement_rate }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small>Achievement: {{ eval.achievement_rate|floatformat:1 }}%</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center">
+                        <p class="text-muted">No recent evaluations found for this employee.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+$(document).ready(function() {
+    // Fetch KPI details when KPI is selected
+    $('#id_kpi').change(function() {
+        var kpi_id = $(this).val();
+        if (kpi_id) {
+            $.ajax({
+                url: '{% url "kpi_details" %}',
+                data: {
+                    'kpi_id': kpi_id
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success) {
+                        $('#id_target').attr('placeholder', 'Suggested: ' + data.min_target + ' - ' + data.max_target);
+                        
+                        // Set default target value if not already set
+                        if (!$('#id_target').val()) {
+                            $('#id_target').val(data.min_target);
+                        }
+                        
+                        // Add unit to labels if available
+                        if (data.unit) {
+                            $('label[for="id_target"]').text('Target (' + data.unit + ')');
+                            $('label[for="id_result"]').text('Result (' + data.unit + ')');
+                        } else {
+                            $('label[for="id_target"]').text('Target');
+                            $('label[for="id_result"]').text('Result');
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Trigger change on page load if KPI is already selected
+    if ($('#id_kpi').val()) {
+        $('#id_kpi').trigger('change');
+    }
+    
+    // Calculate achievement rate when result or target changes
+    $('#id_result, #id_target').change(function() {
+        var target = parseFloat($('#id_target').val());
+        var result = parseFloat($('#id_result').val());
+        
+        if (target && result && target > 0) {
+            var achievement = (result / target * 100).toFixed(2);
+            
+            // Show achievement preview
+            if (!$('#achievement-preview').length) {
+                $('#id_result').after('<div id="achievement-preview" class="mt-2"></div>');
+            }
+            
+            var color_class = achievement >= 100 ? 'text-success' : 
+                             achievement >= 80 ? 'text-info' : 
+                             achievement >= 50 ? 'text-warning' : 'text-danger';
+            
+            $('#achievement-preview').html('<small class="' + color_class + '"><i class="fas fa-chart-line me-1"></i> Achievement Rate: ' + achievement + '%</small>');
+        }
+    });
+});
+</script>
+{% endblock %}

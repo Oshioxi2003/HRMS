@@ -1,0 +1,521 @@
+<!-- templates/reports/leave_analysis.html -->
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Leave Analysis Report" %} - HRMS{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        flex: 1;
+        min-width: 200px;
+        background-color: white;
+        border-radius: 5px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    .stat-card .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+    
+    .stat-card .number {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .stat-card .label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .top-leaver {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .top-leaver:last-child {
+        border-bottom: none;
+    }
+    
+    .top-leaver .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        background-color: #f8f9fa;
+    }
+    
+    .top-leaver .info {
+        flex: 1;
+    }
+    
+    .top-leaver .name {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    
+    .top-leaver .dept {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .top-leaver .days {
+        font-weight: 600;
+        color: #3f51b5;
+    }
+    
+    .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">{% trans "Leave Analysis Report" %}</h4>
+                <a href="{% url 'hr_reports' %}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left me-1"></i> {% trans "Back to Reports" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">{% trans "Report Parameters" %}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'leave_analysis_report' %}">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+                            {{ form.start_date }}
+                            {% if form.start_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">{{ form.department.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">{{ form.department.help_text }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.export_format.id_for_label }}">{{ form.export_format.label }}</label>
+                            {{ form.export_format }}
+                            {% if form.export_format.errors %}
+                            <div class="invalid-feedback d-block">{{ form.export_format.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.leave_type.id_for_label }}">{{ form.leave_type.label }}</label>
+                            {{ form.leave_type }}
+                            {% if form.leave_type.errors %}
+                            <div class="invalid-feedback d-block">{{ form.leave_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                            {{ form.status }}
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-group d-flex">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i> {% trans "Generate Report" %}
+                            </button>
+                            <button type="submit" name="export" class="btn btn-success">
+                                <i class="fas fa-download me-1"></i> {% trans "Export" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    {% if show_results %}
+    <div class="mt-4">
+        <div class="alert alert-info">
+            <h5 class="alert-heading">{% trans "Report Filters" %}</h5>
+            <div>
+                <strong>{% trans "Period" %}:</strong> {{ start_date|date:"Y-m-d" }} to {{ end_date|date:"Y-m-d" }}
+                {% if department %}<strong class="ms-3">{% trans "Department" %}:</strong> {{ department.department_name }}{% endif %}
+                {% if leave_type %}<strong class="ms-3">{% trans "Leave Type" %}:</strong> {{ leave_type }}{% endif %}
+                {% if status %}<strong class="ms-3">{% trans "Status" %}:</strong> {{ status }}{% endif %}
+            </div>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="icon text-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="number">{{ total_requests }}</div>
+                <div class="label">{% trans "Total Requests" %}</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon text-success">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="number">{{ total_days }}</div>
+                <div class="label">{% trans "Total Days" %}</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="icon text-info">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="number">{{ total_days|floatformat:1 }}</div>
+                <div class="label">{% trans "Avg Days Per Request" %}</div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Leave by Type Chart -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Leave by Type" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="leaveTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leave by Department Chart -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Leave by Department" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="leaveDeptChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Leave by Status Chart -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Leave by Status" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="leaveStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Top Leave Takers -->
+            <div class="col-lg-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "Top Leave Takers" %}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for taker in top_leave_takers %}
+                        <div class="top-leaver">
+                            <div class="avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="info">
+                                <div class="name">{{ taker.employee__full_name }}</div>
+                                <div class="dept">{{ taker.employee__department__department_name|default:"No Department" }}</div>
+                            </div>
+                            <div class="days">{{ taker.days }} days</div>
+                        </div>
+                        {% empty %}
+                        <div class="p-3 text-center text-muted">{% trans "No data available" %}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Leave Requests Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">{% trans "Leave Requests" %}</h5>
+                <span class="badge bg-primary">{{ total_requests }} {% trans "Requests" %}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% trans "ID" %}</th>
+                                <th>{% trans "Employee" %}</th>
+                                <th>{% trans "Department" %}</th>
+                                <th>{% trans "Leave Type" %}</th>
+                                <th>{% trans "Start Date" %}</th>
+                                <th>{% trans "End Date" %}</th>
+                                <th>{% trans "Days" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Reason" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in leave_requests %}
+                            <tr>
+                                <td>{{ leave.request_id }}</td>
+                                <td>{{ leave.employee.full_name }}</td>
+                                <td>{{ leave.employee.department.department_name|default:"-" }}</td>
+                                <td>{{ leave.leave_type }}</td>
+                                <td>{{ leave.start_date|date:"Y-m-d" }}</td>
+                                <td>{{ leave.end_date|date:"Y-m-d" }}</td>
+                                <td>{{ leave.leave_days }}</td>
+                                <td>
+                                    {% if leave.status == 'Approved' %}
+                                    <span class="badge bg-success">{{ leave.status }}</span>
+                                    {% elif leave.status == 'Rejected' %}
+                                    <span class="badge bg-danger">{{ leave.status }}</span>
+                                    {% elif leave.status == 'Pending' %}
+                                    <span class="badge bg-warning">{{ leave.status }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ leave.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ leave.reason|truncatechars:30 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-3">{% trans "No leave requests found matching your criteria." %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize datepickers
+    $('.datepicker').flatpickr({
+        dateFormat: 'Y-m-d',
+        allowInput: true
+    });
+    
+    {% if show_results %}
+    // Leave by Type Chart
+    var typeCtx = document.getElementById('leaveTypeChart').getContext('2d');
+    var typeChart = new Chart(typeCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for leave in leave_by_type %}'{{ leave.leave_type }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    label: '{% trans "Number of Requests" %}',
+                    data: [{% for leave in leave_by_type %}{{ leave.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(63, 81, 181, 0.7)',
+                    borderColor: 'rgba(63, 81, 181, 1)',
+                    borderWidth: 1,
+                    order: 2
+                },
+                {
+                    label: '{% trans "Total Days" %}',
+                    data: [{% for leave in leave_by_type %}{{ leave.days }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    type: 'line',
+                    borderColor: 'rgba(76, 175, 80, 1)',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(76, 175, 80, 1)',
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.1,
+                    yAxisID: 'y1',
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '{% trans "Number of Requests" %}'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '{% trans "Total Days" %}'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+    
+    // Leave by Department Chart
+    var deptCtx = document.getElementById('leaveDeptChart').getContext('2d');
+    var deptChart = new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for dept in leave_by_dept %}'{{ dept.employee__department__department_name|default:"No Department" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    label: '{% trans "Total Days" %}',
+                    data: [{% for dept in leave_by_dept %}{{ dept.days }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: 'rgba(0, 188, 212, 0.7)',
+                    borderColor: 'rgba(0, 188, 212, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '{% trans "Leave Days" %}'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '{% trans "Department" %}'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Leave by Status Chart
+    var statusCtx = document.getElementById('leaveStatusChart').getContext('2d');
+    var statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for status in leave_by_status %}'{{ status.status }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [
+                {
+                    data: [{% for status in leave_by_status %}{{ status.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    backgroundColor: [
+                        'rgba(76, 175, 80, 0.7)',  // Approved - Green
+                        'rgba(244, 67, 54, 0.7)',  // Rejected - Red
+                        'rgba(255, 152, 0, 0.7)',  // Pending - Orange
+                        'rgba(158, 158, 158, 0.7)' // Cancelled - Grey
+                    ],
+                    borderColor: [
+                        'rgba(76, 175, 80, 1)',
+                        'rgba(244, 67, 54, 1)',
+                        'rgba(255, 152, 0, 1)',
+                        'rgba(158, 158, 158, 1)'
+                    ],
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

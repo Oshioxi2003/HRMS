@@ -1,0 +1,43 @@
+{% extends "messaging/base_messaging.html" %}
+{% load crispy_forms_tags %}
+
+{% block messaging_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Send Test Email: {{ template.name }}</h5>
+        <a href="{% url 'email_template_detail' template_id=template.template_id %}" class="btn btn-secondary btn-sm">
+            Back to Template
+        </a>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> This will send a real email using the template. Make sure you provide valid information.
+            </div>
+            
+            {{ form.to_email|as_crispy_field }}
+            
+            {% if variables %}
+            <h6 class="mt-4">Template Variables</h6>
+            <p class="text-muted small">Fill in the values for the variables used in this template.</p>
+            
+            <div class="row">
+                {% for var in variables %}
+                <div class="col-md-6 mb-3">
+                    <label for="var_{{ var }}" class="form-label">{{ var }}</label>
+                    <input type="text" class="form-control" id="var_{{ var }}" name="var_{{ var }}" placeholder="Value for {{ var }}">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Send Test Email</button>
+                <a href="{% url 'email_template_detail' template_id=template.template_id %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

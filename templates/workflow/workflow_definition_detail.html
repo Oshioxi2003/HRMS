@@ -1,0 +1,153 @@
+<!-- templates/workflow/workflow_definition_detail.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Workflow Definition: {{ definition.name }}</h5>
+        <div>
+            <a href="{% url 'workflow_step_create' workflow_id=definition.workflow_id %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus-circle"></i> Add Step
+            </a>
+            <a href="{% url 'workflow_step_reorder' workflow_id=definition.workflow_id %}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-sort"></i> Reorder Steps
+            </a>
+            <a href="{% url 'workflow_definition_edit' workflow_id=definition.workflow_id %}" class="btn btn-info btn-sm">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Workflow Details -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 150px">Name:</th>
+                        <td>{{ definition.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Entity Type:</th>
+                        <td>{{ definition.get_entity_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if definition.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm">
+                    <tr>
+                        <th style="width: 150px">Created Date:</th>
+                        <td>{{ definition.created_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Updated Date:</th>
+                        <td>{{ definition.updated_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Active Instances:</th>
+                        <td>{{ active_instances }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Description -->
+        {% if definition.description %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Description</h6>
+            </div>
+            <div class="card-body">
+                {{ definition.description }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Steps -->
+        <div class="card mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Workflow Steps</h6>
+                <a href="{% url 'workflow_step_create' workflow_id=definition.workflow_id %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus-circle"></i> Add Step
+                </a>
+            </div>
+            <div class="card-body">
+                {% if steps %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Step Name</th>
+                                    <th>Type</th>
+                                    <th>Approver</th>
+                                    <th>Required</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for step in steps %}
+                                <tr>
+                                    <td>{{ step.order }}</td>
+                                    <td>{{ step.step_name }}</td>
+                                    <td>{{ step.get_step_type_display }}</td>
+                                    <td>
+                                        {% if step.step_type == 'approval' %}
+                                            {% if step.approver_type == 'specific_user' and step.specific_approver %}
+                                                {{ step.specific_approver.get_full_name }}
+                                            {% else %}
+                                                {{ step.get_approver_type_display }}
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if step.is_required %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'workflow_step_edit' step_id=step.step_id %}" class="btn btn-sm btn-secondary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <a href="{% url 'workflow_step_delete' step_id=step.step_id %}" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> No steps defined for this workflow. 
+                        <a href="{% url 'workflow_step_create' workflow_id=definition.workflow_id %}" class="alert-link">Add your first step</a>.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Back button -->
+        <div class="text-center mt-4">
+            <a href="{% url 'workflow_definitions' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Workflow Definitions
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

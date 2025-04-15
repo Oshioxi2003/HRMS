@@ -1,0 +1,71 @@
+<!-- templates/salary/mark_salary_paid.html -->
+{% extends "salary/base_salary.html" %}
+{% load humanize %}
+
+{% block salary_title %}Mark Salary as Paid{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Mark Salary as Paid</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <p><i class="fas fa-info-circle"></i> You are marking the salary payment for <strong>{{ salary.employee.full_name }}</strong> 
+            for the period <strong>{{ salary.month|get_month_name }} {{ salary.year }}</strong>.</p>
+            <p>Net Salary Amount: <strong>{{ salary.net_salary|intcomma }}</strong></p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="payment_date" class="form-label">Payment Date</label>
+                        <input type="text" class="form-control" id="payment_date" name="payment_date" 
+                               value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method" required>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Check">Check</option>
+                            <option value="Electronic Payment">Electronic Payment</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% url 'salary_detail' pk=salary.salary_id %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> Confirm Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr("#payment_date", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today"
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "workflow/base_workflow.html" %}
+{% load crispy_forms_tags %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Workflow Step Approval</h5>
+    </div>
+    <div class="card-body">
+        <!-- Workflow Information -->
+        <div class="alert alert-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Workflow:</strong> {{ workflow.workflow.name }}<br>
+                    <strong>Step:</strong> {{ step_instance.workflow_step.step_name }}<br>
+                    <strong>Initiated By:</strong> {{ workflow.initiator.get_full_name }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Started Date:</strong> {{ workflow.started_date }}<br>
+                    <strong>Status:</strong> {{ workflow.get_status_display }}<br>
+                    <strong>Entity Type:</strong> {{ workflow.workflow.get_entity_type_display }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Entity Details -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Entity Details</h6>
+            </div>
+            <div class="card-body">
+                {% if entity %}
+                    <!-- Display entity specific details -->
+                    <table class="table table-sm">
+                        <tr>
+                            <th style="width: 150px">ID:</th>
+                            <td>{{ entity.pk }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type:</th>
+                            <td>{{ workflow.workflow.get_entity_type_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Name/Title:</th>
+                            <td>{{ entity }}</td>
+                        </tr>
+                        <!-- Add more entity specific fields here -->
+                    </table>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Entity details not available.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Approval Form -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Decision</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    
+                    <div class="mt-4 text-center">
+                        <button type="submit" class="btn btn-success btn-lg me-2" name="action" value="approve">
+                            <i class="fas fa-check-circle me-2"></i> Approve
+                        </button>
+                        <button type="submit" class="btn btn-danger btn-lg" name="action" value="reject">
+                            <i class="fas fa-times-circle me-2"></i> Reject
+                        </button>
+                        <a href="{% url 'my_approval_requests' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-arrow-left me-2"></i> Back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!-- templates/salary/employee_salary_grade_form.html -->
+{% extends "salary/base_salary.html" %}
+{% load crispy_forms_tags %}
+
+{% block salary_title %}{{ title }}{% endblock %}
+
+{% block salary_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.employee|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.grade|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.effective_date|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.end_date|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.decision_number|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.status|as_crispy_field }}
+                </div>
+            </div>
+            
+            {{ form.notes|as_crispy_field }}
+            
+            <div class="d-flex justify-content-between mt-3">
+                <a href="{% url 'employee_salary_grade_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,297 @@
+<!-- templates/tasks/view_task.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block task_content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Task Details</h5>
+        <div>
+            {% if can_update %}
+            <a href="{% url 'edit_task' task_id=task.task_id %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-edit"></i> Edit Task
+            </a>
+            {% endif %}
+            
+            {% if request.user == task.assigned_by or request.user.role == 'Admin' %}
+            <a href="{% url 'delete_task' task_id=task.task_id %}" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+            {% endif %}
+            
+            <a href="javascript:history.back()" class="btn btn-sm btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h4>{{ task.title }}</h4>
+                
+                <!-- Task Description -->
+                <div class="task-description mb-4">
+                    {% if task.description %}
+                    <p>{{ task.description|linebreaks }}</p>
+                    {% else %}
+                    <p class="text-muted">No description provided.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Task Progress -->
+                <div class="mb-4">
+                    <h6>Progress ({{ task.progress }}%)</h6>
+                    <div class="progress" style="height: 15px;">
+                        <div class="progress-bar {% if task.status == 'Completed' %}bg-success{% elif task.is_overdue %}bg-danger{% else %}bg-primary{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ task.progress }}%;" 
+                             aria-valuenow="{{ task.progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">{{ task.progress }}%</div>
+                    </div>
+                </div>
+                
+                <!-- Status Update Form (for assignee only) -->
+                {% if status_form and request.user.employee == task.assignee %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Update Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'update_task_status' task_id=task.task_id %}">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_status" class="form-label">Status</label>
+                                        {{ status_form.status.errors }}
+                                        {{ status_form.status|add_class:"form-select" }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="id_progress" class="form-label">Progress (%)</label>
+                                        {{ status_form.progress.errors }}
+                                        {{ status_form.progress|add_class:"form-control" }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Update Status
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Task Dependencies -->
+                {% if dependencies %}
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">Dependencies</h6>
+                    <p class="text-muted small">This task depends on the following tasks:</p>
+                    <ul class="list-group">
+                        {% for dep in dependencies %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'view_task' task_id=dep.dependent_on.task_id %}">{{ dep.dependent_on.title }}</a>
+                                <span class="badge {% if dep.dependent_on.status == 'Completed' %}bg-success{% elif dep.dependent_on.status == 'In Progress' %}bg-primary{% elif dep.dependent_on.status == 'On Hold' %}bg-warning{% elif dep.dependent_on.status == 'Not Started' %}bg-secondary{% else %}bg-danger{% endif %} ms-2">
+                                    {{ dep.dependent_on.status }}
+                                </span>
+                            </div>
+                            <span class="badge bg-secondary">{{ dep.dependent_on.progress }}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Tasks Dependent on This -->
+                {% if dependent_tasks %}
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2">Dependent Tasks</h6>
+                    <p class="text-muted small">The following tasks depend on this task:</p>
+                    <ul class="list-group">
+                        {% for dep in dependent_tasks %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{% url 'view_task' task_id=dep.task.task_id %}">{{ dep.task.title }}</a>
+                                <span class="badge {% if dep.task.status == 'Completed' %}bg-success{% elif dep.task.status == 'In Progress' %}bg-primary{% elif dep.task.status == 'On Hold' %}bg-warning{% elif dep.task.status == 'Not Started' %}bg-secondary{% else %}bg-danger{% endif %} ms-2">
+                                    {{ dep.task.status }}
+                                </span>
+                            </div>
+                            <span class="badge bg-secondary">{{ dep.task.progress }}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Task Comments -->
+                <div class="comments-section mt-4">
+                    <h6 class="border-bottom pb-2">Comments ({{ comments|length }})</h6>
+                    
+                    <!-- Comment Form -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <form method="post" action="{% url 'add_task_comment' task_id=task.task_id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    {{ comment_form.comment.errors }}
+                                    {{ comment_form.comment|add_class:"form-control" }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_attachment" class="form-label">Attachment (optional)</label>
+                                    {{ comment_form.attachment.errors }}
+                                    {{ comment_form.attachment|add_class:"form-control" }}
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-comment"></i> Add Comment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Comments List -->
+                    {% if comments %}
+                    <div class="comments-list">
+                        {% for comment in comments %}
+                        <div class="card mb-2 {% if comment.user == request.user %}border-primary{% endif %}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ comment.user.get_full_name|default:comment.user.username }}</strong>
+                                    <small class="text-muted ms-2">{{ comment.created_date|date:"M d, Y H:i" }}</small>
+                                </div>
+                                {% if comment.user == request.user or request.user.role == 'Admin' %}
+                                <form method="post" action="{% url 'delete_task_comment' comment_id=comment.comment_id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this comment?');">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">{{ comment.comment|linebreaks }}</p>
+                                {% if comment.attachment %}
+                                <div class="mt-2">
+                                    <a href="{{ comment.attachment.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-paperclip"></i> View Attachment
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-light">
+                        <i class="fas fa-comment-dots"></i> No comments yet.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Task Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Status</th>
+                                    <td>
+                                        <span class="badge {% if task.status == 'Not Started' %}bg-secondary{% elif task.status == 'In Progress' %}bg-primary{% elif task.status == 'On Hold' %}bg-warning{% elif task.status == 'Completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ task.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Priority</th>
+                                    <td>
+                                        <span class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ task.priority }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Assignee</th>
+                                    <td>{{ task.assignee.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Department</th>
+                                    <td>{{ task.department.department_name|default:"--" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Category</th>
+                                    <td>
+                                        {% if task.category %}
+                                        <span class="badge" style="background-color: {{ task.category.color }}">
+                                            {{ task.category.name }}
+                                        </span>
+                                        {% else %}
+                                        --
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Start Date</th>
+                                    <td>{{ task.start_date }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Due Date</th>
+                                    <td>
+                                        {{ task.due_date }}
+                                        {% if task.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if task.completion_date %}
+                                <tr>
+                                    <th>Completion Date</th>
+                                    <td>{{ task.completion_date }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>Recurring</th>
+                                    <td>
+                                        {% if task.is_recurring %}
+                                        <span class="badge bg-info">Yes</span>
+                                        {% if task.recurrence_pattern %}
+                                        <span class="text-muted small d-block">{{ task.recurrence_pattern }}</span>
+                                        {% endif %}
+                                        {% else %}
+                                        No
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Created By</th>
+                                    <td>{{ task.assigned_by.get_full_name|default:task.assigned_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Created Date</th>
+                                    <td>{{ task.created_date|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                {% if task.attachments %}
+                                <tr>
+                                    <th>Attachments</th>
+                                    <td>
+                                        <a href="{{ task.attachments.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-paperclip"></i> View Attachment
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

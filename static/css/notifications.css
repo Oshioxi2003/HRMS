@@ -1,0 +1,263 @@
+/* Notification List Styling */
+.notification-item {
+    position: relative;
+    padding: 15px;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+    background-color: rgba(63, 81, 181, 0.05);
+    border-left-color: #3f51b5;
+}
+
+.notification-item:hover {
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.notification-icon-wrapper {
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    background-color: #3f51b5;
+}
+
+.notification-icon i {
+    font-size: 1.2rem;
+}
+
+.notification-icon.leave {
+    background-color: #ff9800;
+}
+
+.notification-icon.attendance {
+    background-color: #4caf50;
+}
+
+.notification-icon.performance {
+    background-color: #2196f3;
+}
+
+.notification-icon.contract {
+    background-color: #9c27b0;
+}
+
+.notification-icon.training {
+    background-color: #00bcd4;
+}
+
+.notification-icon.salary {
+    background-color: #f44336;
+}
+
+.notification-icon.birthday {
+    background-color: #e91e63;
+}
+
+.notification-icon.task {
+    background-color: #ff5722;
+}
+
+.notification-icon.document {
+    background-color: #607d8b;
+}
+
+.notification-icon.system {
+    background-color: #795548;
+}
+
+.notification-icon.expense {
+    background-color: #8bc34a;
+}
+
+.notification-icon.asset {
+    background-color: #673ab7;
+}
+
+.notification-icon.workflow {
+    background-color: #009688;
+}
+
+.notification-details {
+    flex-grow: 1;
+}
+
+.notification-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.empty-notifications {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #6c757d;
+}
+
+/* Notification Detail Styling */
+.notification-detail {
+    padding: 20px 0;
+}
+
+.notification-icon-large {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    background-color: #3f51b5;
+    margin-bottom: 20px;
+}
+
+.notification-icon-large i {
+    font-size: 1.8rem;
+}
+
+.notification-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.notification-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.notification-date {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.notification-message {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #212529;
+}
+
+/* Notification Settings Styling */
+.notification-settings-table td {
+    vertical-align: middle;
+}
+
+.notification-icon-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    background-color: #3f51b5;
+}
+
+.notification-icon-small i {
+    font-size: 0.9rem;
+}
+
+.form-switch .form-check-input {
+    width: 2.5em;
+    height: 1.25em;
+}
+
+/* Notification Dropdown Styling (for navbar) */
+.notification-dropdown-menu {
+    width: 350px;
+    padding: 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.notification-dropdown-menu .dropdown-header {
+    background-color: #f8f9fa;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.notification-list {
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.notification-dropdown-menu .notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 15px;
+    border-left: none;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.notification-dropdown-menu .notification-item.unread {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.notification-dropdown-menu .notification-icon {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+}
+
+.notification-dropdown-menu .notification-content {
+    flex-direction: column;
+}
+
+.notification-dropdown-menu .notification-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.notification-dropdown-menu .notification-message {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 3px;
+}
+
+.notification-dropdown-menu .notification-time {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.notification-dropdown-menu .dropdown-footer {
+    background-color: #f8f9fa;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

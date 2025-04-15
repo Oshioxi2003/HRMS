@@ -1,0 +1,220 @@
+<!-- templates/search/global_search.html -->
+{% extends "search/search_base.html" %}
+{% load i18n %}
+
+{% block search_title %}{% trans "Global Search" %}{% endblock %}
+
+{% block search_form_action %}{% url 'global_search' %}{% endblock %}
+
+{% block search_results %}
+{% if query %}
+    <div class="result-count">
+        {% blocktrans with count=total_results %}Found {{ count }} results for "{{ query }}"{% endblocktrans %}
+    </div>
+    
+    {% if total_results > 0 %}
+        <!-- Employee Results -->
+        {% if employee_results %}
+        <div class="section-title mt-4">
+            <h5><i class="fas fa-user-tie"></i> {% trans "Employees" %}</h5>
+        </div>
+        
+        <div class="employee-results">
+            {% for employee in employee_results %}
+            <div class="result-item">
+                <div class="row">
+                    <div class="col-md-1 text-center">
+                        {% if employee.profile_image %}
+                        <img src="{{ employee.profile_image.url }}" class="rounded-circle" width="50" height="50" alt="{{ employee.full_name }}">
+                        {% else %}
+                        <i class="fas fa-user-circle fa-3x text-muted"></i>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <div class="result-title">{{ employee.full_name }}</div>
+                        <div class="result-meta">
+                            {% if employee.department %}
+                            <span class="badge bg-primary">{{ employee.department.department_name }}</span>
+                            {% endif %}
+                            {% if employee.position %}
+                            <span class="badge bg-secondary">{{ employee.position.position_name }}</span>
+                            {% endif %}
+                            {% if employee.email %}
+                            <span class="text-muted"><i class="fas fa-envelope"></i> {{ employee.email }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3 result-actions">
+                        <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> {% trans "View" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if employee_results|length >= 5 %}
+            <div class="text-center mt-2">
+                <a href="{% url 'employee_search' %}?q={{ query }}" class="btn btn-sm btn-link">
+                    {% trans "View all employee results" %} <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Document Results -->
+        {% if document_results %}
+        <div class="section-title mt-4">
+            <h5><i class="fas fa-file-alt"></i> {% trans "Documents" %}</h5>
+        </div>
+        
+        <div class="document-results">
+            {% for document in document_results %}
+            <div class="result-item">
+                <div class="row">
+                    <div class="col-md-1 text-center">
+                        <i class="{{ document.get_file_icon }} fa-2x text-primary"></i>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="result-title">{{ document.title }}</div>
+                        <div class="result-meta">
+                            {% if document.category %}
+                            <span class="badge bg-info">{{ document.category.category_name }}</span>
+                            {% endif %}
+                            <span class="badge bg-secondary">{{ document.visibility }}</span>
+                            <span class="text-muted"><i class="fas fa-calendar"></i> {{ document.created_date|date:"Y-m-d" }}</span>
+                        </div>
+                        {% if document.description %}
+                        <div class="result-description mt-2">
+                            {{ document.description|truncatechars:100 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 result-actions">
+                        <a href="{% url 'document_detail' document_id=document.document_id %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> {% trans "View" %}
+                        </a>
+                        <a href="{% url 'document_download' document_id=document.document_id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download"></i> {% trans "Download" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if document_results|length >= 5 %}
+            <div class="text-center mt-2">
+                <a href="{% url 'document_search' %}?q={{ query }}" class="btn btn-sm btn-link">
+                    {% trans "View all document results" %} <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- Leave Results -->
+        {% if leave_results %}
+        <div class="section-title mt-4">
+            <h5><i class="fas fa-calendar-alt"></i> {% trans "Leave Requests" %}</h5>
+        </div>
+        
+        <div class="leave-results">
+            {% for leave in leave_results %}
+            <div class="result-item">
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="result-title">
+                            {% if user.employee == leave.employee or user.role == 'HR' or user.role == 'Admin' %}
+                            {{ leave.employee.full_name }} - {{ leave.leave_type }}
+                            {% else %}
+                            {{ leave.leave_type }}
+                            {% endif %}
+                        </div>
+                        <div class="result-meta">
+                            <span class="badge {% if leave.status == 'Approved' %}bg-success{% elif leave.status == 'Rejected' %}bg-danger{% elif leave.status == 'Pending' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ leave.status }}
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-calendar"></i> 
+                                {{ leave.start_date|date:"Y-m-d" }} 
+                                {% if leave.start_date != leave.end_date %}
+                                to {{ leave.end_date|date:"Y-m-d" }}
+                                {% endif %}
+                                ({{ leave.leave_days }} days)
+                            </span>
+                        </div>
+                        {% if leave.reason %}
+                        <div class="result-description mt-2">
+                            {{ leave.reason|truncatechars:100 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 result-actions">
+                        <a href="{% url 'leave_detail' pk=leave.request_id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> {% trans "View" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Task Results -->
+        {% if task_results %}
+        <div class="section-title mt-4">
+            <h5><i class="fas fa-tasks"></i> {% trans "Tasks" %}</h5>
+        </div>
+        
+        <div class="task-results">
+            {% for task in task_results %}
+            <div class="result-item">
+                <div class="row">
+                    <div class="col-md-9">
+                        <div class="result-title">{{ task.title }}</div>
+                        <div class="result-meta">
+                            <span class="badge {% if task.status == 'Completed' %}bg-success{% elif task.status == 'In Progress' %}bg-info{% elif task.status == 'Not Started' %}bg-warning{% elif task.status == 'On Hold' %}bg-secondary{% endif %}">
+                                {{ task.status }}
+                            </span>
+                            <span class="badge {% if task.priority == 'High' or task.priority == 'Urgent' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ task.priority }}
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-user"></i> 
+                                {% if task.assignee %}{{ task.assignee.full_name }}{% else %}Not Assigned{% endif %}
+                            </span>
+                            <span class="text-muted">
+                                <i class="fas fa-calendar"></i> 
+                                Due: {{ task.due_date|date:"Y-m-d" }}
+                            </span>
+                        </div>
+                        {% if task.description %}
+                        <div class="result-description mt-2">
+                            {{ task.description|truncatechars:100 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 result-actions">
+                        <a href="{% url 'view_task' task_id=task.task_id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> {% trans "View" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            {% trans "No results found matching your search criteria." %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x mb-3 text-muted"></i>
+        <h4 class="text-muted">{% trans "Enter a search term to begin" %}</h4>
+        <p class="text-muted">{% trans "Global search will look across employees, documents, leave requests, and tasks" %}</p>
+    </div>
+{% endif %}
+{% endblock %}

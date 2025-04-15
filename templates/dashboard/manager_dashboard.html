@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bảng Điều Khiển Quản Lý - HRMS{% endblock %}
+
+{% block extracss %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<style>
+    .stat-card {
+        transition: all 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .dashboard-section {
+        margin-bottom: 2rem;
+    }
+    .chart-container {
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-0 text-gray-800">Bảng Điều Khiển Quản Lý</h1>
+            <p class="mb-4">Phòng Ban: {{ department.department_name }}</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-sm btn-primary" id="refreshDashboard">
+                <i class="fas fa-sync-alt"></i> Làm Mới Dữ Liệu
+            </button>
+        </div>
+    </div>
+
+    <!-- Thống Kê Nhóm -->
+    <div class="row dashboard-section">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Thành Viên Nhóm
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ team_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Có Mặt Hôm Nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_summary.present }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Nghỉ Phép Hôm Nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_summary.on_leave }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2 stat-card">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Vắng Mặt Hôm Nay
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ attendance_summary.absent }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row dashboard-section">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thành Viên Nhóm</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nhân Viên</th>
+                                    <th>Vị Trí</th>
+                                    <th>Email</th>
+                                    <th>Điện Thoại</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in team_members %}
+                                <tr>
+                                    <td>
+                                        {% if employee.photo %}
+                                        <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}" class="rounded-circle me-2" style="width: 30px; height: 30px;">
+                                        {% else %}
+                                        <i class="fas fa-user-circle me-2"></i>
+                                        {% endif %}
+                                        {{ employee.full_name }}
+                                    </td>
+                                    <td>{{ employee.position }}</td>
+                                    <td>{{ employee.email }}</td>
+                                    <td>{{ employee.phone_number }}</td>
+                                    <td>
+                                        {% for attendance in today_attendance %}
+                                            {% if attendance.employee.id == employee.id %}
+                                                {% if attendance.status == 'Present' %}
+                                                <span class="badge bg-success">Có Mặt</span>
+                                                {% elif attendance.status == 'Absent' %}
+                                                <span class="badge bg-danger">Vắng Mặt</span>
+                                                {% elif attendance.status == 'On Leave' %}
+                                                <span class="badge bg-warning text-dark">Nghỉ Phép</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Không tìm thấy thành viên nhóm nào</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Nhân Viên Xuất Sắc</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row dashboard-section">
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Yêu Cầu Nghỉ Phép Đang Chờ Duyệt</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nhân Viên</th>
+                                    <th>Loại Nghỉ Phép</th>
+                                    <th>Từ</th>
+                                    <th>Đến</th>
+                                    <th>Số Ngày</th>
+                                    <th>Lý Do</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for leave in pending_leaves %}
+                                <tr>
+                                    <td>{{ leave.employee.full_name }}</td>
+                                    <td>{{ leave.leave_type }}</td>
+                                    <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                                    <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                                    <td>{{ leave.leave_days }}</td>
+                                    <td>{{ leave.reason|truncatechars:30 }}</td>
+                                    <td>
+                                        <a href="{% url 'leave_request_detail' leave.request_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">Không có yêu cầu nghỉ phép đang chờ duyệt</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'leave_requests' %}" class="btn btn-sm btn-primary">Xem Tất Cả Yêu Cầu Nghỉ Phép</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thao Tác Nhanh -->
+    <div class="row dashboard-section">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thao Tác Nhanh</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'team_attendance' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-clipboard-check me-2"></i> Điểm Danh Nhóm
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'leave_requests' %}" class="btn btn-warning btn-block">
+                                <i class="fas fa-calendar-alt me-2"></i> Yêu Cầu Nghỉ Phép
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'team_performance' %}" class="btn btn-success btn-block">
+                                <i class="fas fa-chart-line me-2"></i> Hiệu Suất
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'calendar' %}" class="btn btn-info btn-block">
+                                <i class="fas fa-calendar me-2"></i> Lịch Nhóm
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Performance Chart
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        
+        const performanceData = {
+            labels: [{% for performer in top_performers %}'{{ performer.name }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Tỷ Lệ Hoàn Thành (%)',
+                data: [{% for performer in top_performers %}{{ performer.average|floatformat:1 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: [
+                    'rgba(25, 135, 84, 0.7)',
+                    'rgba(13, 110, 253, 0.7)',
+                    'rgba(255, 193, 7, 0.7)',
+                    'rgba(111, 66, 193, 0.7)',
+                    'rgba(23, 162, 184, 0.7)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'bar',
+            data: performanceData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+        
+        // Refresh Dashboard Button
+        document.getElementById('refreshDashboard').addEventListener('click', function() {
+            location.reload();
+        });
+    });
+</script>
+{% endblock %}

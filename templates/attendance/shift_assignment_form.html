@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{{ title }}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8 col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.employee.id_for_label }}" class="form-label">Employee</label>
+                            <select name="{{ form.employee.name }}" id="{{ form.employee.id_for_label }}" 
+                                    class="form-select {% if form.employee.errors %}is-invalid{% endif %}" required>
+                                <option value="">Select Employee</option>
+                                {% for choice in form.employee.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.employee.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.employee.errors %}
+                            <div class="invalid-feedback">{{ form.employee.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.shift.id_for_label }}" class="form-label">Shift</label>
+                            <select name="{{ form.shift.name }}" id="{{ form.shift.id_for_label }}" 
+                                    class="form-select {% if form.shift.errors %}is-invalid{% endif %}" required>
+                                <option value="">Select Shift</option>
+                                {% for choice in form.shift.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.shift.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.shift.errors %}
+                            <div class="invalid-feedback">{{ form.shift.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.assignment_date.id_for_label }}" class="form-label">Assignment Date</label>
+                                    <input type="date" name="{{ form.assignment_date.name }}" id="{{ form.assignment_date.id_for_label }}" 
+                                           class="form-control {% if form.assignment_date.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.assignment_date.value|date:'Y-m-d'|default:'' }}" required>
+                                    {% if form.assignment_date.errors %}
+                                    <div class="invalid-feedback">{{ form.assignment_date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.effective_date.id_for_label }}" class="form-label">Effective Date</label>
+                                    <input type="date" name="{{ form.effective_date.name }}" id="{{ form.effective_date.id_for_label }}" 
+                                           class="form-control {% if form.effective_date.errors %}is-invalid{% endif %}" 
+                                           value="{{ form.effective_date.value|date:'Y-m-d'|default:'' }}" required>
+                                    {% if form.effective_date.errors %}
+                                    <div class="invalid-feedback">{{ form.effective_date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.end_date.id_for_label }}" class="form-label">End Date</label>
+                            <input type="date" name="{{ form.end_date.name }}" id="{{ form.end_date.id_for_label }}" 
+                                   class="form-control {% if form.end_date.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.end_date.value|date:'Y-m-d'|default:'' }}">
+                            {% if form.end_date.errors %}
+                            <div class="invalid-feedback">{{ form.end_date.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                Leave blank for indefinite assignment
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
+                            <textarea name="{{ form.notes.name }}" id="{{ form.notes.id_for_label }}" 
+                                      class="form-control {% if form.notes.errors %}is-invalid{% endif %}" 
+                                      rows="3">{{ form.notes.value|default:'' }}</textarea>
+                            {% if form.notes.errors %}
+                            <div class="invalid-feedback">{{ form.notes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                            <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}" 
+                                    class="form-select {% if form.status.errors %}is-invalid{% endif %}">
+                                {% for choice in form.status.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.status.errors %}
+                            <div class="invalid-feedback">{{ form.status.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="{% url 'shift_assignment_list' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

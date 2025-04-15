@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lịch Chấm Công{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+<style>
+    .calendar-container {
+        padding: 20px;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .calendar-filters {
+        margin-bottom: 20px;
+    }
+    .legend {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+        margin-bottom: 10px;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Lịch Chấm Công</h4>
+                <a href="{% url 'my_attendance' %}" class="btn btn-secondary">
+                    <i class="fas fa-list me-1"></i> Xem Dạng Danh Sách
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="calendar-filters">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="calendarView">Chế Độ Xem Lịch</label>
+                                    <select class="form-select" id="calendarView">
+                                        <option value="personal">Lịch Của Tôi</option>
+                                        {% if request.user.role == 'Manager' or request.user.role == 'HR' or request.user.role == 'Admin' %}
+                                        <option value="department">Lịch Phòng Ban</option>
+                                        {% endif %}
+                                        {% if request.user.role == 'HR' or request.user.role == 'Admin' %}
+                                        <option value="company">Lịch Công Ty</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="calendar-container">
+                        <div id="calendar"></div>
+                    </div>
+                    
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #28a745;"></div>
+                            <span>Có Mặt</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc3545;"></div>
+                            <span>Vắng Mặt</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffc107;"></div>
+                            <span>Nghỉ Phép</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #17a2b8;"></div>
+                            <span>Ngày Lễ</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #6f42c1;"></div>
+                            <span>Công Tác</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi Tiết Sự Kiện -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi Tiết Sự Kiện</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="eventDetails">
+                <!-- Chi tiết sự kiện sẽ được hiển thị tại đây -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listWeek'
+        },
+        events: function(fetchInfo, successCallback, failureCallback) {
+            var view = document.getElementById('calendarView').value;
+            var startDate = fetchInfo.startStr.substring(0, 10);
+            var endDate = fetchInfo.endStr.substring(0, 10);
+            
+            // Fetch events via AJAX
+            fetch(`/attendance/calendar-data/?start=${startDate}&end=${endDate}&view=${view}`)
+                .then(response => response.json())
+                .then(data => {
+                    successCallback(data.events);
+                })
+                .catch(error => {
+                    console.error('Error fetching calendar data:', error);
+                    failureCallback(error);
+                });
+        },
+        eventClick: function(info) {
+            var event = info.event;
+            var modalBody = document.getElementById('eventDetails');
+            var content = '';
+            
+            if (event.extendedProps.type === 'attendance') {
+                content = `
+                    <p><strong>Ngày:</strong> ${new Date(event.start).toLocaleDateString()}</p>
+                    <p><strong>Trạng thái:</strong> ${event.extendedProps.status}</p>
+                    ${event.extendedProps.time_in ? `<p><strong>Giờ vào:</strong> ${event.extendedProps.time_in}</p>` : ''}
+                    ${event.extendedProps.time_out ? `<p><strong>Giờ ra:</strong> ${event.extendedProps.time_out}</p>` : ''}
+                `;
+            } else if (event.extendedProps.type === 'department_summary' || event.extendedProps.type === 'company_summary') {
+                content = `
+                    <p><strong>Ngày:</strong> ${new Date(event.start).toLocaleDateString()}</p>
+                    <p><strong>Có mặt:</strong> ${event.extendedProps.present}</p>
+                    <p><strong>Vắng mặt:</strong> ${event.extendedProps.absent}</p>
+                    <p><strong>Nghỉ phép:</strong> ${event.extendedProps.leave}</p>
+                    <p><strong>Ngày lễ:</strong> ${event.extendedProps.holiday}</p>
+                    <p><strong>Công tác:</strong> ${event.extendedProps.business_trip}</p>
+                `;
+            }
+            
+            modalBody.innerHTML = content;
+            $('#eventDetailModal').modal('show');
+        }
+    });
+    
+    calendar.render();
+    
+    // Xử lý khi thay đổi chế độ xem
+    document.getElementById('calendarView').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,372 @@
+<!-- templates/training/training_report.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .chart-container {
+        position: relative;
+        height: 250px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block card_title %}
+    <i class="fas fa-chart-bar"></i> Training Reports & Analytics
+{% endblock %}
+
+{% block training_content %}
+<div class="mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label for="date_from" class="form-label">From Date</label>
+            <input type="text" class="form-control datepicker" id="date_from" name="date_from" value="{{ date_from }}" placeholder="From date...">
+        </div>
+        <div class="col-md-3">
+            <label for="date_to" class="form-label">To Date</label>
+            <input type="text" class="form-control datepicker" id="date_to" name="date_to" value="{{ date_to }}" placeholder="To date...">
+        </div>
+        <div class="col-md-3">
+            <label for="department" class="form-label">Department</label>
+            <select class="form-select" id="department" name="department">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.department_id }}" {% if department_id == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                    {{ dept.department_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label d-block">&nbsp;</label>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-filter"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Courses</h5>
+                <p class="card-text display-5">{{ total_courses }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Participations</h5>
+                <p class="card-text display-5">{{ total_participations }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Cost</h5>
+                <p class="card-text display-5">${{ total_cost|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Avg. Cost/Participant</h5>
+                <p class="card-text display-5">${{ avg_cost_per_participant|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Courses by Status Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Courses by Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="courseStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Participants by Status Chart -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Participants by Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="participantStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Department Training Chart -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Training by Department</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 350px;">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Department Training Table -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Department Training Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Department</th>
+                                <th>Total Participants</th>
+                                <th>Registered</th>
+                                <th>Participating</th>
+                                <th>Completed</th>
+                                <th>Cancelled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dept in department_stats %}
+                            <tr>
+                                <td>{{ dept.employee__department__department_name|default:"No Department" }}</td>
+                                <td>{{ dept.count }}</td>
+                                <td>{{ dept.registered }}</td>
+                                <td>{{ dept.participating }}</td>
+                                <td>{{ dept.completed }}</td>
+                                <td>{{ dept.cancelled }}</td>
+                                <td>
+                                    {% if dept.employee__department__department_name %}
+                                    <a href="{% url 'department_training' department_id=dept.employee__department.department_id %}" class="btn btn-sm btn-primary">
+                                        View Details
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No department data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date pickers
+    flatpickr(".datepicker", {
+        dateFormat: "Y-m-d",
+        allowInput: true
+    });
+    
+    // Chart colors
+    const colors = {
+        blue: 'rgba(54, 162, 235, 0.8)',
+        blueBorder: 'rgba(54, 162, 235, 1)',
+        green: 'rgba(75, 192, 192, 0.8)',
+        greenBorder: 'rgba(75, 192, 192, 1)',
+        red: 'rgba(255, 99, 132, 0.8)',
+        redBorder: 'rgba(255, 99, 132, 1)',
+        yellow: 'rgba(255, 205, 86, 0.8)',
+        yellowBorder: 'rgba(255, 205, 86, 1)',
+        purple: 'rgba(153, 102, 255, 0.8)',
+        purpleBorder: 'rgba(153, 102, 255, 1)',
+        orange: 'rgba(255, 159, 64, 0.8)',
+        orangeBorder: 'rgba(255, 159, 64, 1)',
+        grey: 'rgba(201, 203, 207, 0.8)',
+        greyBorder: 'rgba(201, 203, 207, 1)'
+    };
+    
+    // Extract data from template context
+    const coursesByStatus = {{ courses_by_status|safe }};
+    const participantsByStatus = {{ participants_by_status|safe }};
+    const departmentStats = {{ department_stats|safe }};
+    
+    // Create a function to transform Django query data for Charts.js
+    function transformQueryData(queryData, labelKey, countKey) {
+        const labels = [];
+        const data = [];
+        
+        for (const item of queryData) {
+            labels.push(item[labelKey] || 'Unknown');
+            data.push(item[countKey]);
+        }
+        
+        return { labels, data };
+    }
+    
+    // Course Status Chart
+    const courseStatusData = transformQueryData(coursesByStatus, 'status', 'count');
+    const courseStatusCtx = document.getElementById('courseStatusChart').getContext('2d');
+    new Chart(courseStatusCtx, {
+        type: 'pie',
+        data: {
+            labels: courseStatusData.labels,
+            datasets: [{
+                data: courseStatusData.data,
+                backgroundColor: [
+                    colors.yellow, // Preparing
+                    colors.blue,   // In Progress
+                    colors.green,  // Completed
+                    colors.red     // Cancelled
+                ],
+                borderColor: [
+                    colors.yellowBorder,
+                    colors.blueBorder,
+                    colors.greenBorder,
+                    colors.redBorder
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+    
+    // Participant Status Chart
+    const participantStatusData = transformQueryData(participantsByStatus, 'status', 'count');
+    const participantStatusCtx = document.getElementById('participantStatusChart').getContext('2d');
+    new Chart(participantStatusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: participantStatusData.labels,
+            datasets: [{
+                data: participantStatusData.data,
+                backgroundColor: [
+                    colors.yellow, // Registered
+                    colors.blue,   // Participating
+                    colors.green,  // Completed
+                    colors.red     // Cancelled
+                ],
+                borderColor: [
+                    colors.yellowBorder,
+                    colors.blueBorder,
+                    colors.greenBorder,
+                    colors.redBorder
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+    
+    // Department Training Chart
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+    
+    // Transform department data
+    const deptNames = [];
+    const registeredData = [];
+    const participatingData = [];
+    const completedData = [];
+    const cancelledData = [];
+    
+    for (const dept of departmentStats) {
+        deptNames.push(dept.employee__department__department_name || 'No Department');
+        registeredData.push(dept.registered);
+        participatingData.push(dept.participating);
+        completedData.push(dept.completed);
+        cancelledData.push(dept.cancelled);
+    }
+    
+    new Chart(departmentCtx, {
+        type: 'bar',
+        data: {
+            labels: deptNames,
+            datasets: [
+                {
+                    label: 'Registered',
+                    data: registeredData,
+                    backgroundColor: colors.yellow,
+                    borderColor: colors.yellowBorder,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Participating',
+                    data: participatingData,
+                    backgroundColor: colors.blue,
+                    borderColor: colors.blueBorder,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Completed',
+                    data: completedData,
+                    backgroundColor: colors.green,
+                    borderColor: colors.greenBorder,
+                    borderWidth: 1
+                },
+                {
+                    label: 'Cancelled',
+                    data: cancelledData,
+                    backgroundColor: colors.red,
+                    borderColor: colors.redBorder,
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    stacked: true,
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

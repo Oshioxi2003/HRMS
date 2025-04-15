@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+        color: white;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        object-fit: cover;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-name {
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-role {
+        font-size: 18px;
+        opacity: 0.9;
+        margin-bottom: 15px;
+    }
+    
+    .profile-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .profile-card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 15px 20px;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .info-item {
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-icon {
+        width: 36px;
+        height: 36px;
+        background-color: #f1f5ff;
+        color: #3a7bd5;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .info-label {
+        font-weight: 500;
+        color: #6c757d;
+        margin-bottom: 3px;
+        font-size: 14px;
+    }
+    
+    .info-value {
+        color: #343a40;
+        font-weight: 500;
+    }
+    
+    .action-buttons .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        margin-right: 10px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .btn-icon {
+        margin-right: 10px;
+    }
+    
+    .activity-log {
+        border-left: 3px solid #e9ecef;
+        padding-left: 20px;
+        position: relative;
+    }
+    
+    .activity-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -23px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #3a7bd5;
+        border: 2px solid white;
+    }
+    
+    .activity-time {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .activity-details {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        border-radius: 8px;
+    }
+    
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .status-inactive {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-header {
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            margin: 0 auto 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            {% if messages %}
+                <div class="messages mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-md-center">
+                {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" alt="Profile" class="profile-avatar">
+                {% else %}
+                    <div class="profile-avatar d-flex align-items-center justify-content-center bg-light text-primary">
+                        <i class="fas fa-user fa-4x"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <h1 class="profile-name">{{ user.first_name }} {{ user.last_name|default:"" }}</h1>
+                <p class="profile-role">{{ user.get_role_display }}</p>
+                <div class="action-buttons">
+                    <a href="{% url 'edit_profile' %}" class="btn btn-light">
+                        <i class="fas fa-user-edit btn-icon"></i> {% trans "Edit Profile" %}
+                    </a>
+                    <a href="{% url 'change_password' %}" class="btn btn-light">
+                        <i class="fas fa-key btn-icon"></i> {% trans "Change Password" %}
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3 mt-3 mt-md-0 text-md-end">
+                <span class="status-badge {% if user.is_active %}status-active{% else %}status-inactive{% endif %}">
+                    <i class="fas {% if user.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                    {{ user.is_active|yesno:"Active,Inactive" }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-md-6">
+            <div class="profile-card">
+                <div class="card-header">
+                    <i class="fas fa-user-circle me-2"></i> {% trans "Personal Information" %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Username" %}</div>
+                            <div class="info-value">{{ user.username }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Email" %}</div>
+                            <div class="info-value">{{ user.email }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-id-badge"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Employee ID" %}</div>
+                            <div class="info-value">{{ user.employee.employee_id|default:"Not assigned" }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Department" %}</div>
+                            <div class="info-value">{{ user.employee.department.name|default:"Not assigned" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-card">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-list me-2"></i> {% trans "Account Information" %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-user-tag"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Role" %}</div>
+                            <div class="info-value">{{ user.get_role_display }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Joined Date" %}</div>
+                            <div class="info-value">{{ user.date_joined|date:"F d, Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">{% trans "Last Login" %}</div>
+                            <div class="info-value">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Logs -->
+        <div class="col-md-6">
+            <div class="profile-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="fas fa-history me-2"></i> {% trans "Recent Activity" %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if activity_logs %}
+                        <div class="activity-log">
+                            {% for log in activity_logs %}
+                                <div class="activity-item">
+                                    <div class="activity-time">
+                                        <i class="far fa-clock me-1"></i> {{ log.timestamp|date:"M d, Y" }} at {{ log.timestamp|date:"H:i" }}
+                                    </div>
+                                    <div class="activity-details">
+                                        <strong>{{ log.action }}</strong>
+                                        {% if log.object_type %}
+                                            <span class="text-muted">- {{ log.object_type }}</span>
+                                        {% endif %}
+                                        {% if log.details %}
+                                            <div class="mt-1 small text-muted">{{ log.details }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                            <p>{% trans "No recent activity found." %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

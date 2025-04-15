@@ -1,0 +1,46 @@
+<!-- templates/workflow/workflow_definition_form.html -->
+{% extends "workflow/base_workflow.html" %}
+{% load crispy_forms_tags %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.name|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.entity_type|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    {{ form.description|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.is_active|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i> Save Workflow Definition
+                </button>
+                <a href="{% if is_edit %}{% url 'workflow_definition_detail' workflow_id=workflow.workflow_id %}{% else %}{% url 'workflow_definitions' %}{% endif %}" class="btn btn-secondary ms-2">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,220 @@
+<!-- templates/tasks/department_tasks.html -->
+{% extends "tasks/base_tasks.html" %}
+
+{% block task_content %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ department.department_name }} Tasks</h5>
+        <div>
+            <a href="{% url 'create_task' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Assign New Task
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Department Task Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card bg-light">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.total }}</h3>
+                        <div class="small text-muted">Total Tasks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.not_started }}</h3>
+                        <div class="small">Not Started</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.in_progress }}</h3>
+                        <div class="small">In Progress</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.on_hold }}</h3>
+                        <div class="small">On Hold</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.completed }}</h3>
+                        <div class="small">Completed</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center py-3">
+                        <h3 class="mb-0">{{ task_stats.overdue }}</h3>
+                        <div class="small">Overdue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filter Form -->
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-5">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in task_form.STATUS_CHOICES %}
+                    <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="assignee" class="form-label">Assignee</label>
+                <select name="assignee" id="assignee" class="form-select">
+                    <option value="">All Employees</option>
+                    {% for employee in department_employees %}
+                    <option value="{{ employee.employee_id }}" {% if assignee_filter == employee.employee_id|stringformat:"s" %}selected{% endif %}>{{ employee.full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+        </form>
+        
+        <!-- Tasks by Status -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">Not Started ({{ not_started.count }})</h6>
+                    </div>
+                    <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
+                        {% for task in not_started %}
+                        <div class="card mb-2 task-card">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">
+                                    <a href="{% url 'view_task' task_id=task.task_id %}" class="text-decoration-none">{{ task.title }}</a>
+                                </h6>
+                                <p class="card-text small mb-1">Assigned to: {{ task.assignee.full_name }}</p>
+                                <p class="card-text small mb-1">Due: {{ task.due_date }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</span>
+                                    {% if task.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-muted my-3">No tasks</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">In Progress ({{ in_progress.count }})</h6>
+                    </div>
+                    <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
+                        {% for task in in_progress %}
+                        <div class="card mb-2 task-card">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">
+                                    <a href="{% url 'view_task' task_id=task.task_id %}" class="text-decoration-none">{{ task.title }}</a>
+                                </h6>
+                                <p class="card-text small mb-1">Assigned to: {{ task.assignee.full_name }}</p>
+                                <p class="card-text small mb-1">Due: {{ task.due_date }}</p>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</span>
+                                    {% if task.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-muted my-3">No tasks</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">On Hold ({{ on_hold.count }})</h6>
+                    </div>
+                    <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
+                        {% for task in on_hold %}
+                        <div class="card mb-2 task-card">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">
+                                    <a href="{% url 'view_task' task_id=task.task_id %}" class="text-decoration-none">{{ task.title }}</a>
+                                </h6>
+                                <p class="card-text small mb-1">Assigned to: {{ task.assignee.full_name }}</p>
+                                <p class="card-text small mb-1">Due: {{ task.due_date }}</p>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</span>
+                                    {% if task.is_overdue %}
+                                    <span class="badge bg-danger">Overdue</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-muted my-3">No tasks</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0">Completed ({{ completed.count }})</h6>
+                    </div>
+                    <div class="card-body p-2" style="max-height: 500px; overflow-y: auto;">
+                        {% for task in completed %}
+                        <div class="card mb-2 task-card">
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">
+                                    <a href="{% url 'view_task' task_id=task.task_id %}" class="text-decoration-none">{{ task.title }}</a>
+                                </h6>
+                                <p class="card-text small mb-1">Assigned to: {{ task.assignee.full_name }}</p>
+                                <p class="card-text small mb-1">Completed: {{ task.completion_date|default:"--" }}</p>
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <span class="badge {% if task.priority == 'Low' %}bg-success{% elif task.priority == 'Medium' %}bg-primary{% elif task.priority == 'High' %}bg-warning{% else %}bg-danger{% endif %}">{{ task.priority }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-center text-muted my-3">No tasks</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

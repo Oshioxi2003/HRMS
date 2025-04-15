@@ -1,0 +1,316 @@
+<!-- templates/performance/team_performance.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Team Performance{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .performance-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .performance-header {
+        padding: 15px;
+        background-color: #3f51b5;
+        color: white;
+    }
+    
+    .achievement-badge {
+        font-size: 0.875rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    
+    .month-cell {
+        width: 65px;
+        text-align: center;
+    }
+    
+    .heatmap-cell {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{{ department.department_name }} Team Performance</h4>
+                <div>
+                    <!-- Year Filter -->
+                    <form method="get" class="d-inline-block">
+                        <div class="input-group">
+                            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                {% for year in available_years %}
+                                <option value="{{ year }}" {% if year == year_filter %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5>Overall Performance Heatmap ({{ year_filter }})</h5>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    {% for month in months %}
+                                    <th class="month-cell">{{ month.name|slice:":3" }}</th>
+                                    {% endfor %}
+                                    <th>Average</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in team_performance %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if member.employee.profile_image %}
+                                            <img src="{{ member.employee.profile_image.url }}" alt="{{ member.employee.full_name }}" class="avatar avatar-sm rounded-circle me-2">
+                                            {% else %}
+                                            <div class="avatar avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ member.employee.full_name }}</h6>
+                                                <small class="text-muted">{{ member.employee.position.position_name|default:"-" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    {% for month in months %}
+                                    <td class="month-cell">
+                                        {% with month_data=member.monthly_data|get_item:month.number %}
+                                        {% if month_data.count > 0 %}
+                                        <div class="heatmap-cell 
+                                            {% if month_data.avg >= 100 %}bg-success
+                                            {% elif month_data.avg >= 80 %}bg-info
+                                            {% elif month_data.avg >= 50 %}bg-warning
+                                            {% else %}bg-danger{% endif %}">
+                                            {{ month_data.avg|floatformat:0 }}%
+                                        </div>
+                                        {% else %}
+                                        <div class="heatmap-cell bg-light text-muted">-</div>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    {% endfor %}
+                                    
+                                    <td>
+                                        <span class="achievement-badge 
+                                            {% if member.avg_achievement >= 100 %}bg-success
+                                            {% elif member.avg_achievement >= 80 %}bg-info
+                                            {% elif member.avg_achievement >= 50 %}bg-warning
+                                            {% else %}bg-danger{% endif %} text-white">
+                                            {{ member.avg_achievement|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'employee_evaluations' employee_id=member.employee.employee_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-chart-line"></i> Details
+                                            </a>
+                                            <a href="{% url 'evaluate_employee' employee_id=member.employee.employee_id %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-plus"></i> Evaluate
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="mb-4">Monthly Performance Trends</h5>
+                    <canvas id="teamPerformanceChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Top Performers</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for member in team_performance|dictsortreversed:"avg_achievement"|slice:":5" %}
+                        {% if member.evaluation_count > 0 %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    {% if member.employee.profile_image %}
+                                    <img src="{{ member.employee.profile_image.url }}" alt="{{ member.employee.full_name }}" class="avatar avatar-sm rounded-circle me-2">
+                                    {% else %}
+                                    <div class="avatar avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-primary"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ member.employee.full_name }}</h6>
+                                        <small class="text-muted">{{ member.evaluation_count }} evaluations</small>
+                                    </div>
+                                </div>
+                                <span class="achievement-badge 
+                                    {% if member.avg_achievement >= 100 %}bg-success
+                                    {% elif member.avg_achievement >= 80 %}bg-info
+                                    {% elif member.avg_achievement >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %} text-white">
+                                    {{ member.avg_achievement|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <div class="progress mt-2" style="height: 5px;">
+                                <div class="progress-bar 
+                                    {% if member.avg_achievement >= 100 %}bg-success
+                                    {% elif member.avg_achievement >= 80 %}bg-info
+                                    {% elif member.avg_achievement >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}" 
+                                    style="width: {{ member.avg_achievement }}%;">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Performance Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'performance_evaluations' %}?department={{ department.department_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-1"></i> View All Evaluations
+                        </a>
+                        <a href="{% url 'department_performance' department_id=department.department_id %}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-pie me-1"></i> Department Dashboard
+                        </a>
+                        <a href="{% url 'rewards_disciplinary_list' %}?department={{ department.department_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-award me-1"></i> Rewards & Disciplinary
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Team performance chart
+    var performanceData = {
+        labels: [{% for month in months %}"{{ month.name|slice:":3" }}",{% endfor %}],
+        datasets: [
+            {% for member in team_performance|dictsortreversed:"avg_achievement"|slice:":5" %}
+            {
+                label: "{{ member.employee.full_name }}",
+                data: [
+                    {% for month in months %}
+                    {% with month_data=member.monthly_data|get_item:month.number %}
+                    {% if month_data.count > 0 %}{{ month_data.avg|floatformat:1 }}{% else %}null{% endif %},
+                    {% endwith %}
+                    {% endfor %}
+                ],
+                borderColor: getRandomColor(),
+                backgroundColor: 'transparent',
+                tension: 0.4,
+                pointRadius: 4
+            },
+            {% endfor %}
+        ]
+    };
+    
+    // Create chart
+    var ctx = document.getElementById('teamPerformanceChart').getContext('2d');
+    var teamPerformanceChart = new Chart(ctx, {
+        type: 'line',
+        data: performanceData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 120,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Generate random colors for chart lines
+    function getRandomColor() {
+        var colors = [
+            'rgba(63, 81, 181, 1)',    // Indigo
+            'rgba(76, 175, 80, 1)',    // Green
+            'rgba(33, 150, 243, 1)',   // Blue
+            'rgba(255, 152, 0, 1)',    // Orange
+            'rgba(156, 39, 176, 1)',   // Purple
+            'rgba(244, 67, 54, 1)',    // Red
+            'rgba(0, 188, 212, 1)',    // Cyan
+            'rgba(121, 85, 72, 1)',    // Brown
+            'rgba(233, 30, 99, 1)',    // Pink
+            'rgba(96, 125, 139, 1)'    // Blue Grey
+        ];
+        
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+});
+</script>
+{% endblock %}

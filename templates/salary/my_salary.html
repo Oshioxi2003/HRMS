@@ -1,0 +1,312 @@
+<!-- templates/salary/my_salary.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Lương Của Tôi</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Thông tin nhân viên -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body text-center">
+                    {% if employee.profile_image %}
+                    <img src="{{ employee.profile_image.url }}" class="rounded-circle img-thumbnail shadow" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto shadow" style="width: 120px; height: 120px; font-size: 3rem; color: #ccc;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <h5 class="my-3">{{ employee.full_name }}</h5>
+                    <p class="text-muted mb-1">{{ employee.position.position_name|default:"Chưa có chức vụ" }}</p>
+                    <p class="text-muted mb-4">{{ employee.department.department_name|default:"Chưa có phòng ban" }}</p>
+                </div>
+            </div>
+            
+            <!-- Thông tin cấp bậc lương hiện tại -->
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Thông Tin Lương</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_grade %}
+                    <table class="table">
+                        <tr>
+                            <th>Cấp Bậc Lương:</th>
+                            <td>{{ current_grade.grade.grade_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Lương Cơ Bản:</th>
+                            <td class="format-currency">{{ current_grade.grade.base_salary_amount }}</td>
+                        </tr>
+                        <tr>
+                            <th>Ngày Hiệu Lực:</th>
+                            <td>{{ current_grade.effective_date|date:"d/m/Y" }}</td>
+                        </tr>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">Chưa có cấp bậc lương được phân công.</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Thông tin lương gần nhất -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Lương Gần Đây</h5>
+                </div>
+                <div class="card-body">
+                    {% if latest_salary %}
+                    <div class="text-center mb-3">
+                        <h4>Tháng {{ latest_salary.month }}/{{ latest_salary.year }}</h4>
+                    </div>
+                    <table class="table">
+                        <tr>
+                            <th>Lương Thực Lãnh:</th>
+                            <td class="text-success fw-bold format-currency">{{ latest_salary.net_salary }}</td>
+                        </tr>
+                        <tr>
+                            <th>Trạng Thái:</th>
+                            <td>
+                                {% if latest_salary.is_paid %}
+                                <span class="badge bg-success">Đã Thanh Toán</span>
+                                {% else %}
+                                <span class="badge bg-warning">Chưa Thanh Toán</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Ngày Công:</th>
+                            <td>{{ latest_salary.work_days }} ngày</td>
+                        </tr>
+                        <tr>
+                            <th>Ngày Nghỉ:</th>
+                            <td>{{ latest_salary.leave_days }} ngày</td>
+                        </tr>
+                    </table>
+                    <div class="text-center mt-3">
+                        <a href="{% url 'my_salary_detail' year=latest_salary.year month=latest_salary.month %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i> Xem Chi Tiết
+                        </a>
+                        <a href="{% url 'my_salary_payslip' salary_id=latest_salary.salary_id %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i> Tải Phiếu Lương
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Không có thông tin lương nào.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Lịch sử lương -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Lịch Sử Lương</h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="salaryHistoryAccordion">
+                        {% for year, salaries in grouped_history.items %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ year }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ year }}" 
+                                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                        aria-controls="collapse{{ year }}">
+                                    Năm {{ year }} - {{ salaries|length }} Bản Ghi Lương
+                                </button>
+                            </h2>
+                            <div id="collapse{{ year }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                 aria-labelledby="heading{{ year }}" data-bs-parent="#salaryHistoryAccordion">
+                                <div class="accordion-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Tháng</th>
+                                                    <th>Lương Cơ Bản</th>
+                                                    <th>Phụ Cấp</th>
+                                                    <th>Khấu Trừ</th>
+                                                    <th>Thực Lãnh</th>
+                                                    <th>Trạng Thái</th>
+                                                    <th>Thao Tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for salary in salaries %}
+                                                <tr>
+                                                    <td>Tháng {{ salary.month }}</td>
+                                                    <td class="format-currency">{{ salary.base_salary }}</td>
+                                                    <td class="format-currency">{{ salary.allowance|add:salary.seniority_allowance|add:salary.bonus }}</td>
+                                                    <td class="format-currency">{{ salary.income_tax|add:salary.social_insurance|add:salary.health_insurance|add:salary.unemployment_insurance|add:salary.deductions|add:salary.advance }}</td>
+                                                    <td class="format-currency">{{ salary.net_salary }}</td>
+                                                    <td>
+                                                        {% if salary.is_paid %}
+                                                        <span class="badge bg-success">Đã Thanh Toán</span>
+                                                        {% else %}
+                                                        <span class="badge bg-warning">Chưa Thanh Toán</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <a href="{% url 'my_salary_detail' year=salary.year month=salary.month %}" class="btn btn-primary" title="Xem chi tiết">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                            <a href="{% url 'my_salary_payslip' salary_id=salary.salary_id %}" class="btn btn-info" title="Tải phiếu lương">
+                                                                <i class="fas fa-file-pdf"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Không có lịch sử lương nào.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lịch sử cấp lương -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Lịch Sử Cấp Bậc Lương</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Cấp Bậc Lương</th>
+                                    <th>Lương Cơ Bản</th>
+                                    <th>Ngày Hiệu Lực</th>
+                                    <th>Ngày Kết Thúc</th>
+                                    <th>Trạng Thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grade in salary_grades %}
+                                <tr>
+                                    <td>{{ grade.grade.grade_name }}</td>
+                                    <td class="format-currency">{{ grade.grade.base_salary_amount }}</td>
+                                    <td>{{ grade.effective_date|date:"d/m/Y" }}</td>
+                                    <td>{{ grade.end_date|date:"d/m/Y"|default:"-" }}</td>
+                                    <td>
+                                        {% if grade.status == 'Active' %}
+                                        <span class="badge bg-success">Đang Áp Dụng</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Không Áp Dụng</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">Không có lịch sử cấp bậc lương nào.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Định dạng số tiền với dấu phân cách hàng nghìn và đơn vị tiền tệ
+    document.addEventListener('DOMContentLoaded', function() {
+        // Định dạng tiền tệ theo tiêu chuẩn Việt Nam
+        const formatter = new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND',
+            minimumFractionDigits: 0
+        });
+        
+        // Áp dụng định dạng cho tất cả các phần tử có class format-currency
+        document.querySelectorAll('.format-currency').forEach(function(element) {
+            const value = parseFloat(element.textContent.trim());
+            if (!isNaN(value)) {
+                element.textContent = formatter.format(value);
+            }
+        });
+        
+        // Tạo tooltips cho các nút
+        const tooltipTriggerList = document.querySelectorAll('[title]');
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+        
+        // Thêm hiệu ứng hover cho các hàng trong bảng
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f8f9fa';
+            });
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    });
+</script>
+
+<style>
+    /* Custom styles */
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .card-header {
+        font-weight: 600;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.5em 0.75em;
+    }
+    
+    .btn-group-sm .btn {
+        border-radius: 0.2rem;
+    }
+    
+    .shadow-sm {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0c63e4;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0, 0, 0, 0.125);
+    }
+</style>
+{% endblock %}

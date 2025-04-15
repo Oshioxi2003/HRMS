@@ -1,0 +1,350 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Đánh Giá Hiệu Suất Nhân Viên{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .performance-month {
+        border-left: 4px solid #3f51b5;
+        padding-left: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .achievement-pill {
+        font-size: 0.875rem;
+        padding: 5px 10px;
+        border-radius: 20px;
+        width: 65px;
+        text-align: center;
+    }
+    
+    .kpi-tag {
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        color: #495057;
+        margin-right: 5px;
+        display: inline-block;
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">Đánh Giá Hiệu Suất: {{ employee.full_name }}</h4>
+                <div>
+                    {% if can_evaluate %}
+                    <a href="{% url 'evaluate_employee' employee_id=employee.employee_id %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Thêm Đánh Giá
+                    </a>
+                    {% endif %}
+                    {% if user.role == 'HR' or user.role == 'Admin' %}
+                    <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-info ms-2">
+                        <i class="fas fa-user"></i> Hồ Sơ Nhân Viên
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body p-3">
+                    <form method="get" class="row g-2">
+                        <div class="col-md-4">
+                            <label for="yearFilter" class="form-label small">Năm</label>
+                            <select id="yearFilter" name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                {% for year in available_years %}
+                                <option value="{{ year }}" {% if year == year_filter %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="monthFilter" class="form-label small">Tháng</label>
+                            <select id="monthFilter" name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Tất Cả Tháng</option>
+                                <option value="1" {% if month_filter == "1" %}selected{% endif %}>Tháng 1</option>
+                                <option value="2" {% if month_filter == "2" %}selected{% endif %}>Tháng 2</option>
+                                <option value="3" {% if month_filter == "3" %}selected{% endif %}>Tháng 3</option>
+                                <option value="4" {% if month_filter == "4" %}selected{% endif %}>Tháng 4</option>
+                                <option value="5" {% if month_filter == "5" %}selected{% endif %}>Tháng 5</option>
+                                <option value="6" {% if month_filter == "6" %}selected{% endif %}>Tháng 6</option>
+                                <option value="7" {% if month_filter == "7" %}selected{% endif %}>Tháng 7</option>
+                                <option value="8" {% if month_filter == "8" %}selected{% endif %}>Tháng 8</option>
+                                <option value="9" {% if month_filter == "9" %}selected{% endif %}>Tháng 9</option>
+                                <option value="10" {% if month_filter == "10" %}selected{% endif %}>Tháng 10</option>
+                                <option value="11" {% if month_filter == "11" %}selected{% endif %}>Tháng 11</option>
+                                <option value="12" {% if month_filter == "12" %}selected{% endif %}>Tháng 12</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            {% if month_filter or year_filter != date.today.year %}
+                            <a href="{% url 'employee_evaluations' employee_id=employee.employee_id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-times"></i> Xóa Bộ Lọc
+                            </a>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0">Tỷ Lệ Đạt Mục Tiêu Trung Bình</h6>
+                            <p class="mb-0 small">{{ year_filter }} {% if month_filter %}(Tháng {{ month_filter }}){% endif %}</p>
+                        </div>
+                        <h2 class="mb-0">{{ avg_achievement|floatformat:1 }}%</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            {% if evaluations_by_month %}
+                {% for month_key, month_data in evaluations_by_month.items %}
+                <div class="performance-month">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Tháng {{ month_data.month }} Năm {{ month_data.year }}</h5>
+                        <div>
+                            <span class="badge bg-primary">{{ month_data.total_evaluations }} KPIs</span>
+                            <span class="badge 
+                                {% if month_data.avg_achievement >= 100 %}bg-success
+                                {% elif month_data.avg_achievement >= 80 %}bg-info
+                                {% elif month_data.avg_achievement >= 50 %}bg-warning
+                                {% else %}bg-danger{% endif %}">
+                                {{ month_data.avg_achievement|floatformat:1 }}% TB
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="list-group list-group-flush">
+                            {% for eval in month_data.evaluations %}
+                            <a href="{% url 'evaluation_detail' pk=eval.evaluation_id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ eval.kpi.kpi_name }}</h6>
+                                        <div>
+                                            <span class="kpi-tag">
+                                                <i class="fas fa-tag me-1"></i> 
+                                                {% if eval.kpi.kpi_type == 'Individual' %}Cá nhân
+                                                {% elif eval.kpi.kpi_type == 'Department' %}Phòng ban
+                                                {% elif eval.kpi.kpi_type == 'Company' %}Công ty
+                                                {% else %}{{ eval.kpi.get_kpi_type_display }}{% endif %}
+                                            </span>
+                                            {% if eval.kpi.unit %}
+                                            <span class="kpi-tag">
+                                                <i class="fas fa-ruler me-1"></i> {{ eval.kpi.unit }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="text-muted me-3">Mục tiêu: {{ eval.target }}</span>
+                                            <span class="text-muted">Kết quả: {{ eval.result }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="achievement-pill 
+                                            {% if eval.achievement_rate >= 100 %}bg-success
+                                            {% elif eval.achievement_rate >= 80 %}bg-info
+                                            {% elif eval.achievement_rate >= 50 %}bg-warning
+                                            {% else %}bg-danger{% endif %} text-white">
+                                            {{ eval.achievement_rate|floatformat:1 }}%
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            {{ eval.evaluation_date }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5>Không Tìm Thấy Đánh Giá</h5>
+                        <p class="text-muted">
+                            {% if month_filter or year_filter != date.today.year %}
+                            Không có đánh giá nào cho bộ lọc đã chọn.
+                            <a href="{% url 'employee_evaluations' employee_id=employee.employee_id %}">Xóa bộ lọc</a>
+                            {% else %}
+                            Chưa có đánh giá hiệu suất nào cho nhân viên này.
+                            {% if can_evaluate %}
+                            <br>
+                            <a href="{% url 'evaluate_employee' employee_id=employee.employee_id %}">Thêm đánh giá đầu tiên</a>
+                            {% endif %}
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Employee Profile Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if employee.profile_image %}
+                        <img src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}" class="avatar avatar-lg rounded-circle">
+                        {% else %}
+                        <div class="avatar avatar-lg rounded-circle bg-light d-flex align-items-center justify-content-center">
+                            <i class="fas fa-user fa-2x text-primary"></i>
+                        </div>
+                        {% endif %}
+                        <h5 class="mt-3">{{ employee.full_name }}</h5>
+                        <p class="text-muted mb-0">
+                            {% if employee.position %}
+                            {{ employee.position.position_name }}
+                            {% endif %}
+                            {% if employee.department %}
+                            <br>{{ employee.department.department_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6 class="mb-2">Thông Tin Liên Hệ</h6>
+                        {% if employee.email %}
+                        <p class="mb-1"><i class="fas fa-envelope text-muted me-2"></i> {{ employee.email }}</p>
+                        {% endif %}
+                        {% if employee.phone %}
+                        <p class="mb-1"><i class="fas fa-phone text-muted me-2"></i> {{ employee.phone }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6 class="mb-2">Thông Tin Công Việc</h6>
+                        {% if employee.hire_date %}
+                        <p class="mb-1"><i class="fas fa-calendar-alt text-muted me-2"></i> Ngày vào: {{ employee.hire_date }}</p>
+                        {% endif %}
+                        <p class="mb-1"><i class="fas fa-info-circle text-muted me-2"></i> Trạng thái: 
+                            {% if employee.status == 'Working' %}Đang làm việc
+                            {% elif employee.status == 'Terminated' %}Đã nghỉ việc
+                            {% elif employee.status == 'On Leave' %}Đang nghỉ phép
+                            {% else %}{{ employee.status }}{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Summary Card -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Tóm Tắt Hiệu Suất</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Performance Chart -->
+                    <div class="mb-4">
+                        <canvas id="performanceChart" height="220"></canvas>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Quick Actions -->
+                    <div class="d-grid gap-2">
+                        {% if can_evaluate %}
+                        <a href="{% url 'evaluate_employee' employee_id=employee.employee_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-1"></i> Thêm Đánh Giá Mới
+                        </a>
+                        {% endif %}
+                        {% if user.role == 'HR' or user.role == 'Admin' %}
+                        <a href="{% url 'rewards_disciplinary_create' %}?employee={{ employee.employee_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-award me-1"></i> Thêm Khen/Kỷ Luật
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Performance chart data
+    var performanceData = {
+        labels: [
+            {% for month_key, month_data in evaluations_by_month.items %}
+            "Tháng {{ month_data.month }}",
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Tỷ lệ đạt (%)',
+            data: [
+                {% for month_key, month_data in evaluations_by_month.items %}
+                {{ month_data.avg_achievement|floatformat:1 }},
+                {% endfor %}
+            ],
+            backgroundColor: 'rgba(63, 81, 181, 0.2)',
+            borderColor: 'rgba(63, 81, 181, 1)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true
+        }]
+    };
+    
+    // Create chart
+    var ctx = document.getElementById('performanceChart').getContext('2d');
+    var performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: performanceData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.raw + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 120,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

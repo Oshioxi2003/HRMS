@@ -1,0 +1,519 @@
+.form-section {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.form-section-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.form-section-body {
+    padding: 1.5rem;
+}
+
+.form-header {
+    position: relative;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100px;
+    height: 3px;
+    background-color: #3b7ddd;
+}
+
+.nav-tabs .nav-link.active {
+    border-bottom: 3px solid #3b7ddd;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-right: 1rem;
+    padding: 0.75rem 0.5rem;
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.field-required::after {
+    content: '*';
+    color: #dc3545;
+    margin-left: 4px;
+}
+
+.field-help {
+    display: block;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.custom-file-upload {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.custom-file-upload:hover {
+    border-color: #6c757d;
+    background-color: rgba(0,0,0,0.01);
+}
+
+.custom-file-upload i {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.custom-file-upload.file-selected {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.custom-file-upload.file-selected i {
+    color: #28a745;
+}
+
+.file-preview {
+    transition: all 0.3s;
+}
+
+.file-preview img {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.progress-step {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.progress-step::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #dee2e6;
+    z-index: 1;
+}
+
+.progress-step:first-child::before {
+    left: 50%;
+    width: 50%;
+}
+
+.progress-step:last-child::before {
+    width: 50%;
+}
+
+.step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    margin: 0 auto;
+}
+
+.progress-step.active .step-indicator {
+    border-color: #3b7ddd;
+    background-color: #3b7ddd;
+    color: #fff;
+}
+
+.progress-step.completed .step-indicator {
+    border-color: #28a745;
+    background-color: #28a745;
+    color: #fff;
+}
+
+.step-label {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-primary {
+    background-color: #3b7ddd;
+    border-color: #3b7ddd;
+}
+
+.btn-primary:hover {
+    background-color: #2d62b3;
+    border-color: #2a5ca8;
+}
+
+.preview-image {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 5px;
+    margin-top: 1rem;
+}
+
+.avatar-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    border: 3px solid #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-placeholder i {
+    font-size: 4rem;
+    color: #adb5bd;
+}
+
+/* Styles cho dropdown địa chỉ */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 20px;
+}
+
+/* Style for loading indicator */
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow::before {
+    content: "";
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #3b7ddd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+}
+
+.select-loading .select2-selection__arrow::before {
+    display: block;
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Form section styling */
+.form-section {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.form-section-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+}
+
+.form-section-body {
+    padding: 1.5rem;
+}
+
+/* Field required and help text */
+.field-required::after {
+    content: '*';
+    color: #dc3545;
+    margin-left: 4px;
+}
+
+.field-help {
+    display: block;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Progress indicator */
+.progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.progress-step {
+    flex: 1;
+    position: relative;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.progress-step::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #dee2e6;
+    z-index: 1;
+}
+
+.progress-step:first-child::before {
+    left: 50%;
+    width: 50%;
+}
+
+.progress-step:last-child::before {
+    width: 50%;
+}
+
+.step-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    margin: 0 auto;
+}
+
+.progress-step.active .step-indicator {
+    border-color: #3b7ddd;
+    background-color: #3b7ddd;
+    color: #fff;
+}
+
+.progress-step.completed .step-indicator {
+    border-color: #28a745;
+    background-color: #28a745;
+    color: #fff;
+}
+
+.step-label {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Avatar upload styling */
+.avatar-wrapper {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1rem;
+    border: 3px solid #fff;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.15);
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatar-placeholder i {
+    font-size: 4rem;
+    color: #adb5bd;
+}
+
+/* Custom file upload */
+.custom-file-upload {
+    border: 2px dashed #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+}
+
+.custom-file-upload:hover {
+    border-color: #6c757d;
+    background-color: rgba(0,0,0,0.01);
+}
+
+.custom-file-upload i {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.custom-file-upload.file-selected {
+    border-color: #28a745;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.custom-file-upload.file-selected i {
+    color: #28a745;
+}
+
+.file-preview {
+    transition: all 0.3s;
+}
+
+.file-preview img {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+/* Styling cho dropdowns địa chỉ */
+.location-select {
+    width: 100%;
+}
+
+/* Container cho nút sao chép địa chỉ */
+.address-copy-container {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Style cho dropdown khi đang loading */
+.select-loading {
+    position: relative;
+}
+
+.select-loading .select2-selection__arrow {
+    visibility: hidden;
+}
+
+.select-loading::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-top: 2px solid #3b7ddd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+}
+
+@keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+}
+
+/* Tạo section separators */
+.address-section {
+    position: relative;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+}
+
+.address-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: #f0f0f0;
+}
+
+/* Headers cho từng phần địa chỉ */
+.address-section-title {
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.address-section-title i {
+    margin-right: 8px;
+    color: #3b7ddd;
+}
+
+/* Style cho nhãn tỉnh/thành phố, quận/huyện, phường/xã */
+.location-label {
+    font-weight: 400;
+    color: #495057;
+}
+
+/* Phân cách giữa các phần địa chỉ */
+.address-divider {
+    border-top: 1px dashed #dee2e6;
+    margin: 20px 0;
+}
+
+/* Notification toasts */
+.toast-container {
+    z-index: 9999;
+}
+
+.toast {
+    min-width: 250px;
+}

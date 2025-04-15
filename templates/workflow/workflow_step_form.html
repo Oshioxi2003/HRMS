@@ -1,0 +1,167 @@
+<!-- templates/workflow/workflow_step_form.html -->
+{% extends "workflow/base_workflow.html" %}
+{% load crispy_forms_tags %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ title }}</h5>
+        <span class="badge bg-primary">Workflow: {{ workflow.name }}</span>
+    </div>
+    <div class="card-body">
+        <!-- Existing steps sidebar if there are any -->
+        {% if existing_steps %}
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Existing Steps</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Order</th>
+                                        <th>Step Name</th>
+                                        <th>Type</th>
+                                        <th>Approver</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for step in existing_steps %}
+                                        {% if is_edit and step.step_id == step.step_id %}
+                                            <tr class="table-primary">
+                                        {% else %}
+                                            <tr>
+                                        {% endif %}
+                                            <td>{{ step.order }}</td>
+                                            <td>{{ step.step_name }}</td>
+                                            <td>{{ step.get_step_type_display }}</td>
+                                            <td>
+                                                {% if step.step_type == 'approval' %}
+                                                    {% if step.approver_type == 'specific_user' and step.specific_approver %}
+                                                        {{ step.specific_approver.get_full_name }}
+                                                    {% else %}
+                                                        {{ step.get_approver_type_display }}
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="text-muted">N/A</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Step form -->
+        <form method="post" id="stepForm">
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.step_name|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.step_type|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    {{ form.description|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row approval-fields">
+                <div class="col-md-6">
+                    {{ form.approver_type|as_crispy_field }}
+                </div>
+                <div class="col-md-6 specific-user-field">
+                    {{ form.specific_approver|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    {{ form.order|as_crispy_field }}
+                </div>
+                <div class="col-md-4">
+                    {{ form.is_required|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    {{ form.skip_condition|as_crispy_field }}
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                {% if is_edit %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Update Step
+                    </button>
+                {% else %}
+                    <button type="submit" class="btn btn-primary" name="save">
+                        <i class="fas fa-save me-2"></i> Save Step
+                    </button>
+                    <button type="submit" class="btn btn-success ms-2" name="save_and_add">
+                        <i class="fas fa-plus-circle me-2"></i> Save and Add Another
+                    </button>
+                {% endif %}
+                <a href="{% url 'workflow_definition_detail' workflow_id=workflow.workflow_id %}" class="btn btn-secondary ms-2">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stepTypeSelect = document.getElementById('id_step_type');
+    const approverTypeDiv = document.querySelector('.approval-fields');
+    const specificUserDiv = document.querySelector('.specific-user-field');
+    
+    // Function to toggle approval fields visibility
+    function toggleApprovalFields() {
+        if (stepTypeSelect.value === 'approval') {
+            approverTypeDiv.style.display = 'flex';
+            
+            // Check if approver type is 'specific_user'
+            const approverTypeSelect = document.getElementById('id_approver_type');
+            if (approverTypeSelect.value === 'specific_user') {
+                specificUserDiv.style.display = 'block';
+            } else {
+                specificUserDiv.style.display = 'none';
+            }
+        } else {
+            approverTypeDiv.style.display = 'none';
+        }
+    }
+    
+    // Toggle fields on page load
+    toggleApprovalFields();
+    
+    // Add event listener for step type change
+    stepTypeSelect.addEventListener('change', toggleApprovalFields);
+    
+    // Add event listener for approver type change
+    const approverTypeSelect = document.getElementById('id_approver_type');
+    approverTypeSelect.addEventListener('change', function() {
+        if (this.value === 'specific_user') {
+            specificUserDiv.style.display = 'block';
+        } else {
+            specificUserDiv.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

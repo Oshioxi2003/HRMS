@@ -1,0 +1,59 @@
+<!-- templates/salary/base_salary.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/salary.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{% block salary_title %}Salary Management{% endblock %}</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-2 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Salary Management</h5>
+                    <div class="nav flex-column nav-pills">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'salary_admin' %}active{% endif %}" 
+                           href="{% url 'salary_admin' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a class="nav-link {% if 'salary_grade' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'salary_grade_list' %}">
+                            <i class="fas fa-layer-group"></i> Salary Grades
+                        </a>
+                        <a class="nav-link {% if 'seniority_allowance' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'seniority_allowance_list' %}">
+                            <i class="fas fa-star"></i> Seniority Allowances
+                        </a>
+                        <a class="nav-link {% if 'employee_salary_grade' in request.resolver_match.url_name %}active{% endif %}" 
+                           href="{% url 'employee_salary_grade_list' %}">
+                            <i class="fas fa-user-tag"></i> Salary Assignments
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'salary_advance_list' %}active{% endif %}" 
+                           href="{% url 'salary_advance_list' %}">
+                            <i class="fas fa-money-bill-wave"></i> Salary Advances
+                        </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'process_monthly_salary' %}active{% endif %}" 
+                           href="{% url 'process_monthly_salary' %}">
+                            <i class="fas fa-calculator"></i> Process Salaries
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-10 col-lg-9">
+            {% block salary_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

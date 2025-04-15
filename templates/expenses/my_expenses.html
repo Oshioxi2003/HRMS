@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chi Phí Của Tôi{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex justify-content-between align-items-center">
+                <h4 class="page-title">Chi Phí Của Tôi</h4>
+                <a href="{% url 'create_expense_claim' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Yêu Cầu Chi Phí Mới
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white mb-0">${{ summary.total_submitted|floatformat:2 }}</h5>
+                            <div class="small">Chi Phí Đã Gửi</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-file-invoice fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white mb-0">${{ summary.total_approved|floatformat:2 }}</h5>
+                            <div class="small">Chi Phí Đã Duyệt</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white mb-0">${{ summary.total_paid|floatformat:2 }}</h5>
+                            <div class="small">Chi Phí Đã Thanh Toán</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-money-bill-wave fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="text-white mb-0">${{ summary.total_rejected|floatformat:2 }}</h5>
+                            <div class="small">Chi Phí Bị Từ Chối</div>
+                        </div>
+                        <div>
+                            <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expense List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Yêu Cầu Chi Phí</h5>
+                        <div>
+                            <div class="btn-group">
+                                <a href="{% url 'my_expenses' %}" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline-primary{% endif %}">Tất Cả</a>
+                                <a href="{% url 'my_expenses' %}?status=Draft" class="btn btn-sm {% if status_filter == 'Draft' %}btn-primary{% else %}btn-outline-primary{% endif %}">Bản Nháp</a>
+                                <a href="{% url 'my_expenses' %}?status=Submitted" class="btn btn-sm {% if status_filter == 'Submitted' %}btn-primary{% else %}btn-outline-primary{% endif %}">Đã Gửi</a>
+                                <a href="{% url 'my_expenses' %}?status=Approved" class="btn btn-sm {% if status_filter == 'Approved' %}btn-primary{% else %}btn-outline-primary{% endif %}">Đã Duyệt</a>
+                                <a href="{% url 'my_expenses' %}?status=Paid" class="btn btn-sm {% if status_filter == 'Paid' %}btn-primary{% else %}btn-outline-primary{% endif %}">Đã Thanh Toán</a>
+                                <a href="{% url 'my_expenses' %}?status=Rejected" class="btn btn-sm {% if status_filter == 'Rejected' %}btn-primary{% else %}btn-outline-primary{% endif %}">Bị Từ Chối</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if expenses %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Tiêu Đề</th>
+                                        <th>Ngày Gửi</th>
+                                        <th>Tổng Số Tiền</th>
+                                        <th>Trạng Thái</th>
+                                        <th>Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for expense in expenses %}
+                                    <tr>
+                                        <td>{{ expense.claim_id }}</td>
+                                        <td>{{ expense.claim_title }}</td>
+                                        <td>{{ expense.submission_date|date:"M d, Y"|default:"--" }}</td>
+                                        <td class="text-end">${{ expense.total_amount|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if expense.status == 'Draft' %}bg-secondary
+                                                {% elif expense.status == 'Submitted' %}bg-warning
+                                                {% elif expense.status == 'Approved' %}bg-success
+                                                {% elif expense.status == 'Paid' %}bg-primary
+                                                {% else %}bg-danger{% endif %}">
+                                                {{ expense.status }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <a href="{% url 'view_expense_claim' claim_id=expense.claim_id %}" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> Xem
+                                                </a>
+                                                {% if expense.status == 'Draft' %}
+                                                <a href="{% url 'add_expense_items' claim_id=expense.claim_id %}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i> Sửa
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> Bạn chưa tạo yêu cầu chi phí nào.
+                            <a href="{% url 'create_expense_claim' %}" class="alert-link">Tạo yêu cầu chi phí đầu tiên của bạn</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

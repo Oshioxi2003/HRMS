@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">{% if is_create %}{% trans "Create User" %}{% else %}{% trans "Edit User" %}{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="username" class="form-label">{% trans "Username" %}</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ form.username.value }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="email" class="form-label">{% trans "Email" %}</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ form.email.value }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="first_name" class="form-label">{% trans "First Name" %}</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ form.first_name.value }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="last_name" class="form-label">{% trans "Last Name" %}</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ form.last_name.value }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="role" class="form-label">{% trans "Role" %}</label>
+            <select class="form-select" id="role" name="role">
+                <option value="Employee" {% if form.role.value == "Employee" %}selected{% endif %}>{% trans "Employee" %}</option>
+                <option value="HR" {% if form.role.value == "HR" %}selected{% endif %}>{% trans "HR" %}</option>
+                <option value="Manager" {% if form.role.value == "Manager" %}selected{% endif %}>{% trans "Manager" %}</option>
+                <option value="Admin" {% if form.role.value == "Admin" %}selected{% endif %}>{% trans "Admin" %}</option>
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="is_active" class="form-label">{% trans "Active" %}</label>
+            <input type="checkbox" id="is_active" name="is_active" {% if user.is_active %}checked{% endif %}>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">{% if is_create %}{% trans "Create User" %}{% else %}{% trans "Update User" %}{% endif %}</button>
+    </form>
+</div>
+{% endblock %}

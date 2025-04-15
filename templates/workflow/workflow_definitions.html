@@ -1,0 +1,71 @@
+<!-- templates/workflow/workflow_definitions.html -->
+{% extends "workflow/base_workflow.html" %}
+
+{% block workflow_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Workflow Definitions</h5>
+        <a href="{% url 'workflow_definition_create' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus-circle"></i> Create New Workflow
+        </a>
+    </div>
+    <div class="card-body">
+        {% if definitions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Entity Type</th>
+                            <th>Steps</th>
+                            <th>Instances</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for definition in definitions %}
+                        <tr>
+                            <td>{{ definition.name }}</td>
+                            <td>{{ definition.get_entity_type_display }}</td>
+                            <td>{{ definition.step_count }}</td>
+                            <td>{{ definition.instance_count }}</td>
+                            <td>
+                                {% if definition.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ definition.created_date }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'workflow_definition_detail' workflow_id=definition.workflow_id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'workflow_definition_edit' workflow_id=definition.workflow_id %}" class="btn btn-sm btn-secondary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="{% url 'workflow_step_create' workflow_id=definition.workflow_id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-plus"></i> Add Step
+                                    </a>
+                                    <a href="{% url 'workflow_definition_delete' workflow_id=definition.workflow_id %}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No workflow definitions found. 
+                <a href="{% url 'workflow_definition_create' %}" class="alert-link">Create your first workflow</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

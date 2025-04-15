@@ -1,0 +1,196 @@
+<!-- templates/search/employee_search.html -->
+{% extends "search/search_base.html" %}
+{% load i18n %}
+
+{% block search_title %}{% trans "Employee Search" %}{% endblock %}
+
+{% block search_form_action %}{% url 'employee_search' %}{% endblock %}
+
+{% block search_filters %}
+<div class="search-filters">
+    <form id="search-filters-form" method="get">
+        <input type="hidden" name="q" value="{{ query }}">
+        
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="departmentFilter">{% trans "Department" %}</label>
+                    <select class="form-select" id="departmentFilter" name="department">
+                        <option value="">{% trans "All Departments" %}</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.department_id }}" {% if department_filter == dept.department_id|stringformat:"i" %}selected{% endif %}>
+                            {{ dept.department_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="positionFilter">{% trans "Position" %}</label>
+                    <select class="form-select" id="positionFilter" name="position">
+                        <option value="">{% trans "All Positions" %}</option>
+                        {% for position in positions %}
+                        <option value="{{ position.position_id }}" {% if position_filter == position.position_id|stringformat:"i" %}selected{% endif %}>
+                            {{ position.position_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="statusFilter">{% trans "Status" %}</label>
+                    <select class="form-select" id="statusFilter" name="status">
+                        <option value="">{% trans "All Statuses" %}</option>
+                        {% for status_value, status_label in status_options %}
+                        <option value="{{ status_value }}" {% if status_filter == status_value %}selected{% endif %}>
+                            {{ status_label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="sortFilter">{% trans "Sort By" %}</label>
+                    <select class="form-select" id="sortFilter" name="sort">
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>{% trans "Name" %}</option>
+                        <option value="department" {% if sort_by == 'department' %}selected{% endif %}>{% trans "Department" %}</option>
+                        <option value="hire_date" {% if sort_by == 'hire_date' %}selected{% endif %}>{% trans "Hire Date" %}</option>
+                        <option value="id" {% if sort_by == 'id' %}selected{% endif %}>{% trans "Employee ID" %}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> {% trans "Apply Filters" %}
+                </button>
+                <a href="{% url 'employee_search' %}?q={{ query }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> {% trans "Clear Filters" %}
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block applied_filters %}
+{% if department_filter or position_filter or status_filter or sort_by != 'name' %}
+<div class="applied-filters mb-3">
+    <span class="me-2">{% trans "Applied Filters:" %}</span>
+    
+    {% if department_filter %}
+    {% for dept in departments %}
+    {% if department_filter == dept.department_id|stringformat:"i" %}
+    <span class="filter-chip">
+        {% trans "Department:" %} {{ dept.department_name }}
+        <span class="close" data-param="department">&times;</span>
+    </span>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    
+    {% if position_filter %}
+    {% for position in positions %}
+    {% if position_filter == position.position_id|stringformat:"i" %}
+    <span class="filter-chip">
+        {% trans "Position:" %} {{ position.position_name }}
+        <span class="close" data-param="position">&times;</span>
+    </span>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    
+    {% if status_filter %}
+    <span class="filter-chip">
+        {% trans "Status:" %} {{ status_filter }}
+        <span class="close" data-param="status">&times;</span>
+    </span>
+    {% endif %}
+    
+    {% if sort_by != 'name' %}
+    <span class="filter-chip">
+        {% trans "Sorted by:" %} 
+        {% if sort_by == 'department' %}{% trans "Department" %}
+        {% elif sort_by == 'hire_date' %}{% trans "Hire Date" %}
+        {% elif sort_by == 'id' %}{% trans "Employee ID" %}
+        {% endif %}
+        <span class="close" data-param="sort">&times;</span>
+    </span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block search_results %}
+{% if query %}
+    <div class="result-count">
+        {% blocktrans with count=result_count %}Found {{ count }} employees matching "{{ query }}"{% endblocktrans %}
+    </div>
+    
+    {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "ID" %}</th>
+                        <th>{% trans "Name" %}</th>
+                        <th>{% trans "Department" %}</th>
+                        <th>{% trans "Position" %}</th>
+                        <th>{% trans "Email" %}</th>
+                        <th>{% trans "Phone" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Action" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.employee_id }}</td>
+                        <td>
+                            {% if employee.profile_image %}
+                            <img src="{{ employee.profile_image.url }}" class="rounded-circle me-2" width="30" height="30" alt="{{ employee.full_name }}">
+                            {% else %}
+                            <i class="fas fa-user-circle me-2"></i>
+                            {% endif %}
+                            {{ employee.full_name }}
+                        </td>
+                        <td>{{ employee.department.department_name|default:"--" }}</td>
+                        <td>{{ employee.position.position_name|default:"--" }}</td>
+                        <td>{{ employee.email|default:"--" }}</td>
+                        <td>{{ employee.phone|default:"--" }}</td>
+                        <td>
+                            <span class="badge {% if employee.status == 'Working' %}bg-success{% elif employee.status == 'Resigned' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ employee.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{% url 'employee_detail' pk=employee.employee_id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> {% trans "View" %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            {% trans "No employees found matching your search criteria." %}
+        </div>
+    {% endif %}
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-user-tie fa-4x mb-3 text-muted"></i>
+        <h4 class="text-muted">{% trans "Search for employees" %}</h4>
+        <p class="text-muted">{% trans "Enter a name, email, phone number or ID to find employees" %}</p>
+    </div>
+{% endif %}
+{% endblock %}

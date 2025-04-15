@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Assets" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-flex align-items-center justify-content-between">
+                <h4 class="mb-0">{% trans "Asset Management" %}</h4>
+                
+                {% if perms.assets.add_asset %}
+                <div class="page-title-right">
+                    <a href="{% url 'create_asset' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> {% trans "Add New Asset" %}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Asset Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-primary-subtle flex-shrink-0">
+                            <i class="fas fa-laptop fa-2x text-primary p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ status_counts.total }}</h5>
+                            <p class="text-muted mb-0">{% trans "Total Assets" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-success-subtle flex-shrink-0">
+                            <i class="fas fa-check-circle fa-2x text-success p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ status_counts.available }}</h5>
+                            <p class="text-muted mb-0">{% trans "Available" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-warning-subtle flex-shrink-0">
+                            <i class="fas fa-user fa-2x text-warning p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ status_counts.assigned }}</h5>
+                            <p class="text-muted mb-0">{% trans "Assigned" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-md rounded-circle bg-danger-subtle flex-shrink-0">
+                            <i class="fas fa-tools fa-2x text-danger p-3"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h5 class="mb-0">{{ status_counts.maintenance|add:status_counts.retired }}</h5>
+                            <p class="text-muted mb-0">{% trans "Maintenance/Retired" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="{% trans 'Search assets...' %}" name="q" value="{{ query }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="category">
+                                <option value="">{% trans "All Categories" %}</option>
+                                {% for category in categories %}
+                                <option value="{{ category.category_id }}" {% if category_filter == category.category_id|stringformat:"i" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="status">
+                                <option value="">{% trans "All Statuses" %}</option>
+                                <option value="Available" {% if status_filter == "Available" %}selected{% endif %}>{% trans "Available" %}</option>
+                                <option value="Assigned" {% if status_filter == "Assigned" %}selected{% endif %}>{% trans "Assigned" %}</option>
+                                <option value="Under Maintenance" {% if status_filter == "Under Maintenance" %}selected{% endif %}>{% trans "Under Maintenance" %}</option>
+                                <option value="Retired" {% if status_filter == "Retired" %}selected{% endif %}>{% trans "Retired" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-filter me-1"></i> {% trans "Filter" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Asset List -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Asset Tag" %}</th>
+                                    <th>{% trans "Name" %}</th>
+                                    <th>{% trans "Category" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Assigned To" %}</th>
+                                    <th>{% trans "Condition" %}</th>
+                                    <th>{% trans "Location" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asset in assets %}
+                                <tr>
+                                    <td>{{ asset.asset_tag }}</td>
+                                    <td>{{ asset.asset_name }}</td>
+                                    <td>
+                                        {% if asset.category %}
+                                        <span class="badge bg-info">{{ asset.category.name }}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Uncategorized" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if asset.status == 'Available' %}
+                                        <span class="badge bg-success">{% trans "Available" %}</span>
+                                        {% elif asset.status == 'Assigned' %}
+                                        <span class="badge bg-warning">{% trans "Assigned" %}</span>
+                                        {% elif asset.status == 'Under Maintenance' %}
+                                        <span class="badge bg-danger">{% trans "Maintenance" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{% trans "Retired" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if asset.current_holder %}
+                                        <a href="{% url 'employee_detail' pk=asset.current_holder.employee_id %}">
+                                            {{ asset.current_holder.full_name }}
+                                        </a>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if asset.condition == 'New' %}
+                                        <span class="badge bg-success">{% trans "New" %}</span>
+                                        {% elif asset.condition == 'Good' %}
+                                        <span class="badge bg-info">{% trans "Good" %}</span>
+                                        {% elif asset.condition == 'Fair' %}
+                                        <span class="badge bg-warning">{% trans "Fair" %}</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{% trans "Poor" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ asset.location|default:"-" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'asset_detail' asset_id=asset.asset_id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if perms.assets.change_asset %}
+                                            <a href="{% url 'edit_asset' asset_id=asset.asset_id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if asset.status == 'Available' and perms.assets.change_asset %}
+                                            <a href="{% url 'assign_asset' asset_id=asset.asset_id %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-user-plus"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="fas fa-laptop fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">{% trans "No assets found" %}</h5>
+                                            <p class="text-muted">{% trans "No assets match your search criteria." %}</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

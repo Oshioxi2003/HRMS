@@ -1,0 +1,141 @@
+<!-- templates/training/course_participants.html -->
+{% extends "training/base_training.html" %}
+{% load static %}
+
+{% block card_title %}
+    <i class="fas fa-users"></i> Participants for "{{ course.course_name }}"
+{% endblock %}
+
+{% block training_content %}
+<div class="mb-4">
+    <div class="row">
+        <div class="col-md-8">
+            <form method="get" class="row g-2">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search participants..." name="q" value="{{ search_query }}">
+                        <button class="btn btn-outline-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Statuses</option>
+                        <option value="Registered" {% if status_filter == 'Registered' %}selected{% endif %}>Registered</option>
+                        <option value="Participating" {% if status_filter == 'Participating' %}selected{% endif %}>Participating</option>
+                        <option value="Completed" {% if status_filter == 'Completed' %}selected{% endif %}>Completed</option>
+                        <option value="Cancelled" {% if status_filter == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if can_manage %}
+            <a href="{% url 'add_participants' course_id=course.course_id %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Add Participants
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <h5>Total</h5>
+                        <span class="h3">{{ stats.total }}</span>
+                    </div>
+                    <div class="col">
+                        <h5>Registered</h5>
+                        <span class="h3 text-warning">{{ stats.registered }}</span>
+                    </div>
+                    <div class="col">
+                        <h5>Participating</h5>
+                        <span class="h3 text-primary">{{ stats.participating }}</span>
+                    </div>
+                    <div class="col">
+                        <h5>Completed</h5>
+                        <span class="h3 text-success">{{ stats.completed }}</span>
+                    </div>
+                    <div class="col">
+                        <h5>Cancelled</h5>
+                        <span class="h3 text-danger">{{ stats.cancelled }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if participants %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Registration Date</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Certificate</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participant in participants %}
+            <tr>
+                <td>{{ participant.employee.full_name }}</td>
+                <td>{{ participant.employee.department.department_name|default:"--" }}</td>
+                <td>{{ participant.registration_date }}</td>
+                <td>
+                    {% if participant.status == 'Registered' %}
+                    <span class="badge bg-warning">Registered</span>
+                    {% elif participant.status == 'Participating' %}
+                    <span class="badge bg-primary">Participating</span>
+                    {% elif participant.status == 'Completed' %}
+                    <span class="badge bg-success">Completed</span>
+                    {% elif participant.status == 'Cancelled' %}
+                    <span class="badge bg-danger">Cancelled</span>
+                    {% endif %}
+                </td>
+                <td>{{ participant.score|default:"--" }}</td>
+                <td>{{ participant.certificate|default:"--" }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        {% if can_manage %}
+                        <a href="{% url 'update_participation_status' participation_id=participant.participation_id %}" class="btn btn-primary" title="Update Status">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'delete_participation' participation_id=participant.participation_id %}" class="btn btn-danger" title="Remove Participant">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'employee_training' employee_id=participant.employee.employee_id %}" class="btn btn-info" title="View Employee Training">
+                            <i class="fas fa-user-graduate"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No participants found for this course.
+    {% if can_manage %}
+    <a href="{% url 'add_participants' course_id=course.course_id %}" class="alert-link">Add participants</a>.
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'course_detail' pk=course.course_id %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Course
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,63 @@
+<div class="sidebar">
+    <div class="p-3">
+        <ul class="nav flex-column">
+            <!-- Employee section -->
+            {% include "includes/sidebar/employee_sidebar_items.html" %}
+            
+            <!-- Manager section -->
+            {% include "includes/sidebar/manager_sidebar_items.html" %}
+            
+            <!-- HR section -->
+            {% include "includes/sidebar/hr_sidebar_items.html" %}
+            
+            <!-- Admin section -->
+            <li class="nav-header mt-3 text-uppercase px-3 small text-muted">Quản trị</li>
+            <li class="nav-item">
+                <a class="nav-link{% if request.resolver_match.url_name == 'admin_dashboard' %} active{% endif %}" href="{% url 'admin_dashboard' %}">
+                    <i class="fas fa-cog"></i> Bảng điều khiển quản trị
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'users' in request.path %} active{% endif %}" href="{% url 'user_list' %}">
+                    <i class="fas fa-user-shield"></i> Quản lý người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'permissions' in request.path %} active{% endif %}" href="{% url 'permission_list' %}">
+                    <i class="fas fa-user-lock"></i> Quyền hạn
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'workflow-admin' in request.path %} active{% endif %}" href="{% url 'workflow_definitions' %}">
+                    <i class="fas fa-project-diagram"></i> Quy trình làm việc
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'email-templates' in request.path %} active{% endif %}" href="{% url 'email_settings' %}">
+                    <i class="fas fa-envelope-open-text"></i> Mẫu email
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'system-logs' in request.path %} active{% endif %}" href="{% url 'system_logs' %}">
+                    <i class="fas fa-list-alt"></i> Nhật ký hệ thống
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link{% if 'settings' in request.path %} active{% endif %}" href="{% url 'system_settings' %}">
+                    <i class="fas fa-sliders-h"></i> Cài đặt hệ thống
+                </a>
+            </li>
+            
+            <li class="nav-item dropdown position-relative">
+                <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i id="notificationBell" class="fas fa-bell"></i>
+                    <span id="notificationBadge" class="badge badge-pill badge-danger notification-badge" 
+                        {% if unread_notification_count == 0 %}style="display: none;"{% endif %}>
+                        {{ unread_notification_count|default:0 }}
+                    </span>
+                </a>
+                {% include 'notifications/includes/notification_dropdown.html' with notifications=recent_notifications unread_count=unread_notification_count %}
+            </li>
+        </ul>
+    </div>
+</div>

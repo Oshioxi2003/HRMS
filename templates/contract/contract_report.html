@@ -1,0 +1,353 @@
+{% extends "contract/base_contract.html" %}
+{% load static %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .stat-card {
+        border-radius: 5px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block contract_title %}Contract Analytics Report{% endblock %}
+
+{% block contract_actions %}
+<a href="{% url 'contract_list' %}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left"></i> Back to List
+</a>
+{% endblock %}
+
+{% block contract_content %}
+<!-- Status Overview -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stat-card bg-white">
+            <div class="stat-label">Total Contracts</div>
+            <div class="stat-value text-primary">{{ status_counts.total }}</div>
+            <div class="stat-icon">
+                <i class="fas fa-file-contract fa-2x text-primary-light"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-white">
+            <div class="stat-label">Active Contracts</div>
+            <div class="stat-value text-success">{{ status_counts.active }}</div>
+            <div class="stat-icon">
+                <i class="fas fa-check-circle fa-2x text-success-light"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-white">
+            <div class="stat-label">Expired Contracts</div>
+            <div class="stat-value text-secondary">{{ status_counts.expired }}</div>
+            <div class="stat-icon">
+                <i class="fas fa-calendar-times fa-2x text-secondary-light"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card bg-white">
+            <div class="stat-label">Terminated Contracts</div>
+            <div class="stat-value text-danger">{{ status_counts.terminated }}</div>
+            <div class="stat-icon">
+                <i class="fas fa-times-circle fa-2x text-danger-light"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contract Charts -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Contract Status Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="contractStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Active Contracts by Type</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="contractTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiring Contracts -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Expiring Contracts Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <h1 class="display-4">{{ expiring_30 }}</h1>
+                            <p class="lead">Contracts expiring in 30 days</p>
+                            <a href="{% url 'expiring_contracts' %}?days=30" class="btn btn-sm btn-outline-warning">View Details</a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <h1 class="display-4">{{ expiring_60 }}</h1>
+                            <p class="lead">Contracts expiring in 31-60 days</p>
+                            <a href="{% url 'expiring_contracts' %}?days=60" class="btn btn-sm btn-outline-warning">View Details</a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="p-3">
+                            <h1 class="display-4">{{ expiring_90 }}</h1>
+                            <p class="lead">Contracts expiring in 61-90 days</p>
+                            <a href="{% url 'expiring_contracts' %}?days=90" class="btn btn-sm btn-outline-warning">View Details</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-container mt-4">
+                    <canvas id="expiringChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recently Signed Contracts -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Recently Signed Contracts</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Employee</th>
+                                <th>Contract Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Sign Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contract in recent_contracts %}
+                            <tr>
+                                <td>{{ contract.contract_id }}</td>
+                                <td>
+                                    <a href="{% url 'employee_detail' pk=contract.employee.employee_id %}">
+                                        {{ contract.employee.full_name }}
+                                    </a>
+                                </td>
+                                <td>{{ contract.contract_type }}</td>
+                                <td>{{ contract.start_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if contract.end_date %}
+                                        {{ contract.end_date|date:"Y-m-d" }}
+                                    {% else %}
+                                        <span class="text-muted">Indefinite</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ contract.sign_date|date:"Y-m-d" }}</td>
+                                <td>
+                                    <a href="{% url 'contract_detail' pk=contract.contract_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No recent contracts found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contract Status Chart
+    var statusCtx = document.getElementById('contractStatusChart').getContext('2d');
+    var statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Active', 'Expired', 'Terminated'],
+            datasets: [{
+                data: [
+                    {{ status_counts.active }},
+                    {{ status_counts.expired }},
+                    {{ status_counts.terminated }}
+                ],
+                backgroundColor: [
+                    '#28a745',  // green for active
+                    '#6c757d',  // gray for expired
+                    '#dc3545'   // red for terminated
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            var label = context.label || '';
+                            var value = context.raw || 0;
+                            var total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            var percentage = Math.round((value / total) * 100);
+                            return label + ': ' + value + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Contract Type Chart
+    var typeCtx = document.getElementById('contractTypeChart').getContext('2d');
+    var typeChart = new Chart(typeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Probation', 'Fixed-term', 'Indefinite-term', 'Seasonal'],
+            datasets: [{
+                label: 'Active Contracts',
+                data: [
+                    {{ type_counts.Probation }},
+                    {{ type_counts.Fixed-term }},
+                    {{ type_counts.Indefinite-term }},
+                    {{ type_counts.Seasonal }}
+                ],
+                backgroundColor: [
+                    'rgba(255, 159, 64, 0.7)',   // orange for probation
+                    'rgba(54, 162, 235, 0.7)',   // blue for fixed-term
+                    'rgba(75, 192, 192, 0.7)',   // green for indefinite
+                    'rgba(153, 102, 255, 0.7)'   // purple for seasonal
+                ],
+                borderColor: [
+                    'rgb(255, 159, 64)',
+                    'rgb(54, 162, 235)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+    
+    // Expiring Contracts Chart
+    var expiringCtx = document.getElementById('expiringChart').getContext('2d');
+    var expiringChart = new Chart(expiringCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Next 30 Days', '31-60 Days', '61-90 Days'],
+            datasets: [{
+                label: 'Expiring Contracts',
+                data: [
+                    {{ expiring_30 }},
+                    {{ expiring_60 }},
+                    {{ expiring_90 }}
+                ],
+                backgroundColor: [
+                    'rgba(220, 53, 69, 0.7)',    // red for 30 days
+                    'rgba(255, 193, 7, 0.7)',    // yellow for 60 days
+                    'rgba(40, 167, 69, 0.7)'     // green for 90 days
+                ],
+                borderColor: [
+                    'rgb(220, 53, 69)',
+                    'rgb(255, 193, 7)',
+                    'rgb(40, 167, 69)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

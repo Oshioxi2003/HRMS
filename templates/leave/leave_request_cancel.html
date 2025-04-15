@@ -1,0 +1,50 @@
+{% extends "leave/base_leave.html" %}
+{% load static %}
+
+{% block title %}Cancel Leave Request{% endblock %}
+
+{% block content %}
+<div class="container leave-container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card leave-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-times"></i> Cancel Leave Request</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Are you sure you want to cancel this leave request?
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Request Details</h6>
+                        <p><strong>Request ID:</strong> #{{ leave_request.request_id }}</p>
+                        <p>
+                            <strong>Leave Type:</strong>
+                            <span class="leave-type-badge leave-type-{{ leave_request.leave_type|lower|cut:' ' }}">
+                                {{ leave_request.leave_type }}
+                            </span>
+                        </p>
+                        <p><strong>Period:</strong> {{ leave_request.start_date|date:"M d, Y" }} to {{ leave_request.end_date|date:"M d, Y" }}</p>
+                        <p><strong>Leave Days:</strong> <span class="leave-days-badge">{{ leave_request.leave_days }} days</span></p>
+                        <p><strong>Status:</strong> <span class="leave-status status-{{ leave_request.status|lower }}">{{ leave_request.status }}</span></p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'leave_request_detail' pk=leave_request.request_id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Confirm Cancellation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
