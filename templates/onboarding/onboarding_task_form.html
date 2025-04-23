@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Edit Task" %} | HRMS{% endblock %}
+{% block title %}{% trans "Onboarding Task" %} | HRMS{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Edit Onboarding Task" %}</h1>
-    <p class="text-gray-600">{% trans "Update onboarding task template" %}</p>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Create Onboarding Task" %}</h1>
+    <p class="text-gray-600">{% trans "Define a new task for the employee onboarding process" %}</p>
 </div>
 
 <div class="bg-white rounded-lg shadow-sm">
@@ -134,7 +134,7 @@
                     <p class="mt-1 text-xs text-gray-500">{% trans "Select only if task is position-specific" %}</p>
                 </div>
                 
-                                <!-- Due Days -->
+                <!-- Due Days -->
                 <div>
                     <label for="{{ form.due_days.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
                         {% trans "Due Days" %}
@@ -206,7 +206,7 @@
                     {% trans "Cancel" %}
                 </a>
                 <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
-                    {% trans "Update Task" %}
+                    {% trans "Create Task" %}
                 </button>
             </div>
         </form>

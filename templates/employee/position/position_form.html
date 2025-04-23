@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | HRMS{% endblock %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="mt-2 text-gray-600">
+            {% if is_create %}Tạo vị trí công việc mới{% else %}Cập nhật thông tin vị trí{% endif %}
+        </p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Thông tin Vị trí</h2>
+        </div>
+
+        <div class="p-6">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Position Name -->
+                    <div>
+                        <label for="{{ form.position_name.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Tên Vị trí *
+                        </label>
+                        <input type="text" 
+                               name="{{ form.position_name.name }}" 
+                               id="{{ form.position_name.id_for_label }}" 
+                               value="{{ form.position_name.value|default:'' }}"
+                               class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                      transition-all duration-150
+                                      {% if form.position_name.errors %}border-red-500{% endif %}">
+                        {% if form.position_name.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.position_name.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Position Code -->
+                    <div>
+                        <label for="{{ form.position_code.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Mã Vị trí *
+                        </label>
+                        <input type="text" 
+                               name="{{ form.position_code.name }}" 
+                               id="{{ form.position_code.id_for_label }}" 
+                               value="{{ form.position_code.value|default:'' }}"
+                               class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                      transition-all duration-150
+                                      {% if form.position_code.errors %}border-red-500{% endif %}">
+                        {% if form.position_code.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.position_code.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Mã duy nhất cho vị trí (ví dụ: DEV, MGR, DIR)</p>
+                    </div>
+
+                    <!-- Department -->
+                    <div>
+                        <label for="{{ form.department.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Phòng ban
+                        </label>
+                        <select name="{{ form.department.name }}" 
+                                id="{{ form.department.id_for_label }}"
+                                class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                       transition-all duration-150
+                                       {% if form.department.errors %}border-red-500{% endif %}">
+                            <option value="">---------</option>
+                            {% for choice in form.department.field.choices %}
+                            {% if choice.0 %}
+                            <option value="{{ choice.0 }}" 
+                                    {% if form.department.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.department.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.department.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Để trống nếu là vị trí liên phòng ban</p>
+                    </div>
+
+                    <!-- Level -->
+                    <div>
+                        <label for="{{ form.level.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Cấp bậc
+                        </label>
+                        <input type="number" 
+                               name="{{ form.level.name }}" 
+                               id="{{ form.level.id_for_label }}" 
+                               value="{{ form.level.value|default:'0' }}" 
+                               min="0" max="10"
+                               class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                      transition-all duration-150
+                                      {% if form.level.errors %}border-red-500{% endif %}">
+                        {% if form.level.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.level.errors.0 }}
+                        </p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Cấp bậc trong cơ cấu tổ chức (0-10)</p>
+                    </div>
+
+                    <!-- Salary Range Min -->
+                    <div>
+                        <label for="{{ form.salary_range_min.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Mức lương Tối thiểu
+                        </label>
+                        <input type="number" 
+                               name="{{ form.salary_range_min.name }}" 
+                               id="{{ form.salary_range_min.id_for_label }}" 
+                               value="{{ form.salary_range_min.value|default:'' }}" 
+                               min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                      transition-all duration-150
+                                      {% if form.salary_range_min.errors %}border-red-500{% endif %}">
+                        {% if form.salary_range_min.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.salary_range_min.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Salary Range Max -->
+                    <div>
+                        <label for="{{ form.salary_range_max.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Mức lương Tối đa
+                        </label>
+                        <input type="number" 
+                               name="{{ form.salary_range_max.name }}" 
+                               id="{{ form.salary_range_max.id_for_label }}" 
+                               value="{{ form.salary_range_max.value|default:'' }}" 
+                               min="0" step="0.01"
+                               class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                      focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                      transition-all duration-150
+                                      {% if form.salary_range_max.errors %}border-red-500{% endif %}">
+                        {% if form.salary_range_max.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.salary_range_max.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" 
+                               class="block text-sm font-medium text-gray-700 mb-1">
+                            Trạng thái
+                        </label>
+                        <select name="{{ form.status.name }}" 
+                                id="{{ form.status.id_for_label }}"
+                                class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                       transition-all duration-150
+                                       {% if form.status.errors %}border-red-500{% endif %}">
+                            {% for choice in form.status.field.choices %}
+                            <option value="{{ choice.0 }}" 
+                                    {% if form.status.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.status.errors %}
+                        <p class="mt-1 text-sm text-red-600 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i> 
+                            {{ form.status.errors.0 }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-8">
+                    <label for="{{ form.description.id_for_label }}" 
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Mô tả
+                    </label>
+                    <textarea name="{{ form.description.name }}" 
+                              id="{{ form.description.id_for_label }}" 
+                              rows="5"
+                              class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                     transition-all duration-150
+                                     {% if form.description.errors %}border-red-500{% endif %}">
+                        {{ form.description.value|default:'' }}
+                    </textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i> 
+                        {{ form.description.errors.0 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Responsibilities -->
+                <div class="mb-8">
+                    <label for="{{ form.responsibilities.id_for_label }}" 
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Trách nhiệm
+                    </label>
+                    <textarea name="{{ form.responsibilities.name }}" 
+                              id="{{ form.responsibilities.id_for_label }}" 
+                              rows="5"
+                              class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                     transition-all duration-150
+                                     {% if form.responsibilities.errors %}border-red-500{% endif %}">
+                        {{ form.responsibilities.value|default:'' }}
+                    </textarea>
+                    {% if form.responsibilities.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i> 
+                        {{ form.responsibilities.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Nhập mỗi trách nhiệm trên một dòng</p>
+                </div>
+
+                <!-- Requirements -->
+                <div class="mb-8">
+                    <label for="{{ form.requirements.id_for_label }}" 
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Yêu cầu
+                    </label>
+                    <textarea name="{{ form.requirements.name }}" 
+                              id="{{ form.requirements.id_for_label }}" 
+                              rows="5"
+                              class="w-full rounded-lg border border-gray-300 py-2 px-3 
+                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                                     transition-all duration-150
+                                     {% if form.requirements.errors %}border-red-500{% endif %}">
+                        {{ form.requirements.value|default:'' }}
+                    </textarea>
+                    {% if form.requirements.errors %}
+                    <p class="mt-1 text-sm text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i> 
+                        {{ form.requirements.errors.0 }}
+                    </p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Nhập mỗi yêu cầu trên một dòng</p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex items-center justify-end space-x-4">
+                    <a href="{% url 'position_list' %}" 
+                       class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg 
+                              hover:bg-gray-300 transition-all duration-150">
+                        Hủy
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 
+                                   text-white rounded-lg 
+                                   hover:from-blue-700 hover:to-blue-800 
+                                   transition-all duration-150">
+                        {% if is_create %}Tạo Vị trí{% else %}Cập nhật Vị trí{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

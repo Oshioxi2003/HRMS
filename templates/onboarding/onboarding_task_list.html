@@ -1,41 +1,273 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Onboarding Tasks" %}{% endblock %}
+{% block title %}{% trans "Onboarding Tasks" %} | HRMS{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>{% trans "Onboarding Tasks" %}</h2>
-    <a href="{% url 'onboarding_task_create' %}" class="btn btn-primary mb-3">{% trans "Create New Task" %}</a>
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>{% trans "Task Name" %}</th>
-                <th>{% trans "Description" %}</th>
-                <th>{% trans "Type" %}</th>
-                <th>{% trans "Action" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td>{{ task.task_name }}</td>
-                <td>{{ task.description }}</td>
-                <td>{{ task.get_task_type_display }}</td>
-                <td>
-                    <a href="{% url 'onboarding_task_edit' task_id=task.task_id %}" class="btn btn-sm btn-warning">
-                        <i class="fas fa-edit"></i> {% trans "Edit" %}
-                    </a>
-                    <form action="{% url 'onboarding_task_delete' task_id=task.task_id %}" method="post" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('{% trans 'Are you sure you want to delete this task?' %}')">
-                            <i class="fas fa-trash"></i> {% trans "Delete" %}
-                        </button>
-                    </form>
-                </td>
-            </tr>
+<div class="mb-6 flex flex-wrap items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Onboarding Tasks" %}</h1>
+        <p class="text-gray-600">{% trans "Manage onboarding task templates" %}</p>
+    </div>
+    
+    <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+        <a href="{% url 'onboarding_task_create' %}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+            <i class="fas fa-plus mr-2"></i> {% trans "Add Task" %}
+        </a>
+    </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+    <form method="get" class="flex flex-wrap items-center gap-4">
+        <div class="flex-grow">
+            <label for="search" class="sr-only">{% trans "Search" %}</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" name="q" id="search" placeholder="{% trans 'Search tasks...' %}" value="{{ request.GET.q|default:'' }}"
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white 
+                              focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+            </div>
+        </div>
+        
+        <div>
+            <label for="role" class="sr-only">{% trans "Role" %}</label>
+            <select name="role" id="role" class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white 
+                                                focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                <option value="">{% trans "All Roles" %}</option>
+                <option value="HR" {% if request.GET.role == 'HR' %}selected{% endif %}>{% trans "HR" %}</option>
+                <option value="Manager" {% if request.GET.role == 'Manager' %}selected{% endif %}>{% trans "Manager" %}</option>
+                <option value="IT" {% if request.GET.role == 'IT' %}selected{% endif %}>{% trans "IT" %}</option>
+                <option value="Employee" {% if request.GET.role == 'Employee' %}selected{% endif %}>{% trans "Employee" %}</option>
+                <option value="Admin" {% if request.GET.role == 'Admin' %}selected{% endif %}>{% trans "Admin" %}</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="status" class="sr-only">{% trans "Status" %}</label>
+            <select name="status" id="status" class="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white 
+                                                   focus:outline-none focus:ring-primary focus:border-primary sm:text-sm">
+                <option value="">{% trans "All Statuses" %}</option>
+                <option value="1" {% if request.GET.status == '1' %}selected{% endif %}>{% trans "Active" %}</option>
+                <option value="0" {% if request.GET.status == '0' %}selected{% endif %}>{% trans "Inactive" %}</option>
+            </select>
+        </div>
+        
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+                                     text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            {% trans "Filter" %}
+        </button>
+        
+        <a href="{% url 'onboarding_task_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md 
+                                                          text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+            {% trans "Clear" %}
+        </a>
+    </form>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Task" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Responsible" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Department" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Position" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Due Days" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Status" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Actions" %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task in tasks %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">{{ task.task_name }}</div>
+                        <div class="text-xs text-gray-500">{{ task.description|truncatechars:100 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                              {% if task.responsible_role == 'HR' %}bg-blue-100 text-blue-800
+                              {% elif task.responsible_role == 'Manager' %}bg-green-100 text-green-800
+                              {% elif task.responsible_role == 'IT' %}bg-purple-100 text-purple-800
+                              {% elif task.responsible_role == 'Employee' %}bg-amber-100 text-amber-800
+                              {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task.get_responsible_role_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% if task.department_specific %}
+                            {% if task.department %}
+                            {{ task.department.department_name }}
+                            {% else %}
+                            <span class="text-red-600">{% trans "Missing Department" %}</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-xs text-gray-500">{% trans "All Departments" %}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% if task.position_specific %}
+                            {% if task.position %}
+                            {{ task.position.position_name }}
+                            {% else %}
+                            <span class="text-red-600">{% trans "Missing Position" %}</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-xs text-gray-500">{% trans "All Positions" %}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ task.due_days }} {% trans "days" %}</div>
+                        <div class="text-xs text-gray-500">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                  {% if task.priority == 'High' %}bg-red-100 text-red-800
+                                  {% elif task.priority == 'Medium' %}bg-yellow-100 text-yellow-800
+                                  {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ task.get_priority_display }}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                              {% if task.status %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ task.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <a href="{% url 'onboarding_task_edit' task.task_id %}" class="text-primary hover:text-primary-hover" title="{% trans 'Edit' %}">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'onboarding_task_delete' task.task_id %}" class="text-danger hover:text-red-700" title="{% trans 'Delete' %}">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
+                        {% trans "No onboarding tasks found" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Task Categories -->
+<div class="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6">
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{% trans "HR Tasks" %}</h3>
+            <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {{ tasks|filter:"responsible_role:HR"|length }}
+            </span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1">
+            {% for task in tasks|filter:"responsible_role:HR"|slice:":5" %}
+            <li class="truncate" title="{{ task.task_name }}">
+                <i class="fas fa-circle text-xs text-blue-400 mr-1"></i> {{ task.task_name }}
+            </li>
+            {% empty %}
+            <li class="text-gray-500 italic">{% trans "No HR tasks defined" %}</li>
             {% endfor %}
-        </tbody>
-    </table>
+        </ul>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{% trans "Manager Tasks" %}</h3>
+            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {{ tasks|filter:"responsible_role:Manager"|length }}
+            </span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1">
+            {% for task in tasks|filter:"responsible_role:Manager"|slice:":5" %}
+            <li class="truncate" title="{{ task.task_name }}">
+                <i class="fas fa-circle text-xs text-green-400 mr-1"></i> {{ task.task_name }}
+            </li>
+            {% empty %}
+            <li class="text-gray-500 italic">{% trans "No manager tasks defined" %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{% trans "IT Tasks" %}</h3>
+            <span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {{ tasks|filter:"responsible_role:IT"|length }}
+            </span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1">
+            {% for task in tasks|filter:"responsible_role:IT"|slice:":5" %}
+            <li class="truncate" title="{{ task.task_name }}">
+                <i class="fas fa-circle text-xs text-purple-400 mr-1"></i> {{ task.task_name }}
+            </li>
+            {% empty %}
+            <li class="text-gray-500 italic">{% trans "No IT tasks defined" %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{% trans "Employee Tasks" %}</h3>
+            <span class="bg-amber-100 text-amber-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {{ tasks|filter:"responsible_role:Employee"|length }}
+            </span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1">
+            {% for task in tasks|filter:"responsible_role:Employee"|slice:":5" %}
+            <li class="truncate" title="{{ task.task_name }}">
+                <i class="fas fa-circle text-xs text-amber-400 mr-1"></i> {{ task.task_name }}
+            </li>
+            {% empty %}
+            <li class="text-gray-500 italic">{% trans "No employee tasks defined" %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">{% trans "Admin Tasks" %}</h3>
+            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                {{ tasks|filter:"responsible_role:Admin"|length }}
+            </span>
+        </div>
+        <ul class="text-sm text-gray-700 space-y-1">
+            {% for task in tasks|filter:"responsible_role:Admin"|slice:":5" %}
+            <li class="truncate" title="{{ task.task_name }}">
+                <i class="fas fa-circle text-xs text-gray-400 mr-1"></i> {{ task.task_name }}
+            </li>
+            {% empty %}
+            <li class="text-gray-500 italic">{% trans "No admin tasks defined" %}</li>
+            {% endfor %}
+        </ul>
+    </div>
 </div>
 {% endblock %}

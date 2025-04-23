@@ -1,86 +1,197 @@
-{% extends "base.html" %}
 {% load static %}
 {% load i18n %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-{% endblock %}
-
-{% block content %}
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <img src="{% static 'images/logo.png' %}" alt="Logo Công ty" class="logo">
-            <h1>Đăng nhập</h1>
-            <p class="subtitle">Vui lòng đăng nhập để truy cập hệ thống</p>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <style>
+        .input-group {
+            transition: all 0.3s ease;
+        }
+        .input-group:focus-within {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .alert {
+            transition: opacity 0.3s ease;
+        }
+        .validation-error {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            transition: opacity 0.3s ease;
+        }
+        .hidden {
+            opacity: 0;
+            display: none !important;
+        }
+        .visible {
+            opacity: 1;
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-100 to-blue-100 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-8">
+            <img src="{% static 'images/logo.png' %}" alt="Logo Công ty" class="w-16 mx-auto mb-4">
+            <h1 class="text-2xl font-bold">Đăng nhập</h1>
+            <p class="text-sm opacity-80 mt-2">Truy cập hệ thống quản lý của bạn</p>
         </div>
 
-        {% if messages %}
-        <div class="alert-container">
-            {% for message in messages %}
-            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-                {{ message }}
-                <button type="button" class="close-alert">&times;</button>
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="login-body">
-            <form method="post" class="login-form">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label for="username">Tên đăng nhập hoặc Email</label>
-                    <div class="input-group">
-                        <span class="input-icon"><i class="fas fa-user"></i></span>
-                        <input type="text" id="username" name="username" class="form-control" required 
-                            placeholder="Nhập tên đăng nhập hoặc email">
+        <!-- Alerts -->
+        <div id="alert-container" class="px-6 pt-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded flex justify-between items-center mb-4 visible">
+                        <span>{{ message }}</span>
+                        <button type="button" class="close-alert text-red-700 hover:text-red-900">×</button>
                     </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- Form -->
+        <div class="px-6 py-8">
+            <form id="login-form" method="post" class="space-y-6">
+                {% csrf_token %}
+                <div class="input-group">
+                    <label for="username" class="block text-sm font-medium text-gray-700">Tên đăng nhập hoặc Email</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" id="username" name="username" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Nhập tên đăng nhập hoặc email" required>
+                    </div>
+                    <div id="username-error" class="validation-error hidden"></div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="password">Mật khẩu</label>
-                    <div class="input-group">
-                        <span class="input-icon"><i class="fas fa-lock"></i></span>
-                        <input type="password" id="password" name="password" class="form-control" required 
-                            placeholder="Nhập mật khẩu">
-                        <span class="toggle-password" title="Hiện/ẩn mật khẩu">
+
+                <div class="input-group">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" name="password" class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Nhập mật khẩu" required>
+                        <span class="toggle-password absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 cursor-pointer">
                             <i class="fas fa-eye"></i>
                         </span>
                     </div>
+                    <div id="password-error" class="validation-error hidden"></div>
                 </div>
-                
-                <div class="form-options">
-                    <div class="remember-me">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember">Ghi nhớ đăng nhập</label>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="remember" name="remember" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="remember" class="ml-2 text-sm text-gray-600">Ghi nhớ đăng nhập</label>
                     </div>
-                    <a href="{% url 'password_reset' %}" class="forgot-password">Quên mật khẩu?</a>
+                    <a href="{% url 'password_reset' %}" class="text-sm text-blue-600 hover:underline">Quên mật khẩu?</a>
                 </div>
-                
-                <button type="submit" class="btn-login">Đăng nhập</button>
+
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition duration-300">Đăng nhập</button>
             </form>
 
-            <div class="login-divider">
-                <span>hoặc đăng nhập với</span>
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">Hoặc đăng nhập với</span>
+                </div>
             </div>
 
-            <div class="social-login">
-                <a href="{% url 'social:begin' 'google-oauth2' %}" class="btn-social btn-google">
-                    <i class="fab fa-google"></i>
-                    <span>Google</span>
-                </a>
-            </div>
+            <a href="{% url 'social:begin' 'google-oauth2' %}" class="w-full flex items-center justify-center bg-red-500 text-white py-2 rounded-md hover:bg-red-600 transition duration-300">
+                <i class="fab fa-google mr-2"></i>
+                <span>Google</span>
+            </a>
         </div>
 
-        <div class="login-footer">
-            <p>Chưa có tài khoản? <a href="{% url 'register' %}" class="register-link">Đăng ký ngay</a></p>
+        <!-- Footer -->
+        <div class="bg-gray-50 py-4 text-center border-t">
+            <p class="text-sm text-gray-600">Chưa có tài khoản? <a href="{% url 'register' %}" class="text-blue-600 font-medium hover:underline">Đăng ký ngay</a></p>
         </div>
     </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'js/accounts/login.js' %}"></script>
-{% endblock %}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle password visibility
+            const togglePassword = document.querySelector('.toggle-password');
+            const passwordInput = document.querySelector('#password');
+            togglePassword?.addEventListener('click', () => {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                togglePassword.querySelector('i').classList.toggle('fa-eye', isPassword);
+                togglePassword.querySelector('i').classList.toggle('fa-eye-slash', !isPassword);
+            });
+
+            // Close alerts
+            document.querySelectorAll('.close-alert').forEach(button => {
+                button.addEventListener('click', () => {
+                    const alert = button.parentElement;
+                    alert.classList.remove('visible');
+                    alert.classList.add('hidden');
+                });
+            });
+
+            // Form validation
+            const loginForm = document.querySelector('#login-form');
+            loginForm?.addEventListener('submit', (e) => {
+                const username = document.querySelector('#username').value.trim();
+                const password = document.querySelector('#password').value;
+                let isValid = true;
+
+                if (!username) {
+                    showError('username', 'Vui lòng nhập tên đăng nhập hoặc email');
+                    isValid = false;
+                } else {
+                    clearError('username');
+                }
+
+                if (!password) {
+                    showError('password', 'Vui lòng nhập mật khẩu');
+                    isValid = false;
+                } else {
+                    clearError('password');
+                }
+
+                if (!isValid) e.preventDefault();
+            });
+
+            function showError(id, message) {
+                const errorDiv = document.queryuelSelector(`#${id}-error`);
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('hidden');
+                errorDiv.classList.add('visible');
+            }
+
+            function clearError(id) {
+                const errorDiv = document.querySelector(`#${id}-error`);
+                errorDiv.classList.remove('visible');
+                errorDiv.classList.add('hidden');
+            }
+
+            // Remember me functionality
+            const rememberCheckbox = document.querySelector('#remember');
+            const usernameInput = document.querySelector('#username');
+            const savedUsername = localStorage.getItem('rememberedUsername');
+            if (savedUsername) {
+                usernameInput.value = savedUsername;
+                rememberCheckbox.checked = true;
+            }
+
+            loginForm?.addEventListener('submit', () => {
+                if (rememberCheckbox.checked) {
+                    localStorage.setItem('rememberedUsername', usernameInput.value.trim());
+                } else {
+                    localStorage.removeItem('rememberedUsername');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

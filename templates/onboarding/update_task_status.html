@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Update Task Status" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Update Task Status" %}</h1>
+    <p class="text-gray-600">
+        {% blocktrans with name=task_status.onboarding.employee.full_name %}
+        Update onboarding task status for {{ name }}
+        {% endblocktrans %}
+    </p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Task Information -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Task Information" %}</h2>
+            </div>
+            
+            <div class="p-4">
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Task Name" %}</h3>
+                    <p class="text-gray-900 font-medium">{{ task_status.task.task_name }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Description" %}</h3>
+                    <p class="text-gray-700">{{ task_status.task.description }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Responsible Role" %}</h3>
+                    <p class="text-gray-900">{{ task_status.task.get_responsible_role_display }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Due Date" %}</h3>
+                    <p class="text-gray-900">
+                        {% with due_date=task_status.onboarding.start_date|date:"U"|add:task_status.task.due_days|mul:86400|date:"Y-m-d" %}
+                        {{ due_date|date:"d M Y" }}
+                        {% if due_date|date:"U"|floatformat:"0" < now.date|date:"U"|floatformat:"0" and task_status.status != 'Completed' %}
+                        <span class="text-xs text-red-600 font-medium">{% trans "Overdue" %}</span>
+                        {% endif %}
+                        {% endwith %}
+                    </p>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Priority" %}</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                          {% if task_status.task.priority == 'High' %}bg-red-100 text-red-800
+                          {% elif task_status.task.priority == 'Medium' %}bg-yellow-100 text-yellow-800
+                          {% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ task_status.task.get_priority_display }}
+                    </span>
+                </div>
+                
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Current Status" %}</h3>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                          {% if task_status.status == 'Completed' %}bg-green-100 text-green-800
+                          {% elif task_status.status == 'In Progress' %}bg-blue-100 text-blue-800
+                          {% elif task_status.status == 'Not Started' %}bg-gray-100 text-gray-800
+                          {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ task_status.get_status_display }}
+                    </span>
+                </div>
+                
+                {% if task_status.completion_date %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Completion Date" %}</h3>
+                    <p class="text-gray-900">{{ task_status.completion_date|date:"d M Y" }}</p>
+                </div>
+                {% endif %}
+                
+                {% if task_status.completed_by %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Completed By" %}</h3>
+                    <p class="text-gray-900">{{ task_status.completed_by.get_full_name }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Update Form -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Update Status" %}</h2>
+            </div>
+            
+            <div class="p-6">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Status -->
+                    <div class="mb-6">
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Status" %} *
+                        </label>
+                        <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                       {% if form.status.errors %}border-red-500{% endif %}">
+                            {% for choice in form.status.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>
+                                {{ choice.1 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.status.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Comments -->
+                    <div class="mb-6">
+                        <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Comments" %}
+                        </label>
+                        <textarea name="{{ form.comments.name }}" id="{{ form.comments.id_for_label }}" rows="4"
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                         {% if form.comments.errors %}border-red-500{% endif %}">{{ form.comments.value|default:'' }}</textarea>
+                        {% if form.comments.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.comments.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">{% trans "Add any notes or comments about this task" %}</p>
+                    </div>
+                    
+                    <!-- Completion Checkbox -->
+                    <div class="mb-6">
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="mark_completed" name="mark_completed" type="checkbox" 
+                                       class="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded"
+                                       {% if form.status.value == 'Completed' %}checked{% endif %}>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="mark_completed" class="font-medium text-gray-700">{% trans "Mark as completed now" %}</label>
+                                <p class="text-gray-500">{% trans "This will set the status to 'Completed' and record the current date" %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Send Notification -->
+                    <div class="mb-6">
+                        <div class="relative flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="send_notification" name="send_notification" type="checkbox" 
+                                       class="focus:ring-primary h-4 w-4 text-primary border-gray-300 rounded" checked>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="send_notification" class="font-medium text-gray-700">{% trans "Send notification" %}</label>
+                                <p class="text-gray-500">{% trans "Notify relevant parties about this status update" %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-end space-x-3">
+                        <a href="{% url 'employee_onboarding_detail' task_status.onboarding.employee.pk %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                            {% trans "Cancel" %}
+                        </a>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+                            {% trans "Update Status" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Previous Comments -->
+        {% if task_status.comments %}
+        <div class="bg-white rounded-lg shadow-sm mt-6">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Previous Comments" %}</h2>
+            </div>
+            
+            <div class="p-4">
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <p class="text-gray-700">{{ task_status.comments|linebreaks }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+        const markCompletedCheckbox = document.getElementById('mark_completed');
+        
+        // Update checkbox when status changes
+        statusSelect.addEventListener('change', function() {
+            markCompletedCheckbox.checked = (this.value === 'Completed');
+        });
+        
+        // Update status when checkbox changes
+        markCompletedCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                statusSelect.value = 'Completed';
+            } else if (statusSelect.value === 'Completed') {
+                statusSelect.value = 'In Progress';
+            }
+        });
+    });
+</script>
+{% endblock %}

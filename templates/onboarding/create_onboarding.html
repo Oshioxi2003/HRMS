@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Onboarding" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Create Onboarding Process" %}</h1>
+    <p class="text-gray-600">
+        {% blocktrans with name=employee.full_name %}
+        Start onboarding process for {{ name }}
+        {% endblocktrans %}
+    </p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Employee Information -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Employee" %}</h2>
+            </div>
+            
+            <div class="p-4">
+                <div class="flex flex-col items-center mb-4">
+                    {% if employee.profile_image %}
+                    <img class="h-24 w-24 rounded-full object-cover mb-3" src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}">
+                    {% else %}
+                    <div class="h-24 w-24 rounded-full bg-primary text-white flex items-center justify-center text-2xl mb-3">
+                        {{ employee.full_name|first|upper }}
+                    </div>
+                    {% endif %}
+                    <h3 class="text-lg font-semibold text-gray-800">{{ employee.full_name }}</h3>
+                    <p class="text-gray-600">{{ employee.email }}</p>
+                </div>
+                
+                <div class="border-t border-gray-200 pt-4 space-y-3">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">{% trans "Department" %}</h4>
+                        <p class="text-gray-900">{{ employee.department.department_name|default:"--" }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">{% trans "Position" %}</h4>
+                        <p class="text-gray-900">{{ employee.position.position_name|default:"--" }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">{% trans "Hire Date" %}</h4>
+                        <p class="text-gray-900">{{ employee.hire_date|date:"d M Y"|default:"--" }}</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500">{% trans "Employee ID" %}</h4>
+                        <p class="text-gray-900">{{ employee.employee_id }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Onboarding Form -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">{% trans "Onboarding Details" %}</h2>
+            </div>
+            
+            <div class="p-6">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Start Date -->
+                        <div>
+                            <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% trans "Start Date" %} *
+                            </label>
+                            <input type="date" name="{{ form.start_date.name }}" id="{{ form.start_date.id_for_label }}" 
+                                   value="{{ form.start_date.value|date:'Y-m-d' }}"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                          {% if form.start_date.errors %}border-red-500{% endif %}">
+                            {% if form.start_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Target Completion Date -->
+                        <div>
+                            <label for="{{ form.target_completion_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% trans "Target Completion Date" %} *
+                            </label>
+                            <input type="date" name="{{ form.target_completion_date.name }}" id="{{ form.target_completion_date.id_for_label }}" 
+                                   value="{{ form.target_completion_date.value|date:'Y-m-d' }}"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                          {% if form.target_completion_date.errors %}border-red-500{% endif %}">
+                            {% if form.target_completion_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.target_completion_date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- HR Contact -->
+                        <div>
+                            <label for="{{ form.hr_contact.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% trans "HR Contact" %}
+                            </label>
+                            <select name="{{ form.hr_contact.name }}" id="{{ form.hr_contact.id_for_label }}"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                           {% if form.hr_contact.errors %}border-red-500{% endif %}">
+                                <option value="">---------</option>
+                                {% for choice in form.hr_contact.field.choices %}
+                                {% if choice.0 %}
+                                <option value="{{ choice.0 }}" {% if form.hr_contact.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                            {% if form.hr_contact.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.hr_contact.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Manager Contact -->
+                        <div>
+                            <label for="{{ form.manager_contact.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% trans "Manager Contact" %}
+                            </label>
+                            <select name="{{ form.manager_contact.name }}" id="{{ form.manager_contact.id_for_label }}"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                           {% if form.manager_contact.errors %}border-red-500{% endif %}">
+                                <option value="">---------</option>
+                                {% for choice in form.manager_contact.field.choices %}
+                                {% if choice.0 %}
+                                <option value="{{ choice.0 }}" {% if form.manager_contact.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                            {% if form.manager_contact.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.manager_contact.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Status -->
+                        <div>
+                            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                {% trans "Status" %}
+                            </label>
+                            <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                           {% if form.status.errors %}border-red-500{% endif %}">
+                                {% for choice in form.status.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.status.value == choice.0 %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-6">
+                        <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Notes" %}
+                        </label>
+                        <textarea name="{{ form.notes.name }}" id="{{ form.notes.id_for_label }}" rows="4"
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                         {% if form.notes.errors %}border-red-500{% endif %}">{{ form.notes.value|default:'' }}</textarea>
+                        {% if form.notes.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Send Welcome Email -->
+                    <div class="mb-6">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="send_welcome_email" id="send_welcome_email"
+                                   class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                            <span class="ml-2 text-sm text-gray-700">{% trans "Send welcome email to employee" %}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-end space-x-3">
+                        <a href="{% url 'employee_detail' employee.pk %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                            {% trans "Cancel" %}
+                        </a>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+                            {% trans "Create Onboarding" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Info Box -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-600"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">{% trans "What happens next?" %}</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>{% trans "Onboarding tasks will be automatically assigned based on department and position" %}</li>
+                            <li>{% trans "Relevant managers and HR staff will be notified" %}</li>
+                            <li>{% trans "The employee will receive welcome instructions if selected" %}</li>
+                            <li>{% trans "You can track and update the onboarding progress from the detail page" %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

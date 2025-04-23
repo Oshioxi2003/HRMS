@@ -16,7 +16,6 @@ import csv
 import json
 from datetime import date, datetime
 import xlwt
-import settings
 from django.conf import settings
 
 from .models import (
@@ -32,12 +31,16 @@ from accounts.decorators import hr_required, check_module_permission, admin_requ
 from notifications.services import create_notification
 from messaging.services import EmailService
 from core.export import ExportHelper
-from accounts.models import *
-# Employee views
+from accounts.models import User, SystemLog
+
+# -----------------------------------------------------------------------------
+# QUẢN LÝ NHÂN VIÊN
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('employee', 'View')
 def employee_list(request):
-    """List all employees with filtering"""
+    """Danh sách tất cả nhân viên với bộ lọc"""
     query = request.GET.get('q', '')
     department_filter = request.GET.get('department', '')
     position_filter = request.GET.get('position', '')
@@ -62,20 +65,20 @@ def employee_list(request):
     if status_filter:
         employees = employees.filter(status=status_filter)
     
-    # Order by name
+    # Sắp xếp theo tên
     employees = employees.order_by('full_name')
     
-    # Get counts for summary
+    # Tính tổng cho tóm tắt
     total_count = employees.count()
     active_count = employees.filter(status='Working').count()
     inactive_count = total_count - active_count
     
-    # Paginate results
+    # Phân trang kết quả
     paginator = Paginator(employees, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Get list of departments and positions for filter dropdowns
+    # Lấy danh sách phòng ban và vị trí cho bộ lọc dropdown
     departments = Department.objects.filter(status=1).order_by('department_name')
     positions = Position.objects.filter(status=1).order_by('position_name')
     
@@ -97,10 +100,10 @@ def employee_list(request):
 @login_required
 @check_module_permission('employee', 'View')
 def employee_detail(request, pk):
-    """View employee details"""
+    """Xem chi tiết nhân viên"""
     employee = get_object_or_404(Employee, pk=pk)
     
-    # Get related information
+    # Lấy thông tin liên quan
     try:
         location = EmployeeLocation.objects.get(employee=employee)
     except EmployeeLocation.DoesNotExist:
@@ -118,7 +121,6 @@ def employee_detail(request, pk):
         'location': location,
         'insurance': insurance,
         'certificates': certificates,
-        # Add other related information as needed
     }
     
     return render(request, 'employee/employee_detail.html', context)
@@ -126,7 +128,7 @@ def employee_detail(request, pk):
 @login_required
 @check_module_permission('employee', 'Edit')
 def employee_create(request):
-    """Create a new employee"""
+    """Tạo nhân viên mới"""
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
         location_form = EmployeeLocationForm(request.POST)
@@ -134,22 +136,22 @@ def employee_create(request):
         if form.is_valid() and location_form.is_valid():
             employee = form.save(commit=False)
             
-            # Auto-approve for Admin, HR, and Manager roles
+            # Tự động chấp thuận cho Admin, HR và Manager
             if hasattr(employee, 'user') and employee.user and employee.user.role in ['Admin', 'HR', 'Manager']:
                 employee.approval_status = 'Approved'
                 employee.approval_date = timezone.now()
             
             employee.save()
             
-            # Save location information
+            # Lưu thông tin vị trí
             location = location_form.save(commit=False)
             location.employee = employee
             location.save()
             
-            # Process document uploads
+            # Xử lý tải lên tài liệu
             process_document_uploads(request, employee)
             
-            messages.success(request, _('Tạo nhân viên thành công.'))
+            messages.success(request, 'Tạo nhân viên thành công.')
             return redirect('employee_detail', pk=employee.pk)
     else:
         form = EmployeeForm()
@@ -159,54 +161,53 @@ def employee_create(request):
         'form': form,
         'location_form': location_form,
         'is_create': True,
-        'title': _('Create New Employee')
+        'title': 'Tạo mới nhân viên'
     }
     
     return render(request, 'employee/employee_form.html', context)
 
 def process_document_uploads(request, employee):
-    """Process document uploads for an employee"""
+    """Xử lý tải lên tài liệu cho nhân viên"""
     document_fields = {
-        'id_card_front': 'ID Card Front',
-        'id_card_back': 'ID Card Back',
-        'diploma': 'Diploma/Degree',
-        'other_documents': 'Other Document'
+        'id_card_front': 'Mặt trước CMND/CCCD',
+        'id_card_back': 'Mặt sau CMND/CCCD',
+        'diploma': 'Bằng cấp/Chứng chỉ',
+        'other_documents': 'Tài liệu khác'
     }
     
     for field_name, doc_type in document_fields.items():
         if field_name in request.FILES:
             uploaded_file = request.FILES[field_name]
             
-            # Create document record
+            # Tạo bản ghi tài liệu
             document = EmployeeDocument(
                 employee=employee,
                 document_type=field_name,
                 file=uploaded_file,
                 file_name=uploaded_file.name,
                 file_type=uploaded_file.content_type,
-                file_size=uploaded_file.size // 1024  # Convert bytes to KB
+                file_size=uploaded_file.size // 1024  # Chuyển đổi byte sang KB
             )
             document.save()
             
-            # Log the document upload
+            # Ghi log việc tải lên tài liệu
             if hasattr(request, 'user') and request.user.is_authenticated:
-                from accounts.models import SystemLog
                 SystemLog.objects.create(
                     user=request.user,
-                    action="Document Upload",
+                    action="Tải lên tài liệu",
                     object_type="EmployeeDocument",
                     object_id=document.document_id,
-                    details=f"Uploaded {doc_type} for {employee.full_name}"
+                    details=f"Đã tải lên {doc_type} cho {employee.full_name}"
                 )
 
 @login_required
 @admin_required
 def employee_approve(request, pk):
-    """Approve or reject a pending employee"""
+    """Phê duyệt hoặc từ chối một nhân viên đang chờ duyệt"""
     employee = get_object_or_404(Employee, pk=pk)
     
     if employee.approval_status != 'Pending':
-        messages.warning(request, _('Nhân viên này không trong trạng thái chờ phê duyệt.'))
+        messages.warning(request, 'Nhân viên này không trong trạng thái chờ phê duyệt.')
         return redirect('employee_detail', pk=pk)
     
     if request.method == 'POST':
@@ -214,70 +215,70 @@ def employee_approve(request, pk):
         notes = request.POST.get('notes', '')
         
         if approval_action == 'approve':
-            # Update employee status
+            # Cập nhật trạng thái nhân viên
             employee.approval_status = 'Approved'
             employee.approval_date = timezone.now()
             employee.approval_notes = notes
             employee.save()
             
-            # Send approval email
+            # Gửi email thông báo phê duyệt
             send_approval_email(employee, approved=True)
             
-            # Create notification for employee if they have a user account
+            # Tạo thông báo cho nhân viên nếu họ có tài khoản người dùng
             try:
                 user = User.objects.get(email=employee.email)
                 create_notification(
                     user=user,
                     notification_type='Success',
-                    title=_('Hồ sơ nhân viên đã được phê duyệt'),
-                    message=_('Hồ sơ nhân viên của bạn đã được phê duyệt. Bạn có thể truy cập hệ thống ngay bây giờ.'),
+                    title='Hồ sơ nhân viên đã được phê duyệt',
+                    message='Hồ sơ nhân viên của bạn đã được phê duyệt. Bạn có thể truy cập hệ thống ngay bây giờ.',
                     link=reverse('employee_dashboard')
                 )
             except User.DoesNotExist:
                 pass
             
-            messages.success(request, _('Nhân viên đã được phê duyệt thành công.'))
+            messages.success(request, 'Nhân viên đã được phê duyệt thành công.')
             
         elif approval_action == 'reject':
-            # Update employee status
+            # Cập nhật trạng thái nhân viên
             employee.approval_status = 'Rejected'
             employee.approval_date = timezone.now()
             employee.approval_notes = notes
             employee.save()
             
-            # Send rejection email
+            # Gửi email từ chối
             send_approval_email(employee, approved=False)
             
-            messages.warning(request, _('Nhân viên đã bị từ chối.'))
+            messages.warning(request, 'Nhân viên đã bị từ chối.')
         
         return redirect('employee_detail', pk=pk)
     
     return render(request, 'employee/employee_approve.html', {'employee': employee})
 
 def send_approval_email(employee, approved=True):
-    """Send employee approval/rejection email"""
+    """Gửi email phê duyệt/từ chối nhân viên"""
     if not employee.email:
         return
     
     if approved:
-        subject = _('Hồ sơ nhân viên của bạn đã được phê duyệt')
+        subject = 'Hồ sơ nhân viên của bạn đã được phê duyệt'
         template = 'employee_approved'
     else:
-        subject = _('Hồ sơ nhân viên của bạn cần được chỉnh sửa')
+        subject = 'Hồ sơ nhân viên của bạn cần được chỉnh sửa'
         template = 'employee_rejected'
     
-    # Use messaging service if available
+    # Sử dụng dịch vụ gửi tin nhắn nếu có
     try:
-        # Get current year for footer
+        # Lấy năm hiện tại cho footer
         current_year = timezone.now().year
         
-        # Using template-based email service
+        # Sử dụng dịch vụ email dựa trên mẫu
         EmailService.send_email_by_template(
             template_code=template,
             to_email=employee.email,
             context_dict={
                 'name': employee.full_name,
-                'notes': employee.approval_notes or _('Không có ghi chú bổ sung'),
+                'notes': employee.approval_notes or 'Không có ghi chú bổ sung',
                 'approval_date': employee.approval_date,
                 'login_url': settings.SITE_URL + reverse('login'),
                 'company_name': settings.COMPANY_NAME,
@@ -285,20 +286,20 @@ def send_approval_email(employee, approved=True):
             }
         )
     except Exception as e:
-        # Fallback to simple email
+        # Sử dụng email đơn giản dự phòng
         from django.core.mail import send_mail
         
-        message = _("Kính gửi {},\n\n").format(employee.full_name)
+        message = f"Kính gửi {employee.full_name},\n\n"
         
         if approved:
-            message += _("Chúng tôi vui mừng thông báo rằng hồ sơ nhân viên của bạn đã được phê duyệt. Bạn có thể đăng nhập vào hệ thống bằng thông tin đăng nhập của mình.\n\n")
+            message += "Chúng tôi vui mừng thông báo rằng hồ sơ nhân viên của bạn đã được phê duyệt. Bạn có thể đăng nhập vào hệ thống bằng thông tin đăng nhập của mình.\n\n"
         else:
-            message += _("Chúng tôi rất tiếc phải thông báo rằng hồ sơ nhân viên của bạn chưa được phê duyệt tại thời điểm này. Vui lòng xem bên dưới để biết thêm thông tin.\n\n")
+            message += "Chúng tôi rất tiếc phải thông báo rằng hồ sơ nhân viên của bạn chưa được phê duyệt tại thời điểm này. Vui lòng xem bên dưới để biết thêm thông tin.\n\n"
         
         if employee.approval_notes:
-            message += _("Ghi chú: {}\n\n").format(employee.approval_notes)
+            message += f"Ghi chú: {employee.approval_notes}\n\n"
         
-        message += _("Trân trọng,\nPhòng Nhân sự")
+        message += "Trân trọng,\nPhòng Nhân sự"
         
         send_mail(
             subject,
@@ -311,10 +312,10 @@ def send_approval_email(employee, approved=True):
 @login_required
 @check_module_permission('employee', 'Edit')
 def employee_update(request, pk):
-    """Update an existing employee"""
+    """Cập nhật thông tin nhân viên"""
     employee = get_object_or_404(Employee, pk=pk)
     
-    # Get location if exists or prepare for new one
+    # Lấy vị trí nếu tồn tại hoặc chuẩn bị tạo mới
     try:
         location = EmployeeLocation.objects.get(employee=employee)
     except EmployeeLocation.DoesNotExist:
@@ -325,10 +326,10 @@ def employee_update(request, pk):
         location_form = EmployeeLocationForm(request.POST, instance=location)
         
         if form.is_valid() and location_form.is_valid():
-            # Save employee
+            # Lưu nhân viên
             employee = form.save()
             
-            # Save or create location
+            # Lưu hoặc tạo vị trí
             if location:
                 location_form.save()
             else:
@@ -336,7 +337,7 @@ def employee_update(request, pk):
                 location.employee = employee
                 location.save()
             
-            messages.success(request, _('Cập nhật nhân viên thành công.'))
+            messages.success(request, 'Cập nhật nhân viên thành công.')
             return redirect('employee_detail', pk=employee.pk)
     else:
         form = EmployeeForm(instance=employee)
@@ -347,7 +348,7 @@ def employee_update(request, pk):
         'location_form': location_form,
         'is_create': False,
         'employee': employee,
-        'title': _('Update Employee')
+        'title': 'Cập nhật nhân viên'
     }
     
     return render(request, 'employee/employee_form.html', context)
@@ -355,22 +356,64 @@ def employee_update(request, pk):
 @login_required
 @check_module_permission('employee', 'Delete')
 def employee_delete(request, pk):
-    """Delete an employee"""
+    """Xóa nhân viên"""
     employee = get_object_or_404(Employee, pk=pk)
     
     if request.method == 'POST':
         employee_name = employee.full_name
         employee.delete()
-        messages.success(request, _(f'Đã xóa nhân viên "{employee_name}" thành công.'))
+        messages.success(request, f'Đã xóa nhân viên "{employee_name}" thành công.')
         return redirect('employee_list')
     
     return render(request, 'employee/employee_confirm_delete.html', {'employee': employee})
 
-# Location management
+@login_required
+@admin_required
+def pending_approval_list(request):
+    """Danh sách tất cả nhân viên có trạng thái chờ phê duyệt"""
+    employees = Employee.objects.filter(approval_status='Pending').order_by('-created_date')
+    
+    # Chức năng tìm kiếm
+    query = request.GET.get('q', '')
+    if query:
+        employees = employees.filter(
+            Q(full_name__icontains=query) |
+            Q(email__icontains=query) |
+            Q(id_card__icontains=query) |
+            Q(phone__icontains=query)
+        )
+    
+    # Bộ lọc phòng ban
+    department_filter = request.GET.get('department', '')
+    if department_filter:
+        employees = employees.filter(department_id=department_filter)
+    
+    # Phân trang kết quả
+    paginator = Paginator(employees, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Lấy danh sách phòng ban cho bộ lọc dropdown
+    departments = Department.objects.filter(status=1).order_by('department_name')
+    
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+        'departments': departments,
+        'department_filter': department_filter,
+        'total_count': employees.count(),
+    }
+    
+    return render(request, 'employee/pending_approval_list.html', context)
+
+# -----------------------------------------------------------------------------
+# QUẢN LÝ VỊ TRÍ
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('employee', 'View')
 def employee_location(request, employee_id):
-    """View employee location details"""
+    """Xem chi tiết vị trí của nhân viên"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
     try:
@@ -388,7 +431,7 @@ def employee_location(request, employee_id):
 @login_required
 @check_module_permission('employee', 'Edit')
 def employee_location_update(request, employee_id):
-    """Update employee location"""
+    """Cập nhật vị trí của nhân viên"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
     try:
@@ -407,7 +450,7 @@ def employee_location_update(request, employee_id):
                 location.employee = employee
                 location.save()
             
-            messages.success(request, _('Thông tin vị trí đã được cập nhật thành công.'))
+            messages.success(request, 'Thông tin vị trí đã được cập nhật thành công.')
             return redirect('employee_detail', pk=employee_id)
     else:
         form = EmployeeLocationForm(instance=location)
@@ -416,16 +459,19 @@ def employee_location_update(request, employee_id):
         'form': form,
         'employee': employee,
         'location': location,
-        'title': _('Update Location Information')
+        'title': 'Cập nhật thông tin vị trí'
     }
     
     return render(request, 'employee/location_form.html', context)
 
-# Insurance and tax management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ BẢO HIỂM VÀ THUẾ
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('employee', 'View')
 def insurance_tax_detail(request, employee_id):
-    """View insurance and tax details for an employee"""
+    """Xem chi tiết bảo hiểm và thuế cho nhân viên"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
     try:
@@ -443,12 +489,12 @@ def insurance_tax_detail(request, employee_id):
 @login_required
 @check_module_permission('employee', 'Edit')
 def insurance_tax_create(request, employee_id):
-    """Create insurance and tax information"""
+    """Tạo thông tin bảo hiểm và thuế"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
-    # Check if record already exists
+    # Kiểm tra nếu bản ghi đã tồn tại
     if InsuranceAndTax.objects.filter(employee=employee).exists():
-        messages.warning(request, _('Thông tin bảo hiểm và thuế cho nhân viên này đã tồn tại'))
+        messages.warning(request, 'Thông tin bảo hiểm và thuế cho nhân viên này đã tồn tại')
         return redirect('insurance_tax_update', employee_id=employee_id)
     
     if request.method == 'POST':
@@ -459,7 +505,7 @@ def insurance_tax_create(request, employee_id):
             insurance.employee = employee
             insurance.save()
             
-            messages.success(request, _('Đã tạo thông tin bảo hiểm và thuế thành công.'))
+            messages.success(request, 'Đã tạo thông tin bảo hiểm và thuế thành công.')
             return redirect('employee_detail', pk=employee_id)
     else:
         form = InsuranceAndTaxForm()
@@ -468,7 +514,7 @@ def insurance_tax_create(request, employee_id):
         'form': form,
         'employee': employee,
         'is_create': True,
-        'title': _('Create Insurance & Tax Information')
+        'title': 'Tạo thông tin bảo hiểm & thuế'
     }
     
     return render(request, 'employee/insurance_tax_form.html', context)
@@ -476,7 +522,7 @@ def insurance_tax_create(request, employee_id):
 @login_required
 @check_module_permission('employee', 'Edit')
 def insurance_tax_update(request, employee_id):
-    """Update insurance and tax information"""
+    """Cập nhật thông tin bảo hiểm và thuế"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
     try:
@@ -489,7 +535,7 @@ def insurance_tax_update(request, employee_id):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật thông tin bảo hiểm và thuế thành công.'))
+            messages.success(request, 'Đã cập nhật thông tin bảo hiểm và thuế thành công.')
             return redirect('employee_detail', pk=employee_id)
     else:
         form = InsuranceAndTaxForm(instance=insurance)
@@ -498,16 +544,19 @@ def insurance_tax_update(request, employee_id):
         'form': form,
         'employee': employee,
         'is_create': False,
-        'title': _('Update Insurance & Tax Information')
+        'title': 'Cập nhật thông tin bảo hiểm & thuế'
     }
     
     return render(request, 'employee/insurance_tax_form.html', context)
 
-# Certificate management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ CHỨNG CHỈ
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('employee', 'View')
 def employee_certificates(request, employee_id):
-    """View all certificates for an employee"""
+    """Xem tất cả chứng chỉ của nhân viên"""
     employee = get_object_or_404(Employee, pk=employee_id)
     certificates = EmployeeCertificate.objects.filter(employee=employee).order_by('-issued_date')
     
@@ -521,7 +570,7 @@ def employee_certificates(request, employee_id):
 @login_required
 @check_module_permission('employee', 'Edit')
 def add_certificate(request, employee_id):
-    """Add a new certificate for an employee"""
+    """Thêm chứng chỉ mới cho nhân viên"""
     employee = get_object_or_404(Employee, pk=employee_id)
     
     if request.method == 'POST':
@@ -531,7 +580,7 @@ def add_certificate(request, employee_id):
             certificate = form.save(commit=False)
             certificate.employee = employee
             
-            # Auto-determine status based on expiry date
+            # Tự động xác định trạng thái dựa trên ngày hết hạn
             if certificate.expiry_date:
                 if certificate.expiry_date < date.today():
                     certificate.status = 'Expired'
@@ -539,7 +588,7 @@ def add_certificate(request, employee_id):
                     certificate.status = 'Valid'
             
             certificate.save()
-            messages.success(request, _('Đã thêm chứng chỉ thành công.'))
+            messages.success(request, 'Đã thêm chứng chỉ thành công.')
             return redirect('employee_certificates', employee_id=employee_id)
     else:
         form = EmployeeCertificateForm()
@@ -547,7 +596,7 @@ def add_certificate(request, employee_id):
     context = {
         'form': form,
         'employee': employee,
-        'title': _('Add Certificate')
+        'title': 'Thêm chứng chỉ'
     }
     
     return render(request, 'employee/certificate_form.html', context)
@@ -555,7 +604,7 @@ def add_certificate(request, employee_id):
 @login_required
 @check_module_permission('employee', 'Edit')
 def edit_certificate(request, certificate_id):
-    """Edit an existing certificate"""
+    """Chỉnh sửa chứng chỉ hiện có"""
     certificate = get_object_or_404(EmployeeCertificate, pk=certificate_id)
     employee = certificate.employee
     
@@ -565,7 +614,7 @@ def edit_certificate(request, certificate_id):
         if form.is_valid():
             certificate = form.save(commit=False)
             
-            # Auto-determine status based on expiry date if not revoked
+            # Tự động xác định trạng thái dựa trên ngày hết hạn nếu không bị thu hồi
             if certificate.status != 'Revoked' and certificate.expiry_date:
                 if certificate.expiry_date < date.today():
                     certificate.status = 'Expired'
@@ -573,7 +622,7 @@ def edit_certificate(request, certificate_id):
                     certificate.status = 'Valid'
             
             certificate.save()
-            messages.success(request, _('Đã cập nhật chứng chỉ thành công.'))
+            messages.success(request, 'Đã cập nhật chứng chỉ thành công.')
             return redirect('employee_certificates', employee_id=employee.pk)
     else:
         form = EmployeeCertificateForm(instance=certificate)
@@ -582,7 +631,7 @@ def edit_certificate(request, certificate_id):
         'form': form,
         'employee': employee,
         'certificate': certificate,
-        'title': _('Edit Certificate')
+        'title': 'Chỉnh sửa chứng chỉ'
     }
     
     return render(request, 'employee/certificate_form.html', context)
@@ -590,13 +639,13 @@ def edit_certificate(request, certificate_id):
 @login_required
 @check_module_permission('employee', 'Delete')
 def delete_certificate(request, certificate_id):
-    """Delete a certificate"""
+    """Xóa chứng chỉ"""
     certificate = get_object_or_404(EmployeeCertificate, pk=certificate_id)
     employee_id = certificate.employee.pk
     
     if request.method == 'POST':
         certificate.delete()
-        messages.success(request, _('Đã xóa chứng chỉ thành công.'))
+        messages.success(request, 'Đã xóa chứng chỉ thành công.')
         return redirect('employee_certificates', employee_id=employee_id)
     
     context = {
@@ -608,9 +657,9 @@ def delete_certificate(request, certificate_id):
 
 @login_required
 def my_certificates(request):
-    """View current user's certificates"""
-    if not request.user.employee:
-        messages.error(request, _('Bạn không có hồ sơ nhân viên.'))
+    """Xem chứng chỉ của người dùng hiện tại"""
+    if not hasattr(request.user, 'employee') or not request.user.employee:
+        messages.error(request, 'Bạn không có hồ sơ nhân viên.')
         return redirect('dashboard')
     
     certificates = EmployeeCertificate.objects.filter(
@@ -621,7 +670,7 @@ def my_certificates(request):
     if status_filter:
         certificates = certificates.filter(status=status_filter)
     
-    # Check for expiring certificates
+    # Kiểm tra chứng chỉ sắp hết hạn
     today = date.today()
     for cert in certificates:
         if cert.expiry_date and cert.status == 'Valid':
@@ -639,9 +688,9 @@ def my_certificates(request):
 
 @login_required
 def add_my_certificate(request):
-    """Add a certificate for the current user"""
-    if not request.user.employee:
-        messages.error(request, _('Bạn không có hồ sơ nhân viên.'))
+    """Thêm chứng chỉ cho người dùng hiện tại"""
+    if not hasattr(request.user, 'employee') or not request.user.employee:
+        messages.error(request, 'Bạn không có hồ sơ nhân viên.')
         return redirect('dashboard')
     
     if request.method == 'POST':
@@ -651,7 +700,7 @@ def add_my_certificate(request):
             certificate = form.save(commit=False)
             certificate.employee = request.user.employee
             
-            # Auto-determine status based on expiry date
+            # Tự động xác định trạng thái dựa trên ngày hết hạn
             if certificate.expiry_date:
                 if certificate.expiry_date < date.today():
                     certificate.status = 'Expired'
@@ -660,32 +709,35 @@ def add_my_certificate(request):
             
             certificate.save()
             
-            # Notify HR about new certificate
+            # Thông báo cho HR về chứng chỉ mới
             create_notification(
                 role='HR',
                 notification_type='Certificate',
-                title=_('Đã thêm chứng chỉ mới'),
+                title='Đã thêm chứng chỉ mới',
                 message=f"{request.user.employee.full_name} đã thêm một chứng chỉ mới: {certificate.certificate_name}",
                 link=reverse('edit_certificate', args=[certificate.certificate_id])
             )
             
-            messages.success(request, _('Đã thêm chứng chỉ thành công.'))
+            messages.success(request, 'Đã thêm chứng chỉ thành công.')
             return redirect('my_certificates')
     else:
         form = EmployeeCertificateForm()
     
     context = {
         'form': form,
-        'title': _('Add My Certificate')
+        'title': 'Thêm chứng chỉ của tôi'
     }
     
     return render(request, 'employee/certificate_form.html', context)
 
-# Certificate type management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ LOẠI CHỨNG CHỈ
+# -----------------------------------------------------------------------------
+
 @login_required
 @hr_required
 def certificate_type_list(request):
-    """List all certificate types"""
+    """Danh sách tất cả loại chứng chỉ"""
     certificate_types = CertificateType.objects.all().order_by('type_name')
     
     context = {
@@ -697,20 +749,20 @@ def certificate_type_list(request):
 @login_required
 @hr_required
 def certificate_type_create(request):
-    """Create a new certificate type"""
+    """Tạo loại chứng chỉ mới"""
     if request.method == 'POST':
         form = CertificateTypeForm(request.POST)
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã tạo loại chứng chỉ thành công.'))
+            messages.success(request, 'Đã tạo loại chứng chỉ thành công.')
             return redirect('certificate_type_list')
     else:
         form = CertificateTypeForm()
     
     context = {
         'form': form,
-        'title': _('Create Certificate Type')
+        'title': 'Tạo loại chứng chỉ'
     }
     
     return render(request, 'employee/certificate_type_form.html', context)
@@ -718,7 +770,7 @@ def certificate_type_create(request):
 @login_required
 @hr_required
 def certificate_type_update(request, pk):
-    """Update an existing certificate type"""
+    """Cập nhật loại chứng chỉ hiện có"""
     certificate_type = get_object_or_404(CertificateType, pk=pk)
     
     if request.method == 'POST':
@@ -726,7 +778,7 @@ def certificate_type_update(request, pk):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật loại chứng chỉ thành công.'))
+            messages.success(request, 'Đã cập nhật loại chứng chỉ thành công.')
             return redirect('certificate_type_list')
     else:
         form = CertificateTypeForm(instance=certificate_type)
@@ -734,7 +786,7 @@ def certificate_type_update(request, pk):
     context = {
         'form': form,
         'certificate_type': certificate_type,
-        'title': _('Update Certificate Type')
+        'title': 'Cập nhật loại chứng chỉ'
     }
     
     return render(request, 'employee/certificate_type_form.html', context)
@@ -742,17 +794,17 @@ def certificate_type_update(request, pk):
 @login_required
 @hr_required
 def certificate_type_delete(request, pk):
-    """Delete a certificate type"""
+    """Xóa loại chứng chỉ"""
     certificate_type = get_object_or_404(CertificateType, pk=pk)
     
-    # Check if certificate type is in use
+    # Kiểm tra xem loại chứng chỉ có đang được sử dụng không
     if EmployeeCertificate.objects.filter(type=certificate_type).exists():
-        messages.error(request, _('Không thể xóa loại chứng chỉ đang được sử dụng.'))
+        messages.error(request, 'Không thể xóa loại chứng chỉ đang được sử dụng.')
         return redirect('certificate_type_list')
     
     if request.method == 'POST':
         certificate_type.delete()
-        messages.success(request, _('Đã xóa loại chứng chỉ thành công.'))
+        messages.success(request, 'Đã xóa loại chứng chỉ thành công.')
         return redirect('certificate_type_list')
     
     context = {
@@ -761,14 +813,17 @@ def certificate_type_delete(request, pk):
     
     return render(request, 'employee/certificate_type_confirm_delete.html', context)
 
-# Department management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ PHÒNG BAN
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('organization', 'View')
 def department_list(request):
-    """List all departments"""
+    """Danh sách tất cả phòng ban"""
     departments = Department.objects.all().order_by('department_name')
     
-    # Get employee count for each department
+    # Lấy số lượng nhân viên cho mỗi phòng ban
     for dept in departments:
         dept.employee_count = Employee.objects.filter(department=dept, status='Working').count()
     
@@ -776,19 +831,19 @@ def department_list(request):
         'departments': departments
     }
     
-    return render(request, 'employee/department_list.html', context)
+    return render(request, 'employee/department/department_list.html', context)
 
 @login_required
 @check_module_permission('organization', 'View')
 def department_detail(request, pk):
-    """View department details and employees"""
+    """Xem chi tiết phòng ban và nhân viên"""
     department = get_object_or_404(Department, pk=pk)
     employees = Employee.objects.filter(department=department).order_by('full_name')
     
-    # Group employees by position
+    # Nhóm nhân viên theo vị trí
     positions = {}
     for employee in employees:
-        position_name = employee.position.position_name if employee.position else _('No Position')
+        position_name = employee.position.position_name if employee.position else 'Không có vị trí'
         if position_name not in positions:
             positions[position_name] = []
         positions[position_name].append(employee)
@@ -801,33 +856,33 @@ def department_detail(request, pk):
         'active_count': employees.filter(status='Working').count()
     }
     
-    return render(request, 'employee/department_detail.html', context)
+    return render(request, 'employee/department/department_detail.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def department_create(request):
-    """Create a new department"""
+    """Tạo phòng ban mới"""
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
         
         if form.is_valid():
             department = form.save()
-            messages.success(request, _('Đã tạo phòng ban thành công.'))
+            messages.success(request, 'Đã tạo phòng ban thành công.')
             return redirect('department_list')
     else:
         form = DepartmentForm()
     
     context = {
         'form': form,
-        'title': _('Create Department')
+        'title': 'Tạo phòng ban'
     }
     
-    return render(request, 'employee/department_form.html', context)
+    return render(request, 'employee/department/department_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def department_update(request, pk):
-    """Update an existing department"""
+    """Cập nhật phòng ban hiện có"""
     department = get_object_or_404(Department, pk=pk)
     
     if request.method == 'POST':
@@ -835,7 +890,7 @@ def department_update(request, pk):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật phòng ban thành công.'))
+            messages.success(request, 'Đã cập nhật phòng ban thành công.')
             return redirect('department_list')
     else:
         form = DepartmentForm(instance=department)
@@ -843,41 +898,44 @@ def department_update(request, pk):
     context = {
         'form': form,
         'department': department,
-        'title': _('Update Department')
+        'title': 'Cập nhật phòng ban'
     }
     
-    return render(request, 'employee/department_form.html', context)
+    return render(request, 'employee/department/department_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Delete')
 def department_delete(request, pk):
-    """Delete a department"""
+    """Xóa phòng ban"""
     department = get_object_or_404(Department, pk=pk)
     
-    # Check if department has employees
+    # Kiểm tra xem phòng ban có nhân viên không
     if Employee.objects.filter(department=department).exists():
-        messages.error(request, _('Không thể xóa phòng ban có nhân viên.'))
+        messages.error(request, 'Không thể xóa phòng ban có nhân viên.')
         return redirect('department_list')
     
     if request.method == 'POST':
         department.delete()
-        messages.success(request, _('Đã xóa phòng ban thành công.'))
+        messages.success(request, 'Đã xóa phòng ban thành công.')
         return redirect('department_list')
     
     context = {
         'department': department
     }
     
-    return render(request, 'employee/department_confirm_delete.html', context)
+    return render(request, 'employee/department/department_confirm_delete.html', context)
 
-# Position management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ VỊ TRÍ CÔNG VIỆC
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('organization', 'View')
 def position_list(request):
-    """List all positions"""
+    """Danh sách tất cả vị trí công việc"""
     positions = Position.objects.all().order_by('position_name')
     
-    # Get employee count for each position
+    # Lấy số lượng nhân viên cho mỗi vị trí
     for pos in positions:
         pos.employee_count = Employee.objects.filter(position=pos, status='Working').count()
     
@@ -885,33 +943,33 @@ def position_list(request):
         'positions': positions
     }
     
-    return render(request, 'employee/position_list.html', context)
+    return render(request, 'employee/position/position_list.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def position_create(request):
-    """Create a new position"""
+    """Tạo vị trí công việc mới"""
     if request.method == 'POST':
         form = PositionForm(request.POST)
         
         if form.is_valid():
             position = form.save()
-            messages.success(request, _('Đã tạo vị trí công việc thành công.'))
+            messages.success(request, 'Đã tạo vị trí công việc thành công.')
             return redirect('position_list')
     else:
         form = PositionForm()
     
     context = {
         'form': form,
-        'title': _('Create Position')
+        'title': 'Tạo vị trí công việc'
     }
     
-    return render(request, 'employee/position_form.html', context)
+    return render(request, 'employee/position/position_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def position_update(request, pk):
-    """Update an existing position"""
+    """Cập nhật vị trí công việc hiện có"""
     position = get_object_or_404(Position, pk=pk)
     
     if request.method == 'POST':
@@ -919,7 +977,7 @@ def position_update(request, pk):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật vị trí công việc thành công.'))
+            messages.success(request, 'Đã cập nhật vị trí công việc thành công.')
             return redirect('position_list')
     else:
         form = PositionForm(instance=position)
@@ -927,41 +985,44 @@ def position_update(request, pk):
     context = {
         'form': form,
         'position': position,
-        'title': _('Update Position')
+        'title': 'Cập nhật vị trí công việc'
     }
     
-    return render(request, 'employee/position_form.html', context)
+    return render(request, 'employee/position/position_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Delete')
 def position_delete(request, pk):
-    """Delete a position"""
+    """Xóa vị trí công việc"""
     position = get_object_or_404(Position, pk=pk)
     
-    # Check if position has employees
+    # Kiểm tra xem vị trí có nhân viên không
     if Employee.objects.filter(position=position).exists():
-        messages.error(request, _('Không thể xóa vị trí công việc có nhân viên.'))
+        messages.error(request, 'Không thể xóa vị trí công việc có nhân viên.')
         return redirect('position_list')
     
     if request.method == 'POST':
         position.delete()
-        messages.success(request, _('Đã xóa vị trí công việc thành công.'))
+        messages.success(request, 'Đã xóa vị trí công việc thành công.')
         return redirect('position_list')
     
     context = {
         'position': position
     }
     
-    return render(request, 'employee/position_confirm_delete.html', context)
+    return render(request, 'employee/position/position_confirm_delete.html', context)
 
-# Education level management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ TRÌNH ĐỘ HỌC VẤN
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('organization', 'View')
 def education_list(request):
-    """List all education levels"""
+    """Danh sách tất cả trình độ học vấn"""
     education_levels = EducationLevel.objects.all().order_by('education_name')
     
-    # Get employee count for each education level
+    # Lấy số lượng nhân viên cho mỗi trình độ học vấn
     for edu in education_levels:
         edu.employee_count = Employee.objects.filter(education=edu, status='Working').count()
     
@@ -969,33 +1030,33 @@ def education_list(request):
         'education_levels': education_levels
     }
     
-    return render(request, 'employee/education_list.html', context)
+    return render(request, 'employee/education/education_list.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def education_create(request):
-    """Create a new education level"""
+    """Tạo trình độ học vấn mới"""
     if request.method == 'POST':
         form = EducationLevelForm(request.POST)
         
         if form.is_valid():
             education = form.save()
-            messages.success(request, _('Đã tạo cấp độ học vấn thành công.'))
+            messages.success(request, 'Đã tạo trình độ học vấn thành công.')
             return redirect('education_list')
     else:
         form = EducationLevelForm()
     
     context = {
         'form': form,
-        'title': _('Create Education Level')
+        'title': 'Tạo trình độ học vấn'
     }
     
-    return render(request, 'employee/education_form.html', context)
+    return render(request, 'employee/education/education_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def education_update(request, pk):
-    """Update an existing education level"""
+    """Cập nhật trình độ học vấn hiện có"""
     education = get_object_or_404(EducationLevel, pk=pk)
     
     if request.method == 'POST':
@@ -1003,7 +1064,7 @@ def education_update(request, pk):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật cấp độ học vấn thành công.'))
+            messages.success(request, 'Đã cập nhật trình độ học vấn thành công.')
             return redirect('education_list')
     else:
         form = EducationLevelForm(instance=education)
@@ -1011,41 +1072,44 @@ def education_update(request, pk):
     context = {
         'form': form,
         'education': education,
-        'title': _('Update Education Level')
+        'title': 'Cập nhật trình độ học vấn'
     }
     
-    return render(request, 'employee/education_form.html', context)
+    return render(request, 'employee/education/education_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Delete')
 def education_delete(request, pk):
-    """Delete an education level"""
+    """Xóa trình độ học vấn"""
     education = get_object_or_404(EducationLevel, pk=pk)
     
-    # Check if education level has employees
+    # Kiểm tra xem trình độ học vấn có nhân viên không
     if Employee.objects.filter(education=education).exists():
-        messages.error(request, _('Không thể xóa cấp độ học vấn có nhân viên.'))
+        messages.error(request, 'Không thể xóa trình độ học vấn có nhân viên.')
         return redirect('education_list')
     
     if request.method == 'POST':
         education.delete()
-        messages.success(request, _('Đã xóa cấp độ học vấn thành công.'))
+        messages.success(request, 'Đã xóa trình độ học vấn thành công.')
         return redirect('education_list')
     
     context = {
         'education': education
     }
     
-    return render(request, 'employee/education_confirm_delete.html', context)
+    return render(request, 'employee/education/education_confirm_delete.html', context)
 
-# Academic title management
+# -----------------------------------------------------------------------------
+# QUẢN LÝ HỌC HÀM HỌC VỊ
+# -----------------------------------------------------------------------------
+
 @login_required
 @check_module_permission('organization', 'View')
 def title_list(request):
-    """List all academic titles"""
+    """Danh sách tất cả học hàm học vị"""
     titles = AcademicTitle.objects.all().order_by('title_name')
     
-    # Get employee count for each title
+    # Lấy số lượng nhân viên cho mỗi học hàm học vị
     for title in titles:
         title.employee_count = Employee.objects.filter(title=title, status='Working').count()
     
@@ -1053,33 +1117,33 @@ def title_list(request):
         'titles': titles
     }
     
-    return render(request, 'employee/title_list.html', context)
+    return render(request, 'employee/title/title_list.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def title_create(request):
-    """Create a new academic title"""
+    """Tạo học hàm học vị mới"""
     if request.method == 'POST':
         form = AcademicTitleForm(request.POST)
         
         if form.is_valid():
             title = form.save()
-            messages.success(request, _('Đã tạo học hàm học vị thành công.'))
+            messages.success(request, 'Đã tạo học hàm học vị thành công.')
             return redirect('title_list')
     else:
         form = AcademicTitleForm()
     
     context = {
         'form': form,
-        'title_text': _('Create Academic Title')
+        'title_text': 'Tạo học hàm học vị'
     }
     
-    return render(request, 'employee/title_form.html', context)
+    return render(request, 'employee/title/title_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Edit')
 def title_update(request, pk):
-    """Update an existing academic title"""
+    """Cập nhật học hàm học vị hiện có"""
     title = get_object_or_404(AcademicTitle, pk=pk)
     
     if request.method == 'POST':
@@ -1087,7 +1151,7 @@ def title_update(request, pk):
         
         if form.is_valid():
             form.save()
-            messages.success(request, _('Đã cập nhật học hàm học vị thành công.'))
+            messages.success(request, 'Đã cập nhật học hàm học vị thành công.')
             return redirect('title_list')
     else:
         form = AcademicTitleForm(instance=title)
@@ -1095,41 +1159,44 @@ def title_update(request, pk):
     context = {
         'form': form,
         'academic_title': title,
-        'title_text': _('Update Academic Title')
+        'title_text': 'Cập nhật học hàm học vị'
     }
     
-    return render(request, 'employee/title_form.html', context)
+    return render(request, 'employee/title/title_form.html', context)
 
 @login_required
 @check_module_permission('organization', 'Delete')
 def title_delete(request, pk):
-    """Delete an academic title"""
+    """Xóa học hàm học vị"""
     title = get_object_or_404(AcademicTitle, pk=pk)
     
-    # Check if title has employees
+    # Kiểm tra xem học hàm học vị có nhân viên không
     if Employee.objects.filter(title=title).exists():
-        messages.error(request, _('Không thể xóa học hàm học vị có nhân viên.'))
+        messages.error(request, 'Không thể xóa học hàm học vị có nhân viên.')
         return redirect('title_list')
     
     if request.method == 'POST':
         title.delete()
-        messages.success(request, _('Đã xóa học hàm học vị thành công.'))
+        messages.success(request, 'Đã xóa học hàm học vị thành công.')
         return redirect('title_list')
     
     context = {
         'academic_title': title
     }
     
-    return render(request, 'employee/title_confirm_delete.html', context)
+    return render(request, 'employee/title/title_confirm_delete.html', context)
 
-# Import/Export functionality
+# -----------------------------------------------------------------------------
+# NHẬP/XUẤT DỮ LIỆU
+# -----------------------------------------------------------------------------
+
 @login_required
 @hr_required
 def export_employees(request):
-    """Export employees as CSV or Excel"""
+    """Xuất nhân viên dưới dạng CSV hoặc Excel"""
     format_type = request.GET.get('format', 'csv')
     
-    # Apply filters from request if any
+    # Áp dụng các bộ lọc từ request nếu có
     query = request.GET.get('q', '')
     department_filter = request.GET.get('department', '')
     status_filter = request.GET.get('status', '')
@@ -1150,23 +1217,23 @@ def export_employees(request):
     if status_filter:
         employees = employees.filter(status=status_filter)
     
-    # Define fields to export
+    # Xác định các trường để xuất
     fields = [
-        {'field': 'employee_id', 'display': _('ID')},
-        {'field': 'full_name', 'display': _('Full Name')},
-        {'field': 'email', 'display': _('Email')},
-        {'field': 'phone', 'display': _('Phone')},
-        {'field': 'date_of_birth', 'display': _('Date of Birth')},
-        {'field': 'gender', 'display': _('Gender')},
-        {'field': 'department.department_name', 'display': _('Department')},
-        {'field': 'position.position_name', 'display': _('Position')},
-        {'field': 'hire_date', 'display': _('Hire Date')},
-        {'field': 'id_card', 'display': _('ID Card')},
-        {'field': 'address', 'display': _('Address')},
-        {'field': 'status', 'display': _('Status')}
+        {'field': 'employee_id', 'display': 'ID'},
+        {'field': 'full_name', 'display': 'Họ tên'},
+        {'field': 'email', 'display': 'Email'},
+        {'field': 'phone', 'display': 'Điện thoại'},
+        {'field': 'date_of_birth', 'display': 'Ngày sinh'},
+        {'field': 'gender', 'display': 'Giới tính'},
+        {'field': 'department.department_name', 'display': 'Phòng ban'},
+        {'field': 'position.position_name', 'display': 'Vị trí'},
+        {'field': 'hire_date', 'display': 'Ngày tuyển dụng'},
+        {'field': 'id_card', 'display': 'CMND/CCCD'},
+        {'field': 'address', 'display': 'Địa chỉ'},
+        {'field': 'status', 'display': 'Trạng thái'}
     ]
     
-    file_name = f"employees_export_{datetime.now().strftime('%Y%m%d')}"
+    file_name = f"danh_sach_nhan_vien_{datetime.now().strftime('%Y%m%d')}"
     
     if format_type == 'excel':
         return ExportHelper.export_as_excel(employees, fields, file_name)
@@ -1176,12 +1243,12 @@ def export_employees(request):
 @login_required
 @hr_required
 def import_employees(request):
-    """Import employees from CSV"""
+    """Nhập nhân viên từ file CSV"""
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = request.FILES['csv_file']
         
         if not csv_file.name.endswith('.csv'):
-            messages.error(request, _('Vui lòng tải lên tệp CSV'))
+            messages.error(request, 'Vui lòng tải lên tệp CSV')
             return redirect('employee_list')
         
         try:
@@ -1192,89 +1259,89 @@ def import_employees(request):
             error_count = 0
             errors = []
             
-            for row_num, row in enumerate(reader, start=2):  # Start from 2 to account for header row
+            for row_num, row in enumerate(reader, start=2):  # Bắt đầu từ 2 để tính đến hàng tiêu đề
                 try:
                     email = row.get('Email', '').strip()
-                    full_name = row.get('Full Name', '').strip()
+                    full_name = row.get('Họ tên', '').strip()
                     
                     if not email or not full_name:
                         error_count += 1
                         errors.append(f"Dòng {row_num}: Thiếu trường bắt buộc (Email hoặc Họ tên)")
                         continue
                     
-                    # Check if employee already exists
+                    # Kiểm tra xem nhân viên đã tồn tại chưa
                     if Employee.objects.filter(email=email).exists():
                         employee = Employee.objects.get(email=email)
-                        # Update existing employee
+                        # Cập nhật nhân viên hiện có
                         employee.full_name = full_name
-                        employee.phone = row.get('Phone', '').strip()
+                        employee.phone = row.get('Điện thoại', '').strip()
                         
-                        # Update other fields if provided
-                        if row.get('Date of Birth'):
+                        # Cập nhật các trường khác nếu được cung cấp
+                        if row.get('Ngày sinh'):
                             try:
-                                employee.date_of_birth = datetime.strptime(row.get('Date of Birth'), '%Y-%m-%d').date()
+                                employee.date_of_birth = datetime.strptime(row.get('Ngày sinh'), '%Y-%m-%d').date()
                             except ValueError:
                                 pass
                         
-                        if row.get('Gender'):
-                            gender = row.get('Gender').strip()
-                            if gender in ['Male', 'Female', 'Other']:
+                        if row.get('Giới tính'):
+                            gender = row.get('Giới tính').strip()
+                            if gender in ['Nam', 'Nữ', 'Khác']:
                                 employee.gender = gender
                         
-                        if row.get('Department'):
-                            dept_name = row.get('Department').strip()
+                        if row.get('Phòng ban'):
+                            dept_name = row.get('Phòng ban').strip()
                             dept = Department.objects.filter(department_name=dept_name).first()
                             if dept:
                                 employee.department = dept
                         
-                        if row.get('Position'):
-                            pos_name = row.get('Position').strip()
+                        if row.get('Vị trí'):
+                            pos_name = row.get('Vị trí').strip()
                             pos = Position.objects.filter(position_name=pos_name).first()
                             if pos:
                                 employee.position = pos
                         
-                        if row.get('Hire Date'):
+                        if row.get('Ngày tuyển dụng'):
                             try:
-                                employee.hire_date = datetime.strptime(row.get('Hire Date'), '%Y-%m-%d').date()
+                                employee.hire_date = datetime.strptime(row.get('Ngày tuyển dụng'), '%Y-%m-%d').date()
                             except ValueError:
                                 pass
                         
                         employee.save()
                     else:
-                        # Create new employee
+                        # Tạo nhân viên mới
                         employee = Employee(
                             full_name=full_name,
                             email=email,
-                            phone=row.get('Phone', '').strip()
+                            phone=row.get('Điện thoại', '').strip()
                         )
                         
-                        # Set other fields if provided
-                        if row.get('Date of Birth'):
+                        # Thiết lập các trường khác nếu được cung cấp
+                        if row.get('Ngày sinh'):
                             try:
-                                employee.date_of_birth = datetime.strptime(row.get('Date of Birth'), '%Y-%m-%d').date()
+                                employee.date_of_birth = datetime.strptime(row.get('Ngày sinh'), '%Y-%m-%d').date()
                             except ValueError:
                                 pass
                         
-                        if row.get('Gender'):
-                            gender = row.get('Gender').strip()
-                            if gender in ['Male', 'Female', 'Other']:
+                        if row.get('Giới tính'):
+                            gender = row.get('Giới tính').strip()
+                            if gender in ['Nam', 'Nữ', 'Khác']:
                                 employee.gender = gender
                         
-                        if row.get('Department'):
-                            dept_name = row.get('Department').strip()
+                        if row.get('Phòng ban'):
+                            dept_name = row.get('Phòng ban').strip()
                             dept = Department.objects.filter(department_name=dept_name).first()
                             if dept:
                                 employee.department = dept
                         
-                        if row.get('Position'):
-                            pos_name = row.get('Position').strip()
+                        if row.get('Vị trí'):
+                            pos_name = row.get('Vị trí').strip()
                             pos = Position.objects.filter(position_name=pos_name).first()
                             if pos:
                                 employee.position = pos
                         
-                        if row.get('Hire Date'):
+                        if row.get('Ngày tuyển dụng'):
                             try:
-                                employee.hire_date = datetime.strptime(row.get('Hire Date'), '%Y-%m-%d').date()
+                                employee.hire_date = datetime.strptime(row.get('Ngày tuyển dụng'), '%Y-%m-%d').date()
                             except ValueError:
                                 pass
                         
@@ -1286,9 +1353,9 @@ def import_employees(request):
                     errors.append(f"Dòng {row_num}: {str(e)}")
             
             if error_count:
-                messages.warning(request, _(f'Đã nhập {success_count} nhân viên với {error_count} lỗi.'))
+                messages.warning(request, f'Đã nhập {success_count} nhân viên với {error_count} lỗi.')
             else:
-                messages.success(request, _(f'Đã nhập thành công {success_count} nhân viên.'))
+                messages.success(request, f'Đã nhập thành công {success_count} nhân viên.')
             
             if errors:
                 request.session['import_errors'] = errors
@@ -1297,12 +1364,12 @@ def import_employees(request):
             return redirect('employee_list')
             
         except Exception as e:
-            messages.error(request, _(f'Lỗi xử lý tệp CSV: {str(e)}'))
+            messages.error(request, f'Lỗi xử lý tệp CSV: {str(e)}')
     
-    # Get sample CSV content
-    sample_csv = "Full Name,Email,Phone,Date of Birth,Gender,Department,Position,Hire Date\n"
-    sample_csv += "John Doe,john.doe@example.com,1234567890,1990-01-01,Male,IT,Developer,2020-01-15\n"
-    sample_csv += "Jane Smith,jane.smith@example.com,9876543210,1992-05-20,Female,HR,Manager,2019-11-10"
+    # Lấy nội dung CSV mẫu
+    sample_csv = "Họ tên,Email,Điện thoại,Ngày sinh,Giới tính,Phòng ban,Vị trí,Ngày tuyển dụng\n"
+    sample_csv += "Nguyễn Văn A,nguyenvana@example.com,1234567890,1990-01-01,Nam,CNTT,Lập trình viên,2020-01-15\n"
+    sample_csv += "Lê Thị B,lethib@example.com,9876543210,1992-05-20,Nữ,Nhân sự,Quản lý,2019-11-10"
     
     context = {
         'sample_csv': sample_csv
@@ -1313,13 +1380,13 @@ def import_employees(request):
 @login_required
 @hr_required
 def import_errors(request):
-    """Display errors from import process"""
+    """Hiển thị lỗi từ quá trình nhập dữ liệu"""
     errors = request.session.get('import_errors', [])
     
     if not errors:
         return redirect('employee_list')
     
-    # Clear the session
+    # Xóa khỏi session
     if 'import_errors' in request.session:
         del request.session['import_errors']
     
@@ -1328,42 +1395,3 @@ def import_errors(request):
     }
     
     return render(request, 'employee/import_errors.html', context)
-
-@login_required
-@admin_required
-def pending_approval_list(request):
-    """List all employees with pending approval status"""
-    employees = Employee.objects.filter(approval_status='Pending').order_by('-created_date')
-    
-    # Search functionality
-    query = request.GET.get('q', '')
-    if query:
-        employees = employees.filter(
-            Q(full_name__icontains=query) |
-            Q(email__icontains=query) |
-            Q(id_card__icontains=query) |
-            Q(phone__icontains=query)
-        )
-    
-    # Department filter
-    department_filter = request.GET.get('department', '')
-    if department_filter:
-        employees = employees.filter(department_id=department_filter)
-    
-    # Paginate the results
-    paginator = Paginator(employees, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # Get list of departments for filter dropdown
-    departments = Department.objects.filter(status=1).order_by('department_name')
-    
-    context = {
-        'page_obj': page_obj,
-        'query': query,
-        'departments': departments,
-        'department_filter': department_filter,
-        'total_count': employees.count(),
-    }
-    
-    return render(request, 'employee/pending_approval_list.html', context)

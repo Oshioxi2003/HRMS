@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete Education Level" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Delete Education Level" %}</h1>
+    <p class="text-gray-600">{% trans "Confirm deletion of education level" %}</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Confirm Deletion" %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">{% trans "Warning" %}</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <p>{% trans "Are you sure you want to delete the education level" %} <strong>{{ education.education_name }}</strong>?</p>
+                        <p class="mt-1">{% trans "This action cannot be undone." %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 p-4 rounded-md mb-6">
+            <h3 class="font-medium text-gray-700 mb-2">{% trans "Education Level Information" %}</h3>
+            <p><strong>{% trans "Name" %}:</strong> {{ education.education_name }}</p>
+            <p><strong>{% trans "Code" %}:</strong> {{ education.education_code }}</p>
+            <p><strong>{% trans "Level" %}:</strong> {{ education.level }}</p>
+            <p><strong>{% trans "Status" %}:</strong> {{ education.get_status_display }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex items-center justify-end space-x-3">
+                <a href="{% url 'education_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    {% trans "Cancel" %}
+                </a>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    {% trans "Confirm Delete" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load static %}
+{% block title %}{% trans "Phòng Ban" %} | HRMS{% endblock %}
+
+
+
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Tiêu đề -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{% trans "Quản Lý Phòng Ban" %}</h1>
+        <p class="mt-2 text-gray-600">{% trans "Quản lý các phòng ban và cơ cấu tổ chức của công ty" %}</p>
+    </div>
+
+    <!-- Danh sách phòng ban -->
+    <div class="bg-white rounded-xl shadow-lg mb-8">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">{% trans "Danh Sách Phòng Ban" %}</h2>
+            <a href="{% url 'department_create' %}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                {% trans "Thêm Phòng Ban" %}
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Phòng Ban" %}</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Mã" %}</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Nhân Viên" %}</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Trưởng Phòng" %}</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Trạng Thái" %}</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">{% trans "Hành Động" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for department in departments %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <a href="{% url 'department_detail' department.pk %}" class="text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+                                {{ department.department_name }}
+                            </a>
+                            <div class="text-sm text-gray-500">{{ department.parent_department.department_name|default:"" }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ department.department_code }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ department.employee_count }}</td>
+                        <td class="px-6 py-4">
+                            {% if department.head %}
+                            <a href="{% url 'employee_detail' department.head.pk %}" class="text-indigo-600 hover:text-indigo-800 hover:underline">
+                                {{ department.head.full_name }}
+                            </a>
+                            {% else %}
+                            <span class="text-gray-500">{% trans "Chưa phân công" %}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full 
+                                        {% if department.status == 1 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ department.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end space-x-3">
+                                <a href="{% url 'department_update' department.pk %}" class="text-indigo-600 hover:text-indigo-800" title="{% trans 'Sửa' %}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </a>
+                                {% if department.employee_count == 0 %}
+                                <a href="{% url 'department_delete' department.pk %}" class="text-red-600 hover:text-red-800" title="{% trans 'Xóa' %}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M9 7v12m6-12v12"></path>
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="text-gray-400 cursor-not-allowed" title="{% trans 'Không thể xóa phòng ban có nhân viên' %}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4M9 7v12m6-12v12"></path>
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">{% trans "Không tìm thấy phòng ban" %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Cấu trúc tổ chức -->
+    <div class="bg-white rounded-xl shadow-lg">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">{% trans "Cơ Cấu Tổ Chức" %}</h2>
+        </div>
+        <div class="p-6">
+            <div id="orgChart" class="overflow-x-auto" style="min-height: 400px;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/orgchart@3.1.1/dist/css/jquery.orgchart.min.css">
+<style>
+    .orgchart .node .title { background-color: #4f46e5; color: white; }
+    .orgchart .node .content { border: 1px solid #e5e7eb; }
+    .orgchart .node.dept-inactive .title { background-color: #ef4444; }
+    .orgchart .node:hover .title { opacity: 0.9; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/orgchart@3.1.1/dist/js/jquery.orgchart.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orgData = {
+            'name': '{{ company_name|default:"Tổ Chức" }}',
+            'children': [
+                {% for dept in departments %}
+                {% if not dept.parent_department %}
+                {
+                    'name': '{{ dept.department_name }}',
+                    'title': '{{ dept.department_code }}',
+                    'className': '{% if dept.status == 1 %}dept-active{% else %}dept-inactive{% endif %}',
+                    {% if dept.head %}'head': '{{ dept.head.full_name }}',{% endif %}
+                    'children': []
+                }{% if not forloop.last %},{% endif %}
+                {% endif %}
+                {% endfor %}
+            ]
+        };
+
+        $('#orgChart').orgchart({
+            'data': orgData,
+            'nodeContent': 'title',
+            'direction': 't2b',
+            'pan': true,
+            'zoom': true
+        });
+    });
+</script>
+{% endblock %}

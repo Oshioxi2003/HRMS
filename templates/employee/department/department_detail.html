@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ department.department_name }} | {% trans "Department" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ department.department_name }}</h1>
+        <p class="text-gray-600">{{ department.description }}</p>
+    </div>
+    
+    <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+        <a href="{% url 'department_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i> {% trans "Back to List" %}
+        </a>
+        <a href="{% url 'department_update' department.pk %}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+            <i class="fas fa-edit mr-2"></i> {% trans "Edit Department" %}
+        </a>
+    </div>
+</div>
+
+<!-- Department Information -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- Department Details -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">{% trans "Department Information" %}</h2>
+        </div>
+        <div class="p-4">
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">{% trans "Department Code" %}</h3>
+                <p class="text-gray-800">{{ department.department_code }}</p>
+            </div>
+            
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">{% trans "Parent Department" %}</h3>
+                <p class="text-gray-800">
+                    {% if department.parent_department %}
+                    <a href="{% url 'department_detail' department.parent_department.pk %}" class="text-primary hover:text-primary-hover hover:underline">
+                        {{ department.parent_department.department_name }}
+                    </a>
+                    {% else %}
+                    <span class="text-gray-500">{% trans "None" %}</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">{% trans "Department Head" %}</h3>
+                <p class="text-gray-800">
+                    {% if department.head %}
+                    <a href="{% url 'employee_detail' department.head.pk %}" class="text-primary hover:text-primary-hover hover:underline">
+                        {{ department.head.full_name }}
+                    </a>
+                    {% else %}
+                    <span class="text-gray-500">{% trans "Not assigned" %}</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">{% trans "Status" %}</h3>
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          {% if department.status == 1 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {{ department.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Department Statistics -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">{% trans "Statistics" %}</h2>
+        </div>
+        <div class="p-4">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 rounded-lg bg-blue-50 border border-blue-100">
+                    <div class="text-3xl font-bold text-blue-600 mb-1">{{ employee_count }}</div>
+                    <div class="text-sm text-blue-800">{% trans "Total Employees" %}</div>
+                </div>
+                
+                <div class="p-4 rounded-lg bg-green-50 border border-green-100">
+                    <div class="text-3xl font-bold text-green-600 mb-1">{{ active_count }}</div>
+                    <div class="text-sm text-green-800">{% trans "Active Employees" %}</div>
+                </div>
+                
+                <div class="p-4 rounded-lg bg-purple-50 border border-purple-100">
+                    <div class="text-3xl font-bold text-purple-600 mb-1">{{ positions|length }}</div>
+                    <div class="text-sm text-purple-800">{% trans "Positions" %}</div>
+                </div>
+                
+                <div class="p-4 rounded-lg bg-yellow-50 border border-yellow-100">
+                    <div class="text-3xl font-bold text-yellow-600 mb-1">{{ department.created_date|date:"Y" }}</div>
+                    <div class="text-sm text-yellow-800">{% trans "Established" %}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Department Contact Info -->
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">{% trans "Contact Information" %}</h2>
+        </div>
+        <div class="p-4">
+            {% if department.email or department.phone %}
+                {% if department.email %}
+                <div class="mb-4">
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Email" %}</h3>
+                    <p class="text-gray-800">
+                        <a href="mailto:{{ department.email }}" class="text-primary hover:underline">
+                            {{ department.email }}
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+                
+                {% if department.phone %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">{% trans "Phone" %}</h3>
+                    <p class="text-gray-800">
+                        <a href="tel:{{ department.phone }}" class="text-primary hover:underline">
+                            {{ department.phone }}
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+            {% else %}
+                <p class="text-gray-500">{% trans "No contact information available" %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Department Employees -->
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="flex flex-wrap items-center justify-between p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Employees" %}</h2>
+        
+        <div class="relative">
+            <input type="text" id="employeeSearch" placeholder="{% trans 'Search employee...' %}" 
+                   class="pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Employee" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Position" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Email" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Phone" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Status" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Actions" %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for employee in employees %}
+                <tr class="employee-row hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                {% if employee.profile_image %}
+                                <img class="h-10 w-10 rounded-full object-cover" src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                                    {{ employee.full_name|first|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900 employee-name">
+                                    <a href="{% url 'employee_detail' employee.pk %}" class="hover:underline">
+                                        {{ employee.full_name }}
+                                    </a>
+                                </div>
+                                <div class="text-sm text-gray-500">ID: {{ employee.employee_id }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ employee.position.position_name|default:"N/A" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            <a href="mailto:{{ employee.email }}" class="text-primary hover:underline">
+                                {{ employee.email }}
+                            </a>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% if employee.phone %}
+                            <a href="tel:{{ employee.phone }}" class="text-primary hover:underline">
+                                {{ employee.phone }}
+                            </a>
+                            {% else %}
+                            <span class="text-gray-500">{% trans "Not available" %}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                  {% if employee.status == 'Working' %}bg-green-100 text-green-800
+                                  {% elif employee.status == 'On Leave' %}bg-yellow-100 text-yellow-800
+                                  {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ employee.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'employee_detail' employee.pk %}" class="text-primary hover:text-primary-hover mr-3">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if perms.employee.change_employee %}
+                        <a href="{% url 'employee_update' employee.pk %}" class="text-primary hover:text-primary-hover">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                        {% trans "No employees found in this department" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Grouped Employees by Position -->
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Employees by Position" %}</h2>
+    </div>
+    <div class="p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for position_name, position_employees in positions.items %}
+            <div class="border border-gray-200 rounded-lg">
+                <div class="p-3 bg-gray-50 rounded-t-lg border-b border-gray-200">
+                    <h3 class="font-medium text-gray-700">{{ position_name }} ({{ position_employees|length }})</h3>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    {% for employee in position_employees %}
+                    <li class="p-3 hover:bg-gray-50">
+                        <a href="{% url 'employee_detail' employee.pk %}" class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8">
+                                {% if employee.profile_image %}
+                                <img class="h-8 w-8 rounded-full object-cover" src="{{ employee.profile_image.url }}" alt="{{ employee.full_name }}">
+                                {% else %}
+                                <div class="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-xs">
+                                    {{ employee.full_name|first|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3">
+                                <div class="text-sm font-medium text-gray-900">{{ employee.full_name }}</div>
+                                <div class="text-xs text-gray-500">{{ employee.email }}</div>
+                            </div>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% empty %}
+            <div class="col-span-3 text-center py-6 text-gray-500">
+                {% trans "No position data available" %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('employeeSearch');
+        
+        searchInput.addEventListener('keyup', function() {
+            const searchValue = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.employee-row');
+            
+            rows.forEach(function(row) {
+                const employeeName = row.querySelector('.employee-name').textContent.toLowerCase();
+                
+                if (employeeName.includes(searchValue)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

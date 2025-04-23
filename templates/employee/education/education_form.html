@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+    <p class="text-gray-600">{% if is_create %}{% trans "Create a new education level" %}{% else %}{% trans "Update education level information" %}{% endif %}</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Education Level Information" %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Education Name -->
+                <div>
+                    <label for="{{ form.education_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {% trans "Education Level Name" %} *
+                    </label>
+                    <input type="text" name="{{ form.education_name.name }}" id="{{ form.education_name.id_for_label }}" 
+                           value="{{ form.education_name.value|default:'' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                  {% if form.education_name.errors %}border-red-500{% endif %}">
+                    {% if form.education_name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.education_name.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">{% trans "E.g. High School, Bachelor's Degree, Master's Degree" %}</p>
+                </div>
+                
+                <!-- Education Code -->
+                <div>
+                    <label for="{{ form.education_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {% trans "Education Level Code" %} *
+                    </label>
+                    <input type="text" name="{{ form.education_code.name }}" id="{{ form.education_code.id_for_label }}" 
+                           value="{{ form.education_code.value|default:'' }}"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                  {% if form.education_code.errors %}border-red-500{% endif %}">
+                    {% if form.education_code.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.education_code.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">{% trans "A short code (e.g. HS, BD, MD)" %}</p>
+                </div>
+                
+                <!-- Level -->
+                <div>
+                    <label for="{{ form.level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {% trans "Level" %}
+                    </label>
+                    <input type="number" name="{{ form.level.name }}" id="{{ form.level.id_for_label }}" 
+                           value="{{ form.level.value|default:'0' }}" min="0" max="10"
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                  {% if form.level.errors %}border-red-500{% endif %}">
+                    {% if form.level.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.level.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">{% trans "Numerical level (0-10, higher is more advanced)" %}</p>
+                </div>
+                
+                <!-- Status -->
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {% trans "Status" %}
+                    </label>
+                    <select name="{{ form.status.name }}" id="{{ form.status.id_for_label }}"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                   {% if form.status.errors %}border-red-500{% endif %}">
+                        {% for choice in form.status.field.choices %}
+                        <option value="{{ choice.0 }}" {% if form.status.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div class="mb-6">
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {% trans "Description" %}
+                </label>
+                <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="4"
+                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50
+                                 {% if form.description.errors %}border-red-500{% endif %}">{{ form.description.value|default:'' }}</textarea>
+                {% if form.description.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center justify-end space-x-3">
+                <a href="{% url 'education_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    {% trans "Cancel" %}
+                </a>
+                <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+                    {% if is_create %}{% trans "Create Education Level" %}{% else %}{% trans "Update Education Level" %}{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

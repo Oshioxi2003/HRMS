@@ -1,52 +1,261 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "My Onboarding" %}{% endblock %}
+{% block title %}{% trans "My Onboarding" %} | HRMS{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>{% trans "My Onboarding Process" %}</h2>
-    
-    <div class="mb-3">
-        <h4>{% trans "Status" %}: {{ onboarding.get_status_display }}</h4>
-        <p>{% trans "Start Date" %}: {{ onboarding.start_date }}</p>
-        <p>{% trans "Target Completion Date" %}: {{ onboarding.target_completion_date }}</p>
-        <p>{% trans "Actual Completion Date" %}: {{ onboarding.actual_completion_date }}</p>
-        <p>{% trans "Notes" %}: {{ onboarding.notes }}</p>
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "My Onboarding Process" %}</h1>
+    <p class="text-gray-600">
+        {% blocktrans with start=onboarding.start_date|date:"d M Y" %}
+        Started on {{ start }}
+        {% endblocktrans %}
+    </p>
+</div>
+
+<!-- Progress Overview -->
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Onboarding Progress" %}</h2>
     </div>
     
-    <h4>{% trans "Task Status" %}</h4>
-    <table class="table table-hover">
-        <thead>
-            <tr>
-                <th>{% trans "Task Name" %}</th>
-                <th>{% trans "Status" %}</th>
-                <th>{% trans "Comments" %}</th>
-                <th>{% trans "Actions" %}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task_status in task_statuses %}
-            <tr>
-                <td>{{ task_status.task.task_name }}</td>
-                <td>{{ task_status.get_status_display }}</td>
-                <td>{{ task_status.comments }}</td>
-                <td>
-                    {% if task_status.can_update %}
-                    <a href="{% url 'update_onboarding_task_status' task_status.id %}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-pencil-alt"></i> {% trans "Update" %}
-                    </a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="p-6">
+        <div class="flex flex-wrap items-center mb-6">
+            <div class="w-full md:w-1/4 mb-4 md:mb-0 md:pr-4">
+                {% with completed_tasks=task_statuses|filter:"status:Completed"|length %}
+                {% with total_tasks=task_statuses|length %}
+                {% with progress_percentage=completed_tasks|multiply:100|floatformat:0|default:0|divide:total_tasks %}
+                <div class="flex items-center">
+                    <div class="w-24 h-24 rounded-full flex items-center justify-center border-8 border-primary-hover">
+                        <span class="text-2xl font-bold text-primary">{{ progress_percentage }}%</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-500">{% trans "Status" %}</p>
+                        <p class="font-semibold 
+                                  {% if onboarding.status == 'Completed' %}text-green-600
+                                  {% elif onboarding.status == 'In Progress' %}text-blue-600
+                                  {% elif onboarding.status == 'On Hold' %}text-yellow-600
+                                  {% else %}text-gray-600{% endif %}">
+                            {{ onboarding.get_status_display }}
+                        </p>
+                    </div>
+                </div>
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            </div>
+            
+            <div class="w-full md:w-3/4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-blue-700">{% trans "Start Date" %}</p>
+                    <p class="font-semibold text-blue-900">{{ onboarding.start_date|date:"d M Y" }}</p>
+                </div>
+                
+                <div class="p-3 bg-green-50 rounded-lg">
+                    <p class="text-sm text-green-700">{% trans "Target Date" %}</p>
+                    <p class="font-semibold text-green-900">{{ onboarding.target_completion_date|date:"d M Y" }}</p>
+                </div>
+                
+                <div class="p-3 bg-purple-50 rounded-lg">
+                    <p class="text-sm text-purple-700">{% trans "HR Contact" %}</p>
+                    <p class="font-semibold text-purple-900">
+                        {% if onboarding.hr_contact %}
+                        {{ onboarding.hr_contact.get_full_name }}
+                        {% else %}
+                        <span class="text-gray-500">{% trans "Not assigned" %}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="p-3 bg-amber-50 rounded-lg">
+                    <p class="text-sm text-amber-700">{% trans "Manager Contact" %}</p>
+                    <p class="font-semibold text-amber-900">
+                        {% if onboarding.manager_contact %}
+                        {{ onboarding.manager_contact.get_full_name }}
+                        {% else %}
+                        <span class="text-gray-500">{% trans "Not assigned" %}</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Tasks -->
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "My Tasks" %}</h2>
+    </div>
     
-    <h4>{% trans "Progress" %}: {{ progress_percentage }}%</h4>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Task" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Description" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Due Date" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Status" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Actions" %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task_status in task_statuses|filter:"task__responsible_role:Employee" %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ task_status.task.task_name }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">{{ task_status.task.description|truncatechars:100 }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% with due_date=onboarding.start_date|date:"U"|add:task_status.task.due_days|mul:86400|date:"Y-m-d" %}
+                            {{ due_date|date:"d M Y" }}
+                            {% if due_date|date:"U"|floatformat:"0" < now.date|date:"U"|floatformat:"0" and task_status.status != 'Completed' %}
+                            <span class="text-xs text-red-600 font-medium">{% trans "Overdue" %}</span>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                              {% if task_status.status == 'Completed' %}bg-green-100 text-green-800
+                              {% elif task_status.status == 'In Progress' %}bg-blue-100 text-blue-800
+                              {% elif task_status.status == 'Not Started' %}bg-gray-100 text-gray-800
+                              {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ task_status.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'update_task_status' task_status.id %}" class="text-primary hover:text-primary-hover">
+                            <i class="fas fa-edit"></i> {% trans "Update" %}
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        {% trans "No tasks assigned to you" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- All Tasks Overview -->
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Overall Onboarding Process" %}</h2>
+    </div>
     
-    {% if onboarding.status == "In Progress" %}
-    <a href="{% url 'create_employee_onboarding' employee.id %}" class="btn btn-secondary">{% trans "Edit Onboarding" %}</a>
-    {% endif %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Task" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Responsible" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Due Date" %}
+                    </th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {% trans "Status" %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for task_status in task_statuses %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ task_status.task.task_name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                              {% if task_status.task.responsible_role == 'HR' %}bg-blue-100 text-blue-800
+                              {% elif task_status.task.responsible_role == 'Manager' %}bg-green-100 text-green-800
+                              {% elif task_status.task.responsible_role == 'IT' %}bg-purple-100 text-purple-800
+                              {% elif task_status.task.responsible_role == 'Employee' %}bg-amber-100 text-amber-800
+                              {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ task_status.task.get_responsible_role_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">
+                            {% with due_date=onboarding.start_date|date:"U"|add:task_status.task.due_days|mul:86400|date:"Y-m-d" %}
+                            {{ due_date|date:"d M Y" }}
+                            {% endwith %}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                              {% if task_status.status == 'Completed' %}bg-green-100 text-green-800
+                              {% elif task_status.status == 'In Progress' %}bg-blue-100 text-blue-800
+                              {% elif task_status.status == 'Not Started' %}bg-gray-100 text-gray-800
+                              {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ task_status.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                        {% trans "No tasks defined in the onboarding process" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Help and Resources -->
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Help & Resources" %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-medium text-blue-800 mb-2">{% trans "Onboarding Guide" %}</h3>
+                <p class="text-blue-700 text-sm mb-3">{% trans "Access your complete onboarding guide with detailed information." %}</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline">
+                    <i class="fas fa-arrow-right mr-1"></i> {% trans "View Guide" %}
+                </a>
+            </div>
+            
+            <div class="p-4 bg-green-50 rounded-lg">
+                <h3 class="font-medium text-green-800 mb-2">{% trans "Company Policies" %}</h3>
+                <p class="text-green-700 text-sm mb-3">{% trans "Review important company policies and procedures." %}</p>
+                <a href="#" class="text-green-600 hover:text-green-800 text-sm font-medium hover:underline">
+                    <i class="fas fa-arrow-right mr-1"></i> {% trans "View Policies" %}
+                </a>
+            </div>
+            
+            <div class="p-4 bg-purple-50 rounded-lg">
+                <h3 class="font-medium text-purple-800 mb-2">{% trans "Support" %}</h3>
+                <p class="text-purple-700 text-sm mb-3">{% trans "Need help with your onboarding process?" %}</p>
+                <a href="#" class="text-purple-600 hover:text-purple-800 text-sm font-medium hover:underline">
+                    <i class="fas fa-arrow-right mr-1"></i> {% trans "Contact HR" %}
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

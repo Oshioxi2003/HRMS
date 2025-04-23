@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Vị trí | HRMS{% endblock %}
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Quản lý Vị trí</h1>
+        <p class="mt-2 text-gray-600">Quản lý các vị trí công việc và vai trò trong tổ chức</p>
+    </div>
+
+    <!-- Position List Card -->
+    <div class="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Danh sách Vị trí</h2>
+            <a href="{% url 'position_create' %}" 
+               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 
+                      text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200">
+                <i class="fas fa-plus mr-2"></i> Thêm Vị trí
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Vị trí</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Phòng ban</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Cấp bậc</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Nhân viên</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Trạng thái</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-600">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for position in positions %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ position.position_name }}</div>
+                            <div class="text-sm text-gray-500">{{ position.position_code }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if position.department %}
+                            <a href="{% url 'department_detail' position.department.pk %}" 
+                               class="text-blue-600 hover:text-blue-800 hover:underline">
+                                {{ position.department.department_name }}
+                            </a>
+                            {% else %}
+                            <span class="text-gray-500">Liên phòng ban</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ position.level }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ position.employee_count }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                        {% if position.status == 1 %}bg-green-100 text-green-800
+                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ position.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end space-x-3">
+                                <a href="{% url 'position_update' position.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800" 
+                                   title="Chỉnh sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if position.employee_count == 0 %}
+                                <a href="{% url 'position_delete' position.pk %}" 
+                                   class="text-red-600 hover:text-red-800" 
+                                   title="Xóa">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                                {% else %}
+                                <span class="text-gray-400 cursor-not-allowed" 
+                                      title="Không thể xóa vị trí có nhân viên">
+                                    <i class="fas fa-trash-alt"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            Không tìm thấy vị trí nào
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Stats Card -->
+        <div class="bg-white rounded-2xl shadow-lg">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Thống kê Vị trí</h2>
+            </div>
+            <div class="p-6 grid grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl bg-blue-50">
+                    <div class="text-3xl font-bold text-blue-600">{{ positions|length }}</div>
+                    <div class="text-sm text-blue-800">Tổng số Vị trí</div>
+                </div>
+                <div class="p-4 rounded-xl bg-green-50">
+                    <div class="text-3xl font-bold text-green-600">
+                        {{ positions|dictsortreversed:"employee_count"|first|default:0 }}
+                    </div>
+                    <div class="text-sm text-green-800">Vị trí Lớn nhất</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Positions Card -->
+        <div class="bg-white rounded-2xl shadow-lg lg:col-span-2">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Vị trí Hàng đầu</h2>
+            </div>
+            <div class="p-6">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Vị trí</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Nhân viên</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-600">Phân bố</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for position in positions|dictsortreversed:"employee_count"|slice:":5" %}
+                        <tr class="hover:bg-gray-50 transition-colors duration-150">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ position.position_name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ position.employee_count }}</td>
+                            <td class="px-6 py-4">
+                                <div class="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="absolute top-0 left-0 h-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full"
+                                         style="width: {% widthratio position.employee_count total_employees 100 %}%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
+                                Không có dữ liệu vị trí
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

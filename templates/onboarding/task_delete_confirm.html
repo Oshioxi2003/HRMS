@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete Task" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Delete Onboarding Task" %}</h1>
+    <p class="text-gray-600">{% trans "Confirm task deletion" %}</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Confirm Deletion" %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-500"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">{% trans "Warning" %}</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <p>{% trans "Are you sure you want to delete the task" %} <strong>{{ task.task_name }}</strong>?</p>
+                        <p class="mt-1">{% trans "This action cannot be undone. This will permanently delete the task template and may affect existing onboarding processes." %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 p-4 rounded-md mb-6">
+            <h3 class="font-medium text-gray-700 mb-2">{% trans "Task Information" %}</h3>
+            <p><strong>{% trans "Task Name" %}:</strong> {{ task.task_name }}</p>
+            <p><strong>{% trans "Responsible Role" %}:</strong> {{ task.get_responsible_role_display }}</p>
+            {% if task.department_specific and task.department %}
+            <p><strong>{% trans "Department" %}:</strong> {{ task.department.department_name }}</p>
+            {% endif %}
+            {% if task.position_specific and task.position %}
+            <p><strong>{% trans "Position" %}:</strong> {{ task.position.position_name }}</p>
+            {% endif %}
+            <p><strong>{% trans "Description" %}:</strong> {{ task.description|truncatechars:100 }}</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex items-center justify-end space-x-3">
+                <a href="{% url 'onboarding_task_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    {% trans "Cancel" %}
+                </a>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    {% trans "Delete Task" %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

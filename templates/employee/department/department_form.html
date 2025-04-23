@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block title %}{{ title }} | HRMS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Tiêu đề -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="mt-2 text-gray-600">
+            {% if is_create %}
+                {% trans "Tạo phòng ban mới" %}
+            {% else %}
+                {% trans "Cập nhật thông tin phòng ban" %}
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-lg">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">{% trans "Thông Tin Phòng Ban" %}</h2>
+        </div>
+
+        <div class="p-6">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Tên Phòng Ban -->
+                    <div>
+                        <label for="{{ form.department_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Tên Phòng Ban" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="{{ form.department_name.name }}" 
+                               id="{{ form.department_name.id_for_label }}" 
+                               value="{{ form.department_name.value|default:'' }}"
+                               class="w-full px-4 py-2 rounded-lg border {% if form.department_name.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                               required>
+                        {% if form.department_name.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.department_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Mã Phòng Ban -->
+                    <div>
+                        <label for="{{ form.department_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Mã Phòng Ban" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="{{ form.department_code.name }}" 
+                               id="{{ form.department_code.id_for_label }}" 
+                               value="{{ form.department_code.value|default:'' }}"
+                               class="w-full px-4 py-2 rounded-lg border {% if form.department_code.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                               required>
+                        {% if form.department_code.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.department_code.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">{% trans "Mã duy nhất cho phòng ban (ví dụ: HR, IT, FIN)" %}</p>
+                    </div>
+
+                    <!-- Phòng Ban Cấp Trên -->
+                    <div>
+                        <label for="{{ form.parent_department.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Phòng Ban Cấp Trên" %}
+                        </label>
+                        <select name="{{ form.parent_department.name }}" 
+                                id="{{ form.parent_department.id_for_label }}"
+                                class="w-full px-4 py-2 rounded-lg border {% if form.parent_department.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                            <option value="">---------</option>
+                            {% for choice in form.parent_department.field.choices %}
+                                {% if choice.0 %}
+                                    <option value="{{ choice.0 }}" {% if form.parent_department.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                        {{ choice.1 }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.parent_department.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.parent_department.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Trưởng Phòng -->
+                    <div>
+                        <label for="{{ form.head.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Trưởng Phòng" %}
+                        </label>
+                        <select name="{{ form.head.name }}" 
+                                id="{{ form.head.id_for_label }}"
+                                class="w-full px-4 py-2 rounded-lg border {% if form.head.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                            <option value="">---------</option>
+                            {% for choice in form.head.field.choices %}
+                                {% if choice.0 %}
+                                    <option value="{{ choice.0 }}" {% if form.head.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                        {{ choice.1 }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if form.head.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.head.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Email" %}
+                        </label>
+                        <input type="email" 
+                               name="{{ form.email.name }}" 
+                               id="{{ form.email.id_for_label }}" 
+                               value="{{ form.email.value|default:'' }}"
+                               class="w-full px-4 py-2 rounded-lg border {% if form.email.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                        {% if form.email.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Số Điện Thoại -->
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Số Điện Thoại" %}
+                        </label>
+                        <input type="tel" 
+                               name="{{ form.phone.name }}" 
+                               id="{{ form.phone.id_for_label }}" 
+                               value="{{ form.phone.value|default:'' }}"
+                               class="w-full px-4 py-2 rounded-lg border {% if form.phone.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                        {% if form.phone.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Trạng Thái -->
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            {% trans "Trạng Thái" %}
+                        </label>
+                        <select name="{{ form.status.name }}" 
+                                id="{{ form.status.id_for_label }}"
+                                class="w-full px-4 py-2 rounded-lg border {% if form.status.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                            {% for choice in form.status.field.choices %}
+                                <option value="{{ choice.0 }}" {% if form.status.value|stringformat:"s" == choice.0|stringformat:"s" %}selected{% endif %}>
+                                    {{ choice.1 }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Mô Tả -->
+                <div class="mb-8">
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {% trans "Mô Tả" %}
+                    </label>
+                    <textarea name="{{ form.description.name }}" 
+                              id="{{ form.description.id_for_label }}" 
+                              rows="5"
+                              class="w-full px-4 py-2 rounded-lg border {% if form.description.errors %}border-red-500{% else %}border-gray-300{% endif %} shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Nút Hành Động -->
+                <div class="flex items-center justify-end space-x-4">
+                    <a href="{% url 'department_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors duration-200">
+                        {% trans "Hủy" %}
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200">
+                        {% if is_create %}
+                            {% trans "Tạo Phòng Ban" %}
+                        {% else %}
+                            {% trans "Cập Nhật Phòng Ban" %}
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

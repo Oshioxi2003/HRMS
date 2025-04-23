@@ -12,132 +12,980 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Google Fonts - Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    {% block extra_css %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Custom CSS -->
     <style>
-        /* Kiểu dáng tùy chỉnh cho HRMS */
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1e40af;
+            --secondary-color: #475569;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #0ea5e9;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 70px;
+            --header-height: 60px;
+            --footer-height: 50px;
+        }
+        
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
+            background-color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         
-        .navbar {
-            background-color: #3f51b5;
-        }
-        
+        /* Header styles */
         .navbar-brand {
-            color: white;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary-color);
         }
         
+        .navbar-brand img {
+            height: 35px;
+            margin-right: 8px;
+        }
+        
+        .top-navbar {
+            height: var(--header-height);
+            box-shadow: 0 1px 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+            z-index: 1030;
+        }
+        
+        .navbar-nav .nav-link {
+            color: var(--secondary-color);
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: var(--primary-color);
+        }
+        
+        .navbar-nav .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 10px;
+            padding: 3px 5px;
+        }
+        
+        /* Search bar */
+        .navbar .search-form {
+            max-width: 300px;
+        }
+        
+        /* User profile */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .avatar-sm {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .avatar-lg {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #fff;
+        }
+        
+        /* Main container */
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+        
+        /* Sidebar styles */
         .sidebar {
-            background-color: #ffffff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1020;
         }
         
-        .sidebar .nav-link.active {
-            background-color: rgba(63, 81, 181, 0.1);
-            color: #3f51b5;
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
         }
         
-        .footer {
-            background-color: #ffffff;
-            padding: 15px;
-            box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.1);
+        .sidebar-toggle {
+            background-color: transparent;
+            border: none;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.3s;
         }
         
-        .stat-card {
-            padding: 20px;
-            border-radius: 5px;
-            background-color: #ffffff;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+        .sidebar-toggle:hover {
+            color: var(--primary-color);
         }
         
-        .stat-title {
+        .sidebar-collapsed .sidebar-toggle {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+            list-style: none;
+            margin: 0;
+        }
+        
+        .sidebar-header {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            padding: 0.75rem 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .sidebar-item {
+            position: relative;
+        }
+        
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--secondary-color);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-link:hover {
+            color: var(--primary-color);
+            background-color: rgba(37, 99, 235, 0.1);
+            border-left-color: var(--primary-color);
+        }
+        
+        .sidebar-link.active {
+            color: var(--primary-color);
+            background-color: rgba(37, 99, 235, 0.15);
+            border-left-color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .sidebar-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
             font-size: 1rem;
-            color: #6c757d;
         }
         
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
+        .sidebar-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar.collapsed .sidebar-text,
+        .sidebar.collapsed .sidebar-dropdown,
+        .sidebar.collapsed .sidebar-header {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-link {
+            justify-content: center;
+            padding: 0.75rem 0;
+        }
+        
+        .sidebar.collapsed .sidebar-icon {
+            margin-right: 0;
+            font-size: 1.2rem;
+        }
+        
+        /* Dropdown menu - FIXED */
+        .sidebar-dropdown {
+            margin-left: 30px;
+            padding-left: 0;
+            list-style: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+        
+        .sidebar-dropdown.show {
+            max-height: 1000px;
+        }
+        
+        .dropdown-toggle::after {
+            float: right;
+            margin-top: 8px;
+            transition: transform 0.3s;
+        }
+        
+        .dropdown-toggle[aria-expanded="true"]::after {
+            transform: rotate(90deg);
+        }
+        
+        /* Content area */
+        .content-wrapper {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            transition: margin-left 0.3s;
+        }
+        
+        .content-wrapper.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+        
+        /* Footer styles */
+        .footer {
+            background-color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-top: auto;
+            box-shadow: 0 -1px 5px rgba(0,0,0,0.05);
+            height: var(--footer-height);
+            margin-left: var(--sidebar-width);
+            transition: margin-left 0.3s;
+        }
+        
+        .footer.expanded {
+            margin-left: var(--sidebar-collapsed-width);
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            padding: 1rem 1.25rem;
+            font-weight: 500;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1040;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content-wrapper, .footer {
+                margin-left: 0 !important;
+            }
+            
+            .navbar .search-form {
+                display: none;
+            }
+        }
+        
+        /* Dark mode support - optional */
+        @media (prefers-color-scheme: dark) {
+            body.dark-mode {
+                background-color: #0f172a;
+                color: #e2e8f0;
+            }
+            
+            body.dark-mode .sidebar,
+            body.dark-mode .top-navbar,
+            body.dark-mode .footer,
+            body.dark-mode .card {
+                background-color: #1e293b;
+                color: #e2e8f0;
+            }
+            
+            body.dark-mode .card-header {
+                border-bottom-color: #334155;
+            }
+            
+            body.dark-mode .sidebar-link {
+                color: #cbd5e1;
+            }
+            
+            body.dark-mode .sidebar-link:hover,
+            body.dark-mode .sidebar-link.active {
+                background-color: rgba(59, 130, 246, 0.2);
+            }
         }
     </style>
-    {% endblock %}
-</head>
-{% load i18n %}
-<body>
-    {% include 'includes/navbar.html' %}
     
-    <div class="d-flex">
-        {% if user.is_authenticated %}
-        <!-- Thanh bên dựa theo vai trò người dùng -->
-        {% if user.role == 'Admin' %}
-            {% include 'includes/sidebar/admin_sidebar.html' %}
-        {% elif user.role == 'HR' %}
-            {% include 'includes/sidebar/hr_sidebar.html' %}
-        {% elif user.role == 'Manager' %}
-            {% include 'includes/sidebar/manager_sidebar.html' %}
-        {% else %}
-            {% include 'includes/sidebar/employee_sidebar.html' %}
-        {% endif %}
-        {% endif %}
-        
-        <!-- Nội dung chính -->
-        <div class="content">
-            <!-- Thông báo nhanh -->
-            {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg top-navbar">
+        <div class="container-fluid">
+            <button id="sidebar-toggle" class="sidebar-toggle me-2 d-lg-none">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+                <img src="{% static 'images/logo.png' %}" alt="HRMS Logo" onerror="this.src='https://via.placeholder.com/35x35?text=HRMS';this.onerror='';">
+                <span>HRMS</span>
+            </a>
+            
+            <form class="d-none d-lg-flex search-form ms-auto me-3">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Tìm kiếm...">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
-                {% endfor %}
+            </form>
+            
+            <ul class="navbar-nav me-3">
+                <!-- Language Selector -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-globe"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                        <li><a class="dropdown-item" href="#">Tiếng Việt</a></li>
+                        <li><a class="dropdown-item" href="#">English</a></li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <ul class="navbar-nav">
+                <!-- Notifications -->
+                <li class="nav-item dropdown position-relative">
+                    <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge bg-danger rounded-pill notification-badge" id="notificationCount">3</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                        <h6 class="dropdown-header">Thông báo</h6>
+                        <div id="notificationsContainer">
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="me-3">
+                                    <div class="bg-primary text-white rounded-circle p-2">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-0">Yêu cầu nghỉ phép đã được chấp nhận</p>
+                                    <small class="text-muted">15 phút trước</small>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <div class="me-3">
+                                    <div class="bg-success text-white rounded-circle p-2">
+                                        <i class="fas fa-tasks"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="mb-0">Bạn được phân công nhiệm vụ mới</p>
+                                    <small class="text-muted">1 giờ trước</small>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-center" href="{% url 'notification_list' %}">Xem tất cả thông báo</a>
+                    </div>
+                </li>
+                
+                <!-- User Profile -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if user.employee and user.employee.profile_image %}
+                        <img src="{{ user.employee.profile_image.url }}" alt="{{ user.get_full_name }}" class="avatar me-2">
+                        {% else %}
+                        <div class="avatar me-2 bg-primary d-flex align-items-center justify-content-center text-white">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
+                        {% endif %}
+                        <span class="d-none d-md-block">{{ user.get_full_name|default:user.username }}</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><h6 class="dropdown-header">{{ user.get_role_display }}</h6></li>
+                        <li><a class="dropdown-item" href="{% url 'my_profile' %}">
+                            <i class="fas fa-user fa-fw me-2"></i> Hồ sơ cá nhân
+                        </a></li>
+                        <li><a class="dropdown-item" href="{% url 'change_password' %}">
+                            <i class="fas fa-key fa-fw me-2"></i> Đổi mật khẩu
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt fa-fw me-2"></i> Đăng xuất
+                        </a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="user-profile p-3 d-flex align-items-center">
+                {% if user.employee and user.employee.profile_image %}
+                <img src="{{ user.employee.profile_image.url }}" alt="{{ user.get_full_name }}" class="avatar-lg me-3">
+                {% else %}
+                <div class="avatar-lg me-3 bg-primary d-flex align-items-center justify-content-center text-white">
+                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                </div>
+                {% endif %}
+                <div class="sidebar-text">
+                    <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                    <p class="text-muted mb-0 small">{{ user.get_role_display }}</p>
+                </div>
+                <!-- Added sidebar collapse toggle button -->
+                <button id="sidebar-collapse-toggle" class="sidebar-toggle d-none d-lg-block">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
             </div>
+            
+            <hr class="my-2">
+            
+            <ul class="sidebar-menu">
+                <!-- Dashboard - Cho tất cả người dùng -->
+                <li class="sidebar-item">
+                    <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-tachometer-alt"></i></span>
+                        <span class="sidebar-text">Bảng điều khiển</span>
+                    </a>
+                </li>
+                
+                <!-- Phần Nhân viên - Cho tất cả người dùng -->
+                <li class="sidebar-header">Thông tin cá nhân</li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_profile' %}" class="sidebar-link {% if 'profile' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-user"></i></span>
+                        <span class="sidebar-text">Hồ sơ cá nhân</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_attendance' %}" class="sidebar-link {% if 'attendance' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-clock"></i></span>
+                        <span class="sidebar-text">Chấm công</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_leave_requests' %}" class="sidebar-link {% if 'leave' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-calendar-alt"></i></span>
+                        <span class="sidebar-text">Đơn nghỉ phép</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_salary' %}" class="sidebar-link {% if 'salary' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-money-bill-wave"></i></span>
+                        <span class="sidebar-text">Lương & Phúc lợi</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_documents' %}" class="sidebar-link {% if 'documents' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-file-alt"></i></span>
+                        <span class="sidebar-text">Tài liệu</span>
+                    </a>
+                </li>
+                
+                {% if user.role == 'Employee' or user.role == 'Manager' or user.role == 'HR' or user.role == 'Admin' %}
+                <li class="sidebar-item">
+                    <a href="{% url 'my_tasks' %}" class="sidebar-link {% if 'tasks' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-tasks"></i></span>
+                        <span class="sidebar-text">Nhiệm vụ</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'my_training' %}" class="sidebar-link {% if 'training' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-graduation-cap"></i></span>
+                        <span class="sidebar-text">Đào tạo</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'performance' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-chart-line"></i></span>
+                        <span class="sidebar-text">Đánh giá</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% if user.role == 'Manager' or user.role == 'HR' or user.role == 'Admin' %}
+                <!-- Phần Quản lý - Cho Quản lý, HR, Admin -->
+                <li class="sidebar-header">Quản lý nhóm</li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'manager_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-chart-bar"></i></span>
+                        <span class="sidebar-text">Bảng điều khiển quản lý</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'team' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-users"></i></span>
+                        <span class="sidebar-text">Quản lý nhóm</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'department_tasks' %}" class="sidebar-link {% if 'department-tasks' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-clipboard-list"></i></span>
+                        <span class="sidebar-text">Nhiệm vụ phòng ban</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'pending_leave_requests' %}" class="sidebar-link {% if 'approve-leave' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-calendar-check"></i></span>
+                        <span class="sidebar-text">Phê duyệt nghỉ phép</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'performance_evaluations' %}" class="sidebar-link {% if 'performance-eval' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-star"></i></span>
+                        <span class="sidebar-text">Đánh giá nhân viên</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'department-report' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-file-alt"></i></span>
+                        <span class="sidebar-text">Báo cáo phòng ban</span>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% if user.role == 'HR' or user.role == 'Admin' %}
+                <!-- Phần Nhân sự - Cho HR, Admin -->
+                <li class="sidebar-header">Quản trị nhân sự</li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'hr_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'hr_dashboard' %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-briefcase"></i></span>
+                        <span class="sidebar-text">Bảng điều khiển HR</span>
+                    </a>
+                </li>
+                
+                <!-- FIXED: Updated dropdown structure with proper data-bs-target -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#employeeSubmenu" role="button" aria-expanded="false" aria-controls="employeeSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-user-tie"></i></span>
+                        <span class="sidebar-text">Nhân viên</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'employee' in request.path %}show{% endif %}" id="employeeSubmenu">
+                        <li class="sidebar-item">
+                            <a href="{% url 'employee_list' %}" class="sidebar-link {% if 'employee/list' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-list"></i></span>
+                                <span class="sidebar-text">Danh sách</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'employee_create' %}" class="sidebar-link {% if 'employee/create' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-plus"></i></span>
+                                <span class="sidebar-text">Thêm mới</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'onboarding_list' %}" class="sidebar-link {% if 'onboarding' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-user-plus"></i></span>
+                                <span class="sidebar-text">Onboarding</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- FIXED: Updated dropdown structure with proper data-bs-target -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#orgSubmenu" role="button" aria-expanded="false" aria-controls="orgSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-sitemap"></i></span>
+                        <span class="sidebar-text">Tổ chức</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'department' in request.path or 'position' in request.path %}show{% endif %}" id="orgSubmenu">
+                        <li class="sidebar-item">
+                            <a href="{% url 'department_list' %}" class="sidebar-link {% if 'department' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-building"></i></span>
+                                <span class="sidebar-text">Phòng ban</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'position_list' %}" class="sidebar-link {% if 'position' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-id-badge"></i></span>
+                                <span class="sidebar-text">Chức vụ</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="{% url 'organization_chart' %}" class="sidebar-link {% if 'organization-chart' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-project-diagram"></i></span>
+                                <span class="sidebar-text">Sơ đồ tổ chức</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- FIXED: Updated all other dropdowns with proper Bootstrap 5 structure -->
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#attendanceSubmenu" role="button" aria-expanded="false" aria-controls="attendanceSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-clipboard-check"></i></span>
+                        <span class="sidebar-text">Chấm công</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'attendance-' in request.path %}show{% endif %}" id="attendanceSubmenu">
+                        <li class="sidebar-item">
+                            <a href="{% url 'attendance_report' %}" class="sidebar-link {% if 'attendance-report' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-calendar"></i></span>
+                                <span class="sidebar-text">Báo cáo chấm công</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link {% if 'shift' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-business-time"></i></span>
+                                <span class="sidebar-text">Quản lý ca làm việc</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link {% if 'leave-management' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-calendar-times"></i></span>
+                                <span class="sidebar-text">Quản lý nghỉ phép</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#payrollSubmenu" role="button" aria-expanded="false" aria-controls="payrollSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-money-check-alt"></i></span>
+                        <span class="sidebar-text">Tiền lương</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'salary-' in request.path or 'payroll' in request.path %}show{% endif %}" id="payrollSubmenu">
+                        <li class="sidebar-item">
+                            <a href="{% url 'salary_admin' %}" class="sidebar-link {% if 'salary-admin' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-dollar-sign"></i></span>
+                                <span class="sidebar-text">Quản lý lương</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link {% if 'process-payroll' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <span class="sidebar-text">Tính lương</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link {% if 'salary-advances' in request.path %}active{% endif %}">
+                                <span class="sidebar-icon"><i class="fas fa-hand-holding-usd"></i></span>
+                                <span class="sidebar-text">Tạm ứng lương</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#recruitmentSubmenu" role="button" aria-expanded="false" aria-controls="recruitmentSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-user-plus"></i></span>
+                        <span class="sidebar-text">Tuyển dụng</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'recruitment' in request.path %}show{% endif %}" id="recruitmentSubmenu">
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-briefcase"></i></span>
+                                <span class="sidebar-text">Vị trí tuyển dụng</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-user-tie"></i></span>
+                                <span class="sidebar-text">Ứng viên</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-comments"></i></span>
+                                <span class="sidebar-text">Phỏng vấn</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#assetsSubmenu" role="button" aria-expanded="false" aria-controls="assetsSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-laptop"></i></span>
+                        <span class="sidebar-text">Tài sản</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'asset' in request.path %}show{% endif %}" id="assetsSubmenu">
+                        <li class="sidebar-item">
+                            <a href="{% url 'asset_list' %}" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-list"></i></span>
+                                <span class="sidebar-text">Danh sách tài sản</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-share-square"></i></span>
+                                <span class="sidebar-text">Cấp phát tài sản</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#trainingSubmenu" role="button" aria-expanded="false" aria-controls="trainingSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-chalkboard-teacher"></i></span>
+                        <span class="sidebar-text">Đào tạo</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'training-' in request.path %}show{% endif %}" id="trainingSubmenu">
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-book"></i></span>
+                                <span class="sidebar-text">Khóa học</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-calendar-day"></i></span>
+                                <span class="sidebar-text">Lịch đào tạo</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'expense' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-receipt"></i></span>
+                        <span class="sidebar-text">Chi phí</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'document_list' %}" class="sidebar-link {% if 'document' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-file-alt"></i></span>
+                        <span class="sidebar-text">Quản lý tài liệu</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#reportsSubmenu" role="button" aria-expanded="false" aria-controls="reportsSubmenu">
+                        <span class="sidebar-icon"><i class="fas fa-chart-pie"></i></span>
+                        <span class="sidebar-text">Báo cáo</span>
+                    </a>
+                    <ul class="collapse sidebar-dropdown {% if 'report-' in request.path %}show{% endif %}" id="reportsSubmenu">
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-users"></i></span>
+                                <span class="sidebar-text">Báo cáo nhân sự</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-clock"></i></span>
+                                <span class="sidebar-text">Báo cáo chấm công</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-chart-line"></i></span>
+                                <span class="sidebar-text">Báo cáo hiệu suất</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item">
+                            <a href="" class="sidebar-link">
+                                <span class="sidebar-icon"><i class="fas fa-money-bill"></i></span>
+                                <span class="sidebar-text">Báo cáo lương</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+                
+                {% if user.role == 'Admin' %}
+                <!-- Phần Admin - Chỉ cho Admin -->
+                <li class="sidebar-header">Quản trị hệ thống</li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'admin_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-cog"></i></span>
+                        <span class="sidebar-text">Bảng điều khiển Admin</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'user' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-user-shield"></i></span>
+                        <span class="sidebar-text">Quản lý người dùng</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'permission' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-user-lock"></i></span>
+                        <span class="sidebar-text">Phân quyền</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'system_logs' %}" class="sidebar-link {% if 'logs' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-history"></i></span>
+                        <span class="sidebar-text">Nhật ký hệ thống</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="{% url 'system_settings' %}" class="sidebar-link {% if 'settings' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-sliders-h"></i></span>
+                        <span class="sidebar-text">Cài đặt hệ thống</span>
+                    </a>
+                </li>
+                
+                <li class="sidebar-item">
+                    <a href="" class="sidebar-link {% if 'backup' in request.path %}active{% endif %}">
+                        <span class="sidebar-icon"><i class="fas fa-database"></i></span>
+                        <span class="sidebar-text">Sao lưu & Phục hồi</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </aside>
+        
+        <!-- Main content -->
+        <div class="content-wrapper" id="content">
+            <!-- Messages -->
+            {% if messages %}
+                <div class="messages mb-3">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
             
+            <!-- Page content -->
             {% block content %}{% endblock %}
         </div>
     </div>
     
-    <!-- Chân trang -->
-    <footer class="footer text-center">
-        <div class="container">
-            <span class="text-muted">© {% now "Y" %} HRMS. Đã đăng ký bản quyền.</span>
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6 text-start">
+                    © {% now "Y" %} HRMS - Hệ thống Quản lý Nhân sự
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="d-flex justify-content-md-end justify-content-center">
+                        <a href="#" class="me-3 text-secondary">Điều khoản</a>
+                        <a href="#" class="me-3 text-secondary">Bảo mật</a>
+                        <a href="#" class="text-secondary">Liên hệ</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
     
-    <!-- Bootstrap JS, Popper.js -->
+    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- JS tùy chỉnh -->
-    <script src="{% static 'js/main.js' %}"></script>
-    
-    {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- FIXED: Improved JavaScript for handling dropdowns -->
     <script>
-    $(document).ready(function() {
-        // Khởi tạo bộ chọn ngày
-        $('.datepicker').flatpickr({
-            dateFormat: 'Y-m-d',
-            allowInput: true
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const footer = document.getElementById('footer');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
+        
+        // Handle sidebar toggle on mobile
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('show');
+            });
+        }
+        
+        // Handle sidebar toggle for large screens
+        if (sidebarCollapseToggle) {
+            sidebarCollapseToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+                footer.classList.toggle('expanded');
+            });
+        }
+        
+        // Automatically expand dropdown if it contains active link
+        document.querySelectorAll('.sidebar-dropdown .sidebar-link.active').forEach(function(activeLink) {
+            const parentDropdown = activeLink.closest('.sidebar-dropdown');
+            if (parentDropdown) {
+                const dropdownToggle = document.querySelector(`[href="#${parentDropdown.id}"]`);
+                if (dropdownToggle && !parentDropdown.classList.contains('show')) {
+                    // Create a new Bootstrap Collapse instance and show it
+                    new bootstrap.Collapse(parentDropdown, {
+                        toggle: true
+                    });
+                    
+                    // Make sure aria-expanded is set correctly
+                    dropdownToggle.setAttribute('aria-expanded', 'true');
+                }
+            }
         });
         
-        // Cập nhật số lượng thông báo
-        // Tương tự AJAX thông báo trước đây cho cập nhật thời gian thực
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth < 992 && sidebar.classList.contains('show') &&
+                !sidebar.contains(e.target) && e.target !== sidebarToggle) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
+        // Update notification badge
+        function updateNotifications() {
+            fetch('/notifications/count/')
+                .then(response => response.json())
+                .then(data => {
+                    const notificationBadge = document.getElementById('notificationCount');
+                    if (notificationBadge) {
+                        if (data.count > 0) {
+                            notificationBadge.textContent = data.count;
+                            notificationBadge.style.display = 'inline-block';
+                        } else {
+                            notificationBadge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching notifications:', error));
+        }
+        
+        // Update notifications initially and then every minute
+        updateNotifications();
+        setInterval(updateNotifications, 60000);
     });
     </script>
-    {% endblock %}
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

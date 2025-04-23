@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Import Errors" %} | HRMS{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">{% trans "Import Errors" %}</h1>
+    <p class="text-gray-600">{% trans "The following errors occurred during the import process" %}</p>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm mb-6">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Error Details" %}</h2>
+    </div>
+    
+    <div class="p-4">
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">
+                        {% blocktrans with count=errors|length %}
+                        {{ count }} errors were encountered during the import process. 
+                        Please correct these issues in your CSV file and try again.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                            {% trans "Line" %}
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {% trans "Error Message" %}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for error in errors %}
+                    <tr class="hover:bg-red-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {% if "Dòng" in error %}
+                            <span class="font-semibold">{{ error|slice:"5:"|slice:":3"|strip }}</span>
+                            {% else %}
+                            <span class="text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-red-700">
+                            {{ error }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">
+                            {% trans "No errors found" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-sm">
+    <div class="p-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-800">{% trans "Next Steps" %}</h2>
+    </div>
+    
+    <div class="p-6">
+        <div class="space-y-4">
+            <div class="bg-blue-50 p-4 rounded-md">
+                <h3 class="font-medium text-blue-700 mb-2">{% trans "Common Error Solutions:" %}</h3>
+                <ul class="list-disc pl-5 space-y-1 text-sm text-blue-700">
+                    <li>{% trans "Ensure all required fields (Full Name, Email) are provided" %}</li>
+                    <li>{% trans "Check date formats (YYYY-MM-DD)" %}</li>
+                    <li>{% trans "Verify department and position names exist in the system" %}</li>
+                    <li>{% trans "Make sure gender values are valid (Male, Female, Other)" %}</li>
+                    <li>{% trans "Validate that email addresses are properly formatted" %}</li>
+                </ul>
+            </div>
+            
+            <div class="flex space-x-4">
+                <a href="{% url 'import_employees' %}" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors">
+                    <i class="fas fa-upload mr-2"></i> {% trans "Try Again" %}
+                </a>
+                
+                <a href="{% url 'employee_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> {% trans "Back to Employees" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

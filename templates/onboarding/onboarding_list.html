@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load dashboard_tags %}
+
+{% block title %}Quy trình Onboarding | HRMS{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Quản lý Quy trình Onboarding</h1>
+        <p class="mt-2 text-gray-600">Quản lý các quy trình onboarding cho nhân viên</p>
+    </div>
+
+    <!-- Onboarding Processes Card -->
+    <div class="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Danh sách Quy trình Onboarding</h2>
+            <a href="{% url 'onboarding_task_list' %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 
+                      rounded-lg hover:bg-blue-200 transition-all duration-200">
+                <i class="fas fa-tasks mr-2"></i> Quản lý Nhiệm vụ
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Nhân viên</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Phòng ban</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Vị trí</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Ngày bắt đầu</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Ngày mục tiêu</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Trạng thái</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-gray-600">Tiến độ</th>
+                        <th class="px-6 py-4 text-right text-sm font-semibold text-gray-600">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for onboarding in onboardings %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    {% if onboarding.employee.profile_image %}
+                                    <img class="h-10 w-10 rounded-full object-cover border border-gray-200" 
+                                         src="{{ onboarding.employee.profile_image.url }}" 
+                                         alt="{{ onboarding.employee.full_name }}">
+                                    {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-blue-500 text-white flex items-center justify-center text-lg font-medium">
+                                        {{ onboarding.employee.full_name|first|upper }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="{% url 'employee_detail' onboarding.employee.pk %}" 
+                                           class="text-blue-600 hover:text-blue-800 hover:underline">
+                                            {{ onboarding.employee.full_name }}
+                                        </a>
+                                    </div>
+                                    <div class="text-sm text-gray-500">{{ onboarding.employee.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if onboarding.employee.department %}
+                            {{ onboarding.employee.department.department_name }}
+                            {% else %}
+                            <span class="text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if onboarding.employee.position %}
+                            {{ onboarding.employee.position.position_name }}
+                            {% else %}
+                            <span class="text-gray-500">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">{{ onboarding.start_date|date:"d/m/Y" }}</td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">{{ onboarding.target_completion_date|date:"d/m/Y" }}</div>
+                            {% if onboarding.target_completion_date|date:"U"|floatformat:"0" < now.date|date:"U"|floatformat:"0" and onboarding.status == 'In Progress' %}
+                            <div class="text-xs text-red-600 font-medium">Quá hạn</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                        {% if onboarding.status == 'Completed' %}bg-green-100 text-green-800
+                                        {% elif onboarding.status == 'In Progress' %}bg-blue-100 text-blue-800
+                                        {% elif onboarding.status == 'On Hold' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ onboarding.status }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                {% with total_tasks=0 completed_tasks=0 %}
+                                    {% for task in onboarding.employeetaskstatus_set.all %}
+                                        {% with total_tasks=total_tasks|add:1 %}
+                                            {% if task.status == 'Completed' %}
+                                                {% with completed_tasks=completed_tasks|add:1 %}{% endwith %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                    {% if total_tasks > 0 %}
+                                        {% with progress=completed_tasks|percentage:total_tasks %}
+                                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full 
+                                                    transition-all duration-300" 
+                                             style="width: {{ progress }}%"></div>
+                                        {% endwith %}
+                                    {% else %}
+                                        <div class="bg-blue-500 h-3 rounded-full" style="width: 0%"></div>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'employee_onboarding_detail' onboarding.employee.pk %}" 
+                               class="text-blue-600 hover:text-blue-800" 
+                               title="Xem chi tiết">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            Không tìm thấy quy trình onboarding nào
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Onboarding Status Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Trạng thái Onboarding</h3>
+                <span class="text-3xl text-blue-600">
+                    <i class="fas fa-chart-pie"></i>
+                </span>
+            </div>
+            <div class="space-y-4">
+                {% with total_count=0 in_progress_count=0 completed_count=0 on_hold_count=0 %}
+                    {% for onboarding in onboardings %}
+                        {% with total_count=total_count|add:1 %}
+                            {% if onboarding.status == 'In Progress' %}
+                                {% with in_progress_count=in_progress_count|add:1 %}{% endwith %}
+                            {% elif onboarding.status == 'Completed' %}
+                                {% with completed_count=completed_count|add:1 %}{% endwith %}
+                            {% elif onboarding.status == 'On Hold' %}
+                                {% with on_hold_count=on_hold_count|add:1 %}{% endwith %}
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Đang thực hiện</span>
+                            <span class="text-sm font-medium text-blue-700">{{ in_progress_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            {% if total_count > 0 %}
+                                {% with progress_pct=in_progress_count|percentage:total_count %}
+                                <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+                                     style="width: {{ progress_pct }}%"></div>
+                                {% endwith %}
+                            {% else %}
+                                <div class="bg-blue-600 h-3 rounded-full" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Hoàn thành</span>
+                            <span class="text-sm font-medium text-green-700">{{ completed_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            {% if total_count > 0 %}
+                                {% with progress_pct=completed_count|percentage:total_count %}
+                                <div class="bg-green-600 h-3 rounded-full transition-all duration-300" 
+                                     style="width: {{ progress_pct }}%"></div>
+                                {% endwith %}
+                            {% else %}
+                                <div class="bg-green-600 h-3 rounded-full" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Tạm hoãn</span>
+                            <span class="text-sm font-medium text-yellow-700">{{ on_hold_count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            {% if total_count > 0 %}
+                                {% with progress_pct=on_hold_count|percentage:total_count %}
+                                <div class="bg-yellow-500 h-3 rounded-full transition-all duration-300" 
+                                     style="width: {{ progress_pct }}%"></div>
+                                {% endwith %}
+                            {% else %}
+                                <div class="bg-yellow-500 h-3 rounded-full" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endwith %}
+            </div>
+        </div>
+
+        <!-- Recent Onboardings Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Onboarding Gần đây</h3>
+                <span class="text-3xl text-blue-600">
+                    <i class="fas fa-user-plus"></i>
+                </span>
+            </div>
+            <div class="space-y-3">
+                {% for onboarding in onboardings|slice:":5" %}
+                <div class="flex items-center p-2 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                    <div class="flex-shrink-0 h-8 w-8">
+                        {% if onboarding.employee.profile_image %}
+                        <img class="h-8 w-8 rounded-full object-cover border border-gray-200" 
+                             src="{{ onboarding.employee.profile_image.url }}" 
+                             alt="{{ onboarding.employee.full_name }}">
+                        {% else %}
+                        <div class="h-8 w-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+                            {{ onboarding.employee.full_name|first|upper }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-medium text-gray-900 truncate">{{ onboarding.employee.full_name }}</p>
+                        <p class="text-xs text-gray-500">{{ onboarding.start_date|date:"d/m/Y" }}</p>
+                    </div>
+                    <div>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                    {% if onboarding.status == 'Completed' %}bg-green-100 text-green-800
+                                    {% elif onboarding.status == 'In Progress' %}bg-blue-100 text-blue-800
+                                    {% elif onboarding.status == 'On Hold' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ onboarding.status }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-2">Không có dữ liệu onboarding</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900">Hành động Nhanh</h3>
+                <span class="text-3xl text-blue-600">
+                    <i class="fas fa-bolt"></i>
+                </span>
+            </div>
+            <div class="space-y-3">
+                <a href="{% url 'onboarding_task_create' %}" 
+                   class="block p-3 bg-blue-50 hover:bg-blue-100 rounded-lg 
+                          text-blue-800 transition-all duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-8 w-8 flex items-center justify-center 
+                                    rounded-md bg-blue-200 text-blue-600">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Tạo Nhiệm vụ Mới</p>
+                            <p class="text-xs">Thêm mẫu nhiệm vụ onboarding mới</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" 
+                   class="block p-3 bg-green-50 hover:bg-green-100 rounded-lg 
+                          text-green-800 transition-all duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-8 w-8 flex items-center justify-center 
+                                    rounded-md bg-green-200 text-green-600">
+                            <i class="fas fa-file-export"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Xuất Báo cáo</p>
+                            <p class="text-xs">Tạo báo cáo trạng thái onboarding</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="#" 
+                   class="block p-3 bg-purple-50 hover:bg-purple-100 rounded-lg 
+                          text-purple-800 transition-all duration-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-8 w-8 flex items-center justify-center 
+                                    rounded-md bg-purple-200 text-purple-600">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">Cấu hình Quy trình</p>
+                            <p class="text-xs">Tùy chỉnh quy trình onboarding</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
