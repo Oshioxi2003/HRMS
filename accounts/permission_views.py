@@ -55,7 +55,7 @@ def permission_create(request):
                 return render(request, 'accounts/permission_form.html', {'form': form})
             
             permission = form.save()
-            messages.success(request, 'Permission created successfully')
+            messages.success(request, 'Quyền đã được tạo thành công')
             return redirect('permission_list')
     else:
         form = PermissionForm()

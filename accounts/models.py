@@ -6,7 +6,7 @@ from employee.models import Employee
 class UserManager(BaseUserManager):
     def create_user(self, username, email, password=None, **extra_fields):
         if not email:
-            raise ValueError(_('The Email field must be set'))
+            raise ValueError(_('Trường Email phải được thiết lập'))
         email = self.normalize_email(email)
         user = self.model(username=username, email=email, **extra_fields)
         user.set_password(password)
@@ -30,14 +30,14 @@ class User(AbstractUser):
     )
     
     STATUS_CHOICES = (
-        ('Active', 'Active'),
-        ('Locked', 'Locked'),
-        ('Pending Activation', 'Pending Activation'),
+        ('Active', 'Đã kích hoạt'),
+        ('Locked', 'Đã khóa'),
+        ('Pending Activation', 'Đang chờ kích hoạt'),
     )
     
     email = models.EmailField(_('email address'), unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Employee')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending Activation')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Đang chờ kích hoạt')
     employee = models.OneToOneField(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)

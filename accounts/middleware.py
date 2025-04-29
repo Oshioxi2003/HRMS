@@ -68,7 +68,7 @@ class EmployeeApprovalMiddleware(MiddlewareMixin):
             
         # Only check approval status for regular employees
         if request.user.employee.approval_status != 'Approved':
-            messages.warning(request, _('Your employee profile is pending approval. Please wait for an administrator to approve your account.'))
+            messages.warning(request, _('Hồ sơ nhân viên của bạn đang chờ phê duyệt. Vui lòng đợi quản trị viên phê duyệt tài khoản của bạn.'))
             return redirect('approval_pending')
         
         return None

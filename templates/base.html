@@ -39,77 +39,37 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow-x: hidden;
         }
         
         /* Header styles */
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.4rem;
-            color: var(--primary-color);
-        }
-        
-        .navbar-brand img {
-            height: 35px;
-            margin-right: 8px;
-        }
-        
         .top-navbar {
             height: var(--header-height);
             box-shadow: 0 1px 10px rgba(0,0,0,0.1);
             background-color: #fff;
             z-index: 1030;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
         }
         
-        .navbar-nav .nav-link {
-            color: var(--secondary-color);
+        .navbar-brand img {
+            width: 35px;
+            height: 35px;
+            margin-right: 8px;
         }
         
-        .navbar-nav .nav-link:hover {
-            color: var(--primary-color);
-        }
-        
-        .navbar-nav .nav-link.active {
-            color: var(--primary-color);
+        .navbar-brand span {
             font-weight: 500;
-        }
-        
-        /* Notification badge */
-        .notification-badge {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 10px;
-            padding: 3px 5px;
-        }
-        
-        /* Search bar */
-        .navbar .search-form {
-            max-width: 300px;
-        }
-        
-        /* User profile */
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        .avatar-sm {
-            width: 28px;
-            height: 28px;
-        }
-        
-        .avatar-lg {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #fff;
         }
         
         /* Main container */
         .main-container {
             display: flex;
             flex: 1;
+            margin-top: var(--header-height);
         }
         
         /* Sidebar styles */
@@ -120,9 +80,9 @@
             left: 0;
             top: var(--header-height);
             background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
             overflow-y: auto;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
             z-index: 1020;
         }
         
@@ -143,7 +103,7 @@
             color: var(--primary-color);
         }
         
-        .sidebar-collapsed .sidebar-toggle {
+        .sidebar.collapsed .sidebar-toggle {
             transform: rotate(180deg);
         }
         
@@ -219,7 +179,7 @@
             font-size: 1.2rem;
         }
         
-        /* Dropdown menu - FIXED */
+        /* Dropdown menu */
         .sidebar-dropdown {
             margin-left: 30px;
             padding-left: 0;
@@ -249,6 +209,7 @@
             margin-left: var(--sidebar-width);
             padding: 20px;
             transition: margin-left 0.3s;
+            min-height: calc(100vh - var(--header-height) - var(--footer-height));
         }
         
         .content-wrapper.expanded {
@@ -288,10 +249,11 @@
             font-weight: 500;
         }
         
-        /* Responsive */
-        @media (max-width: 992px) {
+        /* Responsive adjustments */
+        @media (max-width: 991px) {
             .sidebar {
                 transform: translateX(-100%);
+                width: var(--sidebar-width);
                 z-index: 1040;
             }
             
@@ -306,9 +268,71 @@
             .navbar .search-form {
                 display: none;
             }
+            
+            .navbar-brand span {
+                font-size: 1rem;
+            }
+            
+            .top-navbar .navbar-nav .nav-link {
+                padding: 0.5rem;
+            }
+            
+            .content-wrapper {
+                padding: 15px;
+            }
         }
         
-        /* Dark mode support - optional */
+        @media (max-width: 767px) {
+            .footer .text-end {
+                text-align: center !important;
+                margin-top: 10px;
+            }
+            
+            .footer .d-flex {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .footer a {
+                margin: 5px 0;
+            }
+            
+            .navbar-brand img {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .dropdown-menu {
+                width: 100% !important;
+                max-width: 280px;
+            }
+            
+            .notificationsContainer .dropdown-item {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 575px) {
+            .content-wrapper {
+                padding: 10px;
+            }
+            
+            .card-header {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .sidebar-link {
+                font-size: 0.9rem;
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .sidebar-icon {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Dark mode support */
         @media (prefers-color-scheme: dark) {
             body.dark-mode {
                 background-color: #0f172a;
@@ -335,6 +359,10 @@
             body.dark-mode .sidebar-link.active {
                 background-color: rgba(59, 130, 246, 0.2);
             }
+            
+            body.dark-mode .sidebar-header {
+                color: #94a3b8;
+            }
         }
     </style>
     
@@ -344,83 +372,54 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg top-navbar">
         <div class="container-fluid">
-            <button id="sidebar-toggle" class="sidebar-toggle me-2 d-lg-none">
+            <button id="sidebar-toggle" class="sidebar-toggle me-2 d-lg-none" aria-label="Toggle sidebar">
                 <i class="fas fa-bars"></i>
             </button>
             
             <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
-                <img src="{% static 'images/logo.png' %}" alt="HRMS Logo" onerror="this.src='https://via.placeholder.com/35x35?text=HRMS';this.onerror='';">
-                <span>HRMS</span>
+                <img src="{% static 'images/logo.png' %}" alt="HRMS Logo" width="35" height="35" 
+                     onerror="this.src='https://via.placeholder.com/35x35?text=HRMS';this.onerror='';">
+                <span class="ms-2">HRMS</span>
             </a>
             
-            <form class="d-none d-lg-flex search-form ms-auto me-3">
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Tìm kiếm...">
-                    <button class="btn btn-outline-secondary" type="submit">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-            </form>
+            
             
             <ul class="navbar-nav me-3">
                 <!-- Language Selector -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Select language">
                         <i class="fas fa-globe"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                         <li><a class="dropdown-item" href="#">Tiếng Việt</a></li>
-                        <li><a class="dropdown-item" href="#">English</a></li>
                     </ul>
                 </li>
-            </ul>
-            
-            <ul class="navbar-nav">
+                
                 <!-- Notifications -->
                 <li class="nav-item dropdown position-relative">
-                    <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
                         <i class="fas fa-bell"></i>
                         <span class="badge bg-danger rounded-pill notification-badge" id="notificationCount">3</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                    <div class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationsDropdown" style="width: 300px; max-height: 400px; overflow-y: auto;">
                         <h6 class="dropdown-header">Thông báo</h6>
                         <div id="notificationsContainer">
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <div class="me-3">
-                                    <div class="bg-primary text-white rounded-circle p-2">
-                                        <i class="fas fa-calendar-check"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p class="mb-0">Yêu cầu nghỉ phép đã được chấp nhận</p>
-                                    <small class="text-muted">15 phút trước</small>
-                                </div>
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <div class="me-3">
-                                    <div class="bg-success text-white rounded-circle p-2">
-                                        <i class="fas fa-tasks"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <p class="mb-0">Bạn được phân công nhiệm vụ mới</p>
-                                    <small class="text-muted">1 giờ trước</small>
-                                </div>
-                            </a>
+                            <!-- Notification items will be loaded here -->
                         </div>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item text-center" href="{% url 'notification_list' %}">Xem tất cả thông báo</a>
                     </div>
                 </li>
-                
+            </ul>
+            
+            <ul class="navbar-nav">
                 <!-- User Profile -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {% if user.employee and user.employee.profile_image %}
-                        <img src="{{ user.employee.profile_image.url }}" alt="{{ user.get_full_name }}" class="avatar me-2">
+                        <img src="{{ user.employee.profile_image.url }}" alt="{{ user.get_full_name }}" class="avatar me-2" style="width: 30px; height: 30px; border-radius: 50%;">
                         {% else %}
-                        <div class="avatar me-2 bg-primary d-flex align-items-center justify-content-center text-white">
+                        <div class="avatar me-2 bg-primary d-flex align-items-center justify-content-center text-white" style="width: 30px; height: 30px; border-radius: 50%;">
                             {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                         </div>
                         {% endif %}
@@ -448,27 +447,15 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="user-profile p-3 d-flex align-items-center">
-                {% if user.employee and user.employee.profile_image %}
-                <img src="{{ user.employee.profile_image.url }}" alt="{{ user.get_full_name }}" class="avatar-lg me-3">
-                {% else %}
-                <div class="avatar-lg me-3 bg-primary d-flex align-items-center justify-content-center text-white">
-                    {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
-                </div>
-                {% endif %}
-                <div class="sidebar-text">
-                    <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
-                    <p class="text-muted mb-0 small">{{ user.get_role_display }}</p>
-                </div>
-                <!-- Added sidebar collapse toggle button -->
                 <button id="sidebar-collapse-toggle" class="sidebar-toggle d-none d-lg-block">
-                    <i class="fas fa-chevron-left"></i>
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
             
             <hr class="my-2">
             
             <ul class="sidebar-menu">
-                <!-- Dashboard - Cho tất cả người dùng -->
+                <!-- Dashboard -->
                 <li class="sidebar-item">
                     <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                         <span class="sidebar-icon"><i class="fas fa-tachometer-alt"></i></span>
@@ -476,7 +463,7 @@
                     </a>
                 </li>
                 
-                <!-- Phần Nhân viên - Cho tất cả người dùng -->
+                <!-- Personal Information -->
                 <li class="sidebar-header">Thông tin cá nhân</li>
                 
                 <li class="sidebar-item">
@@ -538,7 +525,7 @@
                 {% endif %}
                 
                 {% if user.role == 'Manager' or user.role == 'HR' or user.role == 'Admin' %}
-                <!-- Phần Quản lý - Cho Quản lý, HR, Admin -->
+                <!-- Team Management -->
                 <li class="sidebar-header">Quản lý nhóm</li>
                 
                 <li class="sidebar-item">
@@ -585,7 +572,7 @@
                 {% endif %}
                 
                 {% if user.role == 'HR' or user.role == 'Admin' %}
-                <!-- Phần Nhân sự - Cho HR, Admin -->
+                <!-- HR Management -->
                 <li class="sidebar-header">Quản trị nhân sự</li>
                 
                 <li class="sidebar-item">
@@ -595,7 +582,6 @@
                     </a>
                 </li>
                 
-                <!-- FIXED: Updated dropdown structure with proper data-bs-target -->
                 <li class="sidebar-item">
                     <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#employeeSubmenu" role="button" aria-expanded="false" aria-controls="employeeSubmenu">
                         <span class="sidebar-icon"><i class="fas fa-user-tie"></i></span>
@@ -623,7 +609,6 @@
                     </ul>
                 </li>
                 
-                <!-- FIXED: Updated dropdown structure with proper data-bs-target -->
                 <li class="sidebar-item">
                     <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#orgSubmenu" role="button" aria-expanded="false" aria-controls="orgSubmenu">
                         <span class="sidebar-icon"><i class="fas fa-sitemap"></i></span>
@@ -651,7 +636,6 @@
                     </ul>
                 </li>
                 
-                <!-- FIXED: Updated all other dropdowns with proper Bootstrap 5 structure -->
                 <li class="sidebar-item">
                     <a class="sidebar-link dropdown-toggle" data-bs-toggle="collapse" href="#attendanceSubmenu" role="button" aria-expanded="false" aria-controls="attendanceSubmenu">
                         <span class="sidebar-icon"><i class="fas fa-clipboard-check"></i></span>
@@ -824,7 +808,7 @@
                 {% endif %}
                 
                 {% if user.role == 'Admin' %}
-                <!-- Phần Admin - Chỉ cho Admin -->
+                <!-- System Administration -->
                 <li class="sidebar-header">Quản trị hệ thống</li>
                 
                 <li class="sidebar-item">
@@ -849,7 +833,7 @@
                 </li>
                 
                 <li class="sidebar-item">
-                    <a href="{% url 'system_logs' %}" class="sidebar-link {% if 'logs' in request.path %}active{% endif %}">
+                    <a href="" class="sidebar-link ">
                         <span class="sidebar-icon"><i class="fas fa-history"></i></span>
                         <span class="sidebar-text">Nhật ký hệ thống</span>
                     </a>
@@ -895,10 +879,10 @@
     <footer class="footer" id="footer">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-6 text-start">
+                <div class="col-md-11 text-start">
                     © {% now "Y" %} HRMS - Hệ thống Quản lý Nhân sự
                 </div>
-                <div class="col-md-6 text-end">
+                <div class="col-md-1 text-end">
                     <div class="d-flex justify-content-md-end justify-content-center">
                         <a href="#" class="me-3 text-secondary">Điều khoản</a>
                         <a href="#" class="me-3 text-secondary">Bảo mật</a>
@@ -912,7 +896,7 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- FIXED: Improved JavaScript for handling dropdowns -->
+    <!-- Custom JavaScript -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sidebar = document.getElementById('sidebar');
@@ -920,6 +904,24 @@
         const footer = document.getElementById('footer');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebarCollapseToggle = document.getElementById('sidebar-collapse-toggle');
+        
+        // Store sidebar state in localStorage
+        function saveSidebarState(collapsed) {
+            localStorage.setItem('sidebarCollapsed', collapsed);
+        }
+        
+        // Load sidebar state from localStorage
+        function loadSidebarState() {
+            const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (collapsed && window.innerWidth > 991) {
+                sidebar.classList.add('collapsed');
+                content.classList.add('expanded');
+                footer.classList.add('expanded');
+            }
+        }
+        
+        // Load saved state on page load
+        loadSidebarState();
         
         // Handle sidebar toggle on mobile
         if (sidebarToggle) {
@@ -931,9 +933,12 @@
         // Handle sidebar toggle for large screens
         if (sidebarCollapseToggle) {
             sidebarCollapseToggle.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                content.classList.toggle('expanded');
-                footer.classList.toggle('expanded');
+                if (window.innerWidth > 991) {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('expanded');
+                    footer.classList.toggle('expanded');
+                    saveSidebarState(sidebar.classList.contains('collapsed'));
+                }
             });
         }
         
@@ -943,12 +948,9 @@
             if (parentDropdown) {
                 const dropdownToggle = document.querySelector(`[href="#${parentDropdown.id}"]`);
                 if (dropdownToggle && !parentDropdown.classList.contains('show')) {
-                    // Create a new Bootstrap Collapse instance and show it
                     new bootstrap.Collapse(parentDropdown, {
                         toggle: true
                     });
-                    
-                    // Make sure aria-expanded is set correctly
                     dropdownToggle.setAttribute('aria-expanded', 'true');
                 }
             }
@@ -956,11 +958,33 @@
         
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(e) {
-            if (window.innerWidth < 992 && sidebar.classList.contains('show') &&
+            if (window.innerWidth <= 991 && sidebar.classList.contains('show') &&
                 !sidebar.contains(e.target) && e.target !== sidebarToggle) {
                 sidebar.classList.remove('show');
             }
         });
+        
+        // Add tooltip to sidebar items when collapsed
+        function updateTooltips() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            if (sidebar.classList.contains('collapsed') && window.innerWidth > 991) {
+                sidebarLinks.forEach(link => {
+                    const text = link.querySelector('.sidebar-text')?.textContent;
+                    if (text) link.setAttribute('title', text);
+                });
+            } else {
+                sidebarLinks.forEach(link => {
+                    link.removeAttribute('title');
+                });
+            }
+        }
+        
+        // Update tooltips on sidebar state change
+        sidebar.addEventListener('transitionend', updateTooltips);
+        window.addEventListener('resize', updateTooltips);
+        
+        // Initial tooltip setup
+        updateTooltips();
         
         // Update notification badge
         function updateNotifications() {
@@ -983,6 +1007,17 @@
         // Update notifications initially and then every minute
         updateNotifications();
         setInterval(updateNotifications, 60000);
+        
+        // Handle window resize to reset sidebar state
+        window.addEventListener('resize', function() {
+            if (window.innerWidth <= 991) {
+                sidebar.classList.remove('collapsed');
+                content.classList.remove('expanded');
+                footer.classList.remove('expanded');
+            } else {
+                loadSidebarState();
+            }
+        });
     });
     </script>
     

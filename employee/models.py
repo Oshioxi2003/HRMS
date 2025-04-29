@@ -62,21 +62,21 @@ class EducationLevel(models.Model):
 
 class Employee(models.Model):
     GENDER_CHOICES = (
-        ('Male', 'Male'),
-        ('Female', 'Female'),
-        ('Other', 'Other'),
+        ('Male', 'Nam'),
+        ('Female', 'Nữ'),
+        ('Other', 'Khác'),
     )
     
     STATUS_CHOICES = (
-        ('Working', 'Working'),
-        ('Resigned', 'Resigned'),
-        ('On Leave', 'On Leave'),
+        ('Working', 'Đang làm'),
+        ('Resigned', 'Đã nghỉ việc'),
+        ('On Leave', 'Nghỉ phép'),
     )
     
     APPROVAL_STATUS_CHOICES = (
-        ('Pending', 'Pending'),
-        ('Approved', 'Approved'),
-        ('Rejected', 'Rejected'),
+        ('Pending', 'Chưa duyệt'),
+        ('Approved', 'Xét duyệt'),
+        ('Rejected', 'Từ chối'),
     )
     
     employee_id = models.AutoField(primary_key=True)
@@ -95,8 +95,8 @@ class Employee(models.Model):
     title = models.ForeignKey(AcademicTitle, on_delete=models.SET_NULL, null=True, blank=True)
     hire_date = models.DateField(null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Working')
-    approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='Pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Đang làm')
+    approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='Chưa duyệt')
     approval_date = models.DateTimeField(null=True, blank=True)
     approval_notes = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -167,9 +167,9 @@ class CertificateType(models.Model):
 
 class EmployeeCertificate(models.Model):
     STATUS_CHOICES = (
-        ('Valid', 'Valid'),
-        ('Expired', 'Expired'),
-        ('Revoked', 'Revoked'),
+        ('Valid', 'Có hiệu lực'),
+        ('Expired', 'Hết hạn'),
+        ('Revoked', 'Bị thu hồi'),
     )
     
     certificate_id = models.AutoField(primary_key=True)
@@ -184,19 +184,19 @@ class EmployeeCertificate(models.Model):
     notes = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Valid')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Có hiệu lực')
     
     def __str__(self):
         return f"{self.employee.full_name} - {self.certificate_name}"
 
 class EmployeeDocument(models.Model):
     DOCUMENT_TYPES = (
-        ('id_card_front', 'ID Card Front'),
-        ('id_card_back', 'ID Card Back'),
-        ('diploma', 'Diploma/Degree'),
-        ('resume', 'Resume/CV'),
-        ('contract', 'Employment Contract'),
-        ('other', 'Other Document'),
+        ('id_card_front', 'CCCD Mặt trước'),
+        ('id_card_back', 'CCCD Mặt sau'),
+        ('diploma', 'Bắng tốt nghiệp/ Bằng cấp'),
+        ('resume', 'Sơ yếu lý lịch/CV'),
+        ('contract', 'Hợp đồng lao động'),
+        ('other', 'Tài liệu khác'),
     )
     
     document_id = models.AutoField(primary_key=True)

@@ -17,7 +17,7 @@ class RegistrationForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise ValidationError("Email already exists")
+            raise ValidationError("Email đã tồn tại.")
         return email
     
     def save(self, commit=True):
@@ -83,6 +83,6 @@ class PasswordChangeForm(forms.Form):
         confirm_password = cleaned_data.get('confirm_password')
         
         if new_password and confirm_password and new_password != confirm_password:
-            self.add_error('confirm_password', 'Passwords do not match')
+            self.add_error('confirm_password', 'Mật khẩu không khớp.')
         
         return cleaned_data
